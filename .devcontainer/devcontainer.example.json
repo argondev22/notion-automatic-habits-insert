@@ -1,17 +1,14 @@
 {
   "name": "dev",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "forwardPorts": [3000],
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-docker",
         "ms-azuretools.vscode-containers",
         "editorconfig.editorconfig",
-        "cweijan.vscode-database-client2",
-        "cweijan.dbclient-jdbc",
-        "golang.go",
-        "ms-python.python"
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
       ]
     }
   },
@@ -19,11 +16,8 @@
     "ghcr.io/devcontainers/features/common-utils:2.5.3": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.23"
-    },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.9"
+    "ghcr.io/devcontainers-contrib/features/jest": {
+      "version": "latest"
     }
   }
 }
