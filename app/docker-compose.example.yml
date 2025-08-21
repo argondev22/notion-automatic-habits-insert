@@ -4,5 +4,5 @@ services:
     image: app
     build: .
     environment:
-      - NOTION_TOKEN=
+      - INTEGRATION_SECRET=
 
