@@ -4,6 +4,9 @@ FROM node:20-bullseye
 # Set working directory
 WORKDIR /app
 
+# Copy TypeScript configuration first
+COPY tsconfig.json ./
+
 # Copy package files
 COPY package*.json ./
 
@@ -11,10 +14,10 @@ COPY package*.json ./
 RUN npm install --include=dev
 
 # Copy source code
-COPY ./src .
+COPY ./src ./src
 
 # Install TypeScript globally and compile
-RUN tsc --outDir ./dist .
+RUN npx tsc --outDir ./dist ./src/main.ts
 
 # Run the compiled JavaScript
 CMD ["node", "./dist/main.js"]
