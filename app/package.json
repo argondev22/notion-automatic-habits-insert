@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "main": "index.js",
   "scripts": {
     "build": "tsc --outDir ./dist ./src/main.ts",
@@ -8,11 +8,15 @@
     "tsx": "tsx ./src/main.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "argon",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/node": "^24.3.0",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@notionhq/client": "^4.0.2"
   }
 }
