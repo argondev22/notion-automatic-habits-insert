@@ -16,8 +16,8 @@ RUN npm install --include=dev
 # Copy source code
 COPY ./src ./src
 
-# Install TypeScript globally and compile
-RUN npx tsc --outDir ./dist ./src/main.ts
+# Compile TypeScript using project config
+RUN npx tsc -p .
 
 # Run the compiled JavaScript
 CMD ["node", "./dist/main.js"]
