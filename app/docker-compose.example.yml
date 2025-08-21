@@ -3,6 +3,6 @@ services:
   app:
     image: app
     build: .
-    volumes:
-      - ./src:/app
+    environment:
+      - NOTION_TOKEN=
 
