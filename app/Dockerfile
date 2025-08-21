@@ -1,20 +1,20 @@
-# Use official Node.js image with TypeScript support
+# Use Node.js 20 with Debian Bullseye
 FROM node:20-bullseye
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies including dev dependencies
+RUN npm install --include=dev
 
 # Copy source code
 COPY ./src .
 
 # Install TypeScript globally and compile
-RUN tsc --outDir ./dist ./src/main.ts
+RUN tsc --outDir ./dist .
 
 # Run the compiled JavaScript
-CMD ["node", "dist/main.js"]
+CMD ["node", "./dist/main.js"]
