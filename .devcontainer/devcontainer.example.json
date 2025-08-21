@@ -1,6 +1,14 @@
 {
   "name": "dev",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2.5.3": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers-contrib/features/jest": {
+      "version": "latest"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -8,16 +16,9 @@
         "ms-azuretools.vscode-containers",
         "editorconfig.editorconfig",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "hediet.vscode-drawio"
       ]
-    }
-  },
-  "features": {
-    "ghcr.io/devcontainers/features/common-utils:2.5.3": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers-contrib/features/jest": {
-      "version": "latest"
     }
   }
 }
