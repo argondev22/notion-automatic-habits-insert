@@ -1,9 +1,10 @@
 {
-  "name": "app",
-  "version": "0.0.0",
-  "main": "index.js",
+  "name": "notion-automatic-habits-insert",
+  "version": "1.0.0",
+  "main": "src/main.ts",
   "scripts": {
-    "start": "docker compose up --build"
+    "start": "docker compose up --build",
+    "clean": "docker compose down && docker image prune -f"
   },
   "keywords": [],
   "author": "argon",
