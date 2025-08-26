@@ -1,7 +1,7 @@
 services:
 
   app:
-    image: app
+    image: notion-automatic-habits-insert
     build: .
     environment:
       - INTEGRATION_SECRET=
