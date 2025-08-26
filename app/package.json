@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/main.ts",
   "scripts": {
-    "start": "docker compose up --build",
+    "start": "docker compose down && docker compose up --build",
     "clean": "docker compose down && docker image prune -f"
   },
   "keywords": [],
