@@ -1,10 +1,3 @@
-interface Habit {
-  name: string
-  startTime: string
-  endTime: string
-  days: Array<Day>
-}
-
 enum Day {
   MONDAY,
   TUESDAY,
@@ -13,4 +6,24 @@ enum Day {
   FRIDAY,
   SATURDAY,
   SUNDAY
+}
+
+enum Profile {
+  ENGINEER,
+  WORK,
+  PRIVATE
+}
+
+export interface Habit {
+  name: string
+  time: string
+  days: Array<Day>
+  profile: Profile
+}
+
+export interface Todo {
+  name: string
+  startTime: string
+  endTime: string
+  profile: Profile
 }
