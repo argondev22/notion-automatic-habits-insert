@@ -19,6 +19,7 @@ export interface Habit {
   time: string
   days: Array<Day>
   profile: Profile
+  content: string
 }
 
 export interface Todo {
@@ -26,4 +27,5 @@ export interface Todo {
   startTime: string
   endTime: string
   profile: Profile
+  content: string
 }
