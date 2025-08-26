@@ -33,18 +33,16 @@ async function extractHabitsFromPages(
   return await Promise.all(
     habitPages.map(async (page) => {
       // ページのコンテンツ（ブロック）を取得
-      let content = "";
+      let content: BlockObjectResponse = [];
       try {
         // @ts-ignore
         const blocks = await notionClient.blocks.children.list({
           block_id: page.id,
         });
 
-        // ブロックからテキストコンテンツを抽出
-        content = await extractContentFromBlocks(blocks.results);
+        content = blocks.results;
       } catch (error) {
         console.error(`ページ ${page.id} のコンテンツ取得エラー:`, error);
-        content = "コンテンツの取得に失敗しました";
       }
 
       return {
@@ -68,40 +66,4 @@ async function extractHabitsFromPages(
       };
     })
   );
-}
-
-async function extractContentFromBlocks(blocks: BlockObjectResponse) {
-  const BLOCK_TYPE = {
-    PARAGRAPH: "paragraph",
-    HEADING_1: "heading_1",
-    HEADING_2: "heading_2",
-    BULLETED_LIST_ITEM: "bulleted_list_item",
-  };
-  return blocks
-    .map((block: any) => {
-      if (block.type === BLOCK_TYPE.PARAGRAPH && block.paragraph?.rich_text) {
-        return convertRichtextToPlainText(block.paragraph.rich_text);
-      }
-      if (block.type === BLOCK_TYPE.HEADING_1 && block.heading_1?.rich_text) {
-        return convertRichtextToPlainText(block.heading_1.rich_text);
-      }
-      if (block.type === BLOCK_TYPE.HEADING_2 && block.heading_2?.rich_text) {
-        return convertRichtextToPlainText(block.heading_2.rich_text);
-      }
-      if (
-        block.type === BLOCK_TYPE.BULLETED_LIST_ITEM &&
-        block.bulleted_list_item?.rich_text
-      ) {
-        return (
-          "• " + convertRichtextToPlainText(block.bulleted_list_item.rich_text)
-        );
-      }
-      return "";
-    })
-    .filter((text: any) => text.trim() !== "")
-    .join("\n");
-}
-
-function convertRichtextToPlainText(text: any) {
-  return text.map((text: any) => text.plain_text).join("");
 }
