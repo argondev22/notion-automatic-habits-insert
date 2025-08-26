@@ -6,7 +6,8 @@
 
 |名前|説明|必須|
 |---|---|---|
-|`EXAMPLE_VARIABLE`|Environmental Varialbe Example|〇|
+|`INTEGRATION_SECRET`|Notion APIの統合シークレット|〇|
+|`HABITS_DATABASE_ID`|DB_HABITSのID|〇|
 
 ## クイックスタート
 
