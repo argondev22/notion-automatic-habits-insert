@@ -21,4 +21,3 @@ RUN npx tsc -p .
 
 # Run the compiled JavaScript
 CMD ["node", "./dist/main.js"]
-

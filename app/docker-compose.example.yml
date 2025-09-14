@@ -5,4 +5,4 @@ services:
     build: .
     environment:
       - INTEGRATION_SECRET=
-
+      - HABITS_DATABASE_ID=
