@@ -1,0 +1,21 @@
+{
+  "name": "notion-automatic-habits-insert",
+  "version": "1.0.0",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "docker compose down && docker compose up --build",
+    "clean": "docker compose down && docker image prune -f"
+  },
+  "keywords": [],
+  "author": "argon",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@notionhq/client": "^4.0.2"
+  }
+}
