@@ -1,5 +1,5 @@
 {
-  "name": "dev",
+  "name": "notion-automatic-habits-insert",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2.5.3": {},
@@ -9,6 +9,10 @@
       "version": "latest"
     }
   },
+  "postCreateCommand": "git config --global user.name 'Your Name' && git config --global user.email 'your.email@example.com'",
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
