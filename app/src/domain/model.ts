@@ -1,33 +1,33 @@
-import { BlockObjectResponse } from "../lib/notionhq/type"
+import { BlockObjectResponse } from "../lib/notionhq/type";
 
-enum Day {
+export enum Day {
   MONDAY,
   TUESDAY,
   WEDNESDAY,
   THURSDAY,
   FRIDAY,
   SATURDAY,
-  SUNDAY
+  SUNDAY,
 }
 
-enum Profile {
+export enum Profile {
   ENGINEER,
   WORK,
-  PRIVATE
+  PRIVATE,
 }
 
 export interface Habit {
-  name: string
-  time: string
-  days: Array<Day>
-  profile: Profile
-  content: BlockObjectResponse
+  name: string;
+  time: string;
+  days: Array<Day>;
+  profile: Array<Profile>;
+  content: BlockObjectResponse;
 }
 
 export interface Todo {
-  name: string
-  startTime: string
-  endTime: string
-  profile: Profile
-  content: string
+  name: string;
+  startTime: string;
+  endTime: string;
+  profile: Array<Profile>;
+  content: string;
 }
