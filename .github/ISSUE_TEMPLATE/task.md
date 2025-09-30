@@ -10,7 +10,6 @@ assignees: 'argondev22'
 ## Acceptance Criteria
 <!-- What needs to be done to complete this task -->
 - [ ]
-- [ ]
 
 ## Notes
 <!-- Any additional information (optional) -->
