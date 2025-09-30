@@ -9,9 +9,9 @@
       "version": "latest"
     }
   },
-  "postCreateCommand": "git config --global user.name 'Your Name' && git config --global user.email 'your.email@example.com'",
   "mounts": [
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind"
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind"
   ],
   "customizations": {
     "vscode": {
