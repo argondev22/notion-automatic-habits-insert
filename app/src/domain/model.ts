@@ -10,8 +10,8 @@ export interface Habit {
 
 export interface Todo {
   name: string;
-  startTime: string;
-  endTime: string;
+  startTime: Date;
+  endTime: Date;
   profile: Array<Profile>;
   content: BlockObjectResponse;
 }
