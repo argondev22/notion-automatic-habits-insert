@@ -4,7 +4,7 @@ export interface Habit {
   name: string;
   time: string;
   days: Array<Day>;
-  profile: Array<Profile>;
+  profiles: Array<Profile>;
   content: BlockObjectResponse;
 }
 
@@ -12,7 +12,7 @@ export interface Todo {
   name: string;
   startTime: Date;
   endTime: Date;
-  profile: Array<Profile>;
+  profiles: Array<Profile>;
   content: BlockObjectResponse;
 }
 
