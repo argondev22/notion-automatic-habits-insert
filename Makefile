@@ -4,11 +4,8 @@ init:
 	@chmod +x ./bin/init-project.sh
 	@./bin/init-project.sh
 
-build:
-	@cd app && docker compose build
-
 start:
-	@cd app && docker compose down && docker compose up
+	@cd app && docker compose build && docker image prune -f && docker compose down && docker compose up
 
 clean:
 	@docker system prune -f
