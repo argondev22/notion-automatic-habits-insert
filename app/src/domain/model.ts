@@ -27,7 +27,7 @@ export enum Day {
 }
 
 export enum Profile {
+  PRIVATE,
   ENGINEER,
   WORK,
-  PRIVATE,
 }
