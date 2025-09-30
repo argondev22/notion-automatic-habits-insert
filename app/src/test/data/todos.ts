@@ -1,17 +1,19 @@
 import { Profile, Todo } from "../../domain/model";
 
+const now = new Date();
+
 export const todos: Todo[] = [
   {
     name: "朝ごはん/ケア",
-    startTime: "8:15",
-    endTime: "9:00",
+    startTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 15, 0),
+    endTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0),
     profile: [Profile.PRIVATE],
     content: [],
   },
   {
     name: "ランニング",
-    startTime: "19:00",
-    endTime: "19:30",
+    startTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 19, 0, 0),
+    endTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 19, 30, 0),
     profile: [Profile.PRIVATE],
     content: [],
   },
