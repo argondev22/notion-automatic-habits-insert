@@ -1,6 +1,6 @@
-import { notionClient } from "../lib/notionhq/init";
-import { Habit, Todo, Profile } from "./model";
-import { todos } from "../test/data/todos";
+import { notionClient } from "../../lib/notionhq/init";
+import { Habit, Todo, Profile } from "../model";
+import { todos } from "../../test/data/todos";
 
 export async function insertHabitsToTodosDatabase(
   habits: Habit[]

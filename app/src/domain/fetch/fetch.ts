@@ -1,9 +1,9 @@
-import { notionClient } from "../lib/notionhq/init";
+import { notionClient } from "../../lib/notionhq/init";
 import {
   BlockObjectResponse,
   DatabaseObjectResponse,
-} from "../lib/notionhq/type";
-import { Habit } from "./model";
+} from "../../lib/notionhq/type";
+import { Habit } from "../model";
 
 export async function fetchHabits(): Promise<Habit[]> {
   try {
