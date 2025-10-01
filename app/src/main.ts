@@ -1,14 +1,17 @@
 import { fetchHabits } from "./domain/fetch/fetch";
-import { insertHabitsToTodosDatabase } from "./domain/insert/insert";
-import { habits } from "./test/data/habits";
+import { convertHabitsToTodos } from "./domain/convert/convert";
+import { insertTodos } from "./domain/insert/insert";
 
 async function main() {
   try {
-    // const habits = await fetchHabits();
-    // console.log(habits);
+    // DB_HABITSのデータを取得
+    const habits = await fetchHabits();
 
-    console.log(habits);
-    await insertHabitsToTodosDatabase(habits);
+    // HabitモデルをTodoモデルに変換
+    const todos = convertHabitsToTodos(habits);
+
+    // DB_TODOSにデータを追加
+    await insertTodos(todos);
   } catch (error) {
     console.error(error);
   }

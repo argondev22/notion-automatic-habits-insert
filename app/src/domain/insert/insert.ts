@@ -1,14 +1,14 @@
-import { Habit } from "../model";
-import { convertHabitToTodos } from "./convertHabitToTodos";
+import { Todo } from "../model";
+import { convertToTodosDatabase } from "./convertToTodosDatabase";
 import { getTodosDatabaseId } from "./getTodosDatabaseId";
 import { insertTodosToDatabase } from "./insertTodosToDatabase";
 
-export async function insertHabitsToTodosDatabase(
-  habits: Habit[]
+export async function insertTodos(
+  todos: Todo[]
 ): Promise<void> {
   try {
-    // DB_HABITSのデータ形式をDB_TODOSのデータ形式に変換
-    const todos = convertHabitToTodos(habits);
+    // TodoモデルをDB_TODOSのデータに変換
+    const results = convertToTodosDatabase(todos);
 
     // DB_TODOSのIDを取得
     const todosDatabaseId = getTodosDatabaseId();
@@ -18,7 +18,7 @@ export async function insertHabitsToTodosDatabase(
     }
 
     // DB_TODOSにデータを追加
-    await insertTodosToDatabase(todosDatabaseId, todos);
+    await insertTodosToDatabase(todosDatabaseId, results);
   } catch (error) {
     console.error(error);
   }
