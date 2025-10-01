@@ -5,12 +5,33 @@ import { todos } from "../test/data/todos";
 export async function insertHabitsToTodosDatabase(
   habits: Habit[]
 ): Promise<void> {
-  const todosDatabaseId = process.env.TODOS_DATABASE_ID;
+  // DB_TODOSのIDを取得
+  const todosDatabaseId = getTodosDatabaseId();
   if (!todosDatabaseId) {
     console.log("データベースIDが指定されていません");
     return;
   }
 
+  // DB_HABITSのデータ形式をDB_TODOSのデータ形式に変換
+  // const todos = convertHabitToTodos(habits);
+
+  // DB_TODOSにデータを追加
+  await insertTodosToDatabase(todosDatabaseId, todos);
+}
+
+function getTodosDatabaseId() {
+  const todosDatabaseId = process.env.TODOS_DATABASE_ID;
+  if (!todosDatabaseId) {
+    return;
+  }
+  return todosDatabaseId;
+}
+
+function convertHabitToTodos(habits: Habit[]): Todo[] {
+  return [];
+}
+
+async function insertTodosToDatabase(todosDatabaseId: string, todos: Todo[]): Promise<void> {
   for (const todo of todos) {
     await insertTodoToDatabase(todosDatabaseId, todo);
     console.log(
@@ -18,28 +39,6 @@ export async function insertHabitsToTodosDatabase(
     );
   }
 }
-
-// function convertHabitToTodos(habit: Habit): Todo[] {
-//   const todos: Todo[] = [];
-
-//   // 時間の解析
-//   const timeRange = habit.time.split("-");
-//   const startTime = timeRange[0] || habit.time;
-//   const endTime = timeRange[1] || startTime;
-
-//   // 各曜日に対してTodoを作成
-//   for (const day of habit.days) {
-//     todos.push({
-//       name: `${habit.name} (${getDayName(day)})`,
-//       startTime,
-//       endTime,
-//       profile: habit.profile,
-//       content: JSON.stringify(habit.content),
-//     });
-//   }
-
-//   return todos;
-// }
 
 async function insertTodoToDatabase(
   databaseId: string,
