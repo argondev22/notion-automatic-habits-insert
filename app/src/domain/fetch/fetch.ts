@@ -1,9 +1,9 @@
-import { notionClient } from "../lib/notionhq/init";
+import { notionClient } from "../../lib/notionhq/init";
 import {
   BlockObjectResponse,
   DatabaseObjectResponse,
-} from "../lib/notionhq/type";
-import { Habit } from "./model";
+} from "../../lib/notionhq/type";
+import { Habit } from "../model";
 
 export async function fetchHabits(): Promise<Habit[]> {
   try {
@@ -58,10 +58,10 @@ async function extractHabitsFromPages(
           // @ts-ignore
           page.properties.DAY?.multi_select?.map((day: any) => day.name) ||
           "曜日が取得できませんでした",
-        profile:
+        profiles:
           // @ts-ignore
-          page.properties.PROFILE?.relation?.[0]?.id ||
-          "プロフィールが取得できませんでした",
+          page.properties.PROFILE?.relation?.map((rel: any) => rel.id) ||
+          ["プロフィールが取得できませんでした"],
         content: content,
       };
     })

@@ -1,6 +1,10 @@
 # Use Node.js 20 with Debian Bullseye
 FROM node:20-bullseye
 
+# Set timezone to JST
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Set working directory
 WORKDIR /app
 
