@@ -7,3 +7,5 @@ services:
       - INTEGRATION_SECRET=
       - HABITS_DATABASE_ID=
       - TODOS_DATABASE_ID=
+    volumes:
+      - ./app:/app
