@@ -1,4 +1,4 @@
-import { Profile, Todo } from "../model";
+import { Todo } from "../model";
 import { notionClient } from "../../lib/notionhq/init";
 
 
@@ -15,12 +15,6 @@ async function insertTodoToDatabase(
   databaseId: string,
   todo: Todo
 ): Promise<void> {
-  const profilePageId = {
-    [Profile.PRIVATE]: process.env.PRIVATE_PROFILE_ID,
-    [Profile.ENGINEER]: process.env.ENGINEER_PROFILE_ID,
-    [Profile.WORK]: process.env.WORK_PROFILE_ID,
-  };
-  const profilePageIds = todo.profiles.map(p => profilePageId[p]);
 
   const properties: any = {
     NAME: {
@@ -39,7 +33,7 @@ async function insertTodoToDatabase(
       },
     },
     PROFILE: {
-      relation: profilePageIds.map(id => ({ id })),
+      relation: todo.profiles.map(id => ({ id })),
     },
   };
 
