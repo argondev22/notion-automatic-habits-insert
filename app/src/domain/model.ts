@@ -5,6 +5,7 @@ export interface Habit {
   time: string;
   days: Array<Day>;
   profiles: Array<string>;
+  tobes: Array<string>;
   content: BlockObjectResponse;
 }
 
