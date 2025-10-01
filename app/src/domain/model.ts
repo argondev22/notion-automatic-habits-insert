@@ -13,6 +13,7 @@ export interface Todo {
   startTime: Date;
   endTime: Date;
   profiles: Array<Profile>;
+  tobe: string;
   content: BlockObjectResponse;
 }
 
