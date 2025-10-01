@@ -13,6 +13,7 @@ export const todos: Todo[] = [
     startTime: createDate(8, 15),
     endTime: createDate(9, 0),
     profiles: [Profile.PRIVATE],
+    tobe: "朝ごはん/ケア",
     content: [],
   },
   {
@@ -20,6 +21,7 @@ export const todos: Todo[] = [
     startTime: createDate(19, 0),
     endTime: createDate(19, 30),
     profiles: [Profile.PRIVATE],
+    tobe: "ランニング",
     content: [],
   },
 ];
