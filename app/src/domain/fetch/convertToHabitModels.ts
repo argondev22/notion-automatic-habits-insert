@@ -6,7 +6,7 @@ import { notionClient } from "../../lib/notionhq/init";
 export async function convertToHabitModels(
   habitPages: DatabaseObjectResponse
 ): Promise<Habit[]> {
-  // 取得したページから必要なデータを抽出
+  console.log(habitPages);
   return await Promise.all(
     habitPages.map(async (page) => {
       // ページのコンテンツ（ブロック）を取得
@@ -39,6 +39,10 @@ export async function convertToHabitModels(
           // @ts-ignore
           page.properties.PROFILE?.relation?.map((rel: any) => rel.id) ||
           ["プロフィールが取得できませんでした"],
+        tobes:
+          // @ts-ignore
+          page.properties.TOBE?.relation?.map((rel: any) => rel.id) ||
+          ["TOBEが取得できませんでした"],
         content: content,
       };
     })
