@@ -1,6 +1,6 @@
 import { Habit } from "../model";
 import { getHabitsDatabaseId } from "./getHabitsDatabaseId";
-import { fetchHabitsFromDatabase } from "./fetchHabitsFromDatabase";
+import { fetchFromHabitsDatabase } from "./fetchFromHabitsDatabase";
 import { convertToHabitModels } from "./convertToHabitModels";
 
 export async function fetchHabits(): Promise<Habit[]> {
@@ -13,7 +13,7 @@ export async function fetchHabits(): Promise<Habit[]> {
     }
 
     // DB_HABITSのデータを取得
-    const results = await fetchHabitsFromDatabase(habitsDatabaseId);
+    const results = await fetchFromHabitsDatabase(habitsDatabaseId);
 
     // Habitモデルに変換
     return await convertToHabitModels(results);
