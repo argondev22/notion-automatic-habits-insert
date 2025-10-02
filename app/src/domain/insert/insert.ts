@@ -1,7 +1,7 @@
 import { Todo } from "../model";
 import { convertToTodosDatabase } from "./convertToTodosDatabase";
 import { getTodosDatabaseId } from "./getTodosDatabaseId";
-import { insertTodosToDatabase } from "./insertTodosToDatabase";
+// import { insertTodosToDatabase } from "./insertTodosToDatabase";
 
 export async function insertTodos(
   todos: Todo[]
@@ -18,7 +18,7 @@ export async function insertTodos(
     }
 
     // DB_TODOSにデータを追加
-    await insertTodosToDatabase(todosDatabaseId, results);
+    // await insertTodosToDatabase(todosDatabaseId, results);
   } catch (error) {
     console.error(error);
   }
