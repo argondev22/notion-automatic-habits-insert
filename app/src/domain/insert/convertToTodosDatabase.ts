@@ -1,6 +1,6 @@
 import { Todo } from "../model";
-import { DatabaseObjectResponse } from "../../lib/notionhq/type";
+import { DatabaseResponse } from "../../lib/notionhq/type";
 
-export function convertToTodosDatabase(todos: Todo[]): DatabaseObjectResponse {
+export function convertToTodosDatabase(todos: Todo[]): DatabaseResponse {
   return [];
 }
