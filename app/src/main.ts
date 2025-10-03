@@ -6,12 +6,13 @@ async function main() {
   try {
     // DB_HABITSのデータを取得
     const habits = await fetchHabits();
+    console.log(habits);
 
-    // HabitモデルをTodoモデルに変換
-    const todos = convertHabitsToTodos(habits);
+    // // HabitモデルをTodoモデルに変換
+    // const todos = convertHabitsToTodos(habits);
 
-    // DB_TODOSにデータを追加
-    await insertTodos(todos);
+    // // DB_TODOSにデータを追加
+    // await insertTodos(todos);
   } catch (error) {
     console.error(error);
   }
