@@ -75,6 +75,8 @@ export class ConsoleLogger implements ILogger {
 
     const logMessage = this.formatLogEntry(entry);
 
+    // Loggerクラス内でのconsole使用は許可（no-consoleルールを無効化）
+    // eslint-disable-next-line no-console
     switch (level) {
       case LogLevel.DEBUG:
         console.debug(logMessage);

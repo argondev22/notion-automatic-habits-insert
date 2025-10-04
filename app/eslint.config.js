@@ -35,6 +35,11 @@ export default [
       '@typescript-eslint/no-inferrable-types': 'off',
       'no-unused-vars': 'off', // TypeScript版を使用
       'no-undef': 'off', // TypeScriptが型チェックを行うため
+      // ロギングシステムが実装されているため、console.logの使用を制限
+      // console.logのみを禁止し、Loggerクラスで使用する他のconsoleメソッドは許可
+      'no-console': process.env.NODE_ENV === 'production'
+        ? ['error', { allow: ['warn', 'error', 'info', 'debug'] }]
+        : ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
     },
   },
   {
