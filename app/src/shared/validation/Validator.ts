@@ -1,4 +1,4 @@
-import { Habit, Day } from "../../model";
+import { Habit, Day } from "../../domain/model";
 import { FetchError, ERROR_CODES } from "../errors/FetchError";
 import { ConsoleLogger } from "../logger/Logger";
 

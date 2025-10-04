@@ -2,8 +2,8 @@ import { Habit } from "../model";
 import { EnvironmentConfig } from "../../config/EnvironmentConfig";
 import { ServiceFactory } from "./factories/ServiceFactory";
 import { HabitRepository } from "./repositories/HabitRepository";
-import { FetchError } from "../shared/errors/FetchError";
-import { ILogger, LoggerFactory } from "../shared/logger/Logger";
+import { FetchError } from "../../shared/errors/FetchError";
+import { ILogger, LoggerFactory } from "../../shared/logger/Logger";
 
 /**
  * 結果の型定義

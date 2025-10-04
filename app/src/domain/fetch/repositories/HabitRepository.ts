@@ -2,9 +2,9 @@ import { Habit } from "../../model";
 import { DatabaseResponse, PageResponse, BlockObjectResponse } from "../../../lib/notionhq/type";
 import { NotionDatabaseService } from "../services/NotionDatabaseService";
 import { HabitMapper } from "../mappers/HabitMapper";
-import { FetchError, ERROR_CODES } from "../../shared/errors/FetchError";
-import { ILogger } from "../../shared/logger/Logger";
-import { ICache } from "../../shared/cache/Cache";
+import { FetchError, ERROR_CODES } from "../../../shared/errors/FetchError";
+import { ILogger } from "../../../shared/logger/Logger";
+import { ICache } from "../../../shared/cache/Cache";
 
 /**
  * Habitデータの取得と変換を行うリポジトリクラス
