@@ -1,4 +1,3 @@
-import { FetchError, ERROR_CODES } from "../errors/FetchError";
 import { ILogger, LoggerFactory } from "../logger/Logger";
 
 /**

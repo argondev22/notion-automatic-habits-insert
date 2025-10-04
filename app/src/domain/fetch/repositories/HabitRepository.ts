@@ -1,5 +1,5 @@
 import { Habit } from "../../model";
-import { DatabaseResponse, PageResponse, BlockObjectResponse } from "../../../lib/notionhq/type";
+import { PageResponse } from "../../../lib/notionhq/type";
 import { NotionDatabaseService } from "../services/NotionDatabaseService";
 import { HabitMapper } from "../mappers/HabitMapper";
 import { FetchError, ERROR_CODES } from "../../../shared/errors/FetchError";
