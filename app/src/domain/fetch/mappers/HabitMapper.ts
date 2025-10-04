@@ -146,13 +146,13 @@ export class HabitMapper {
    */
   private convertStringToDay(dayString: string): Day {
     const dayMap: Record<string, Day> = {
-      'MONDAY': Day.MONDAY,
-      'TUESDAY': Day.TUESDAY,
-      'WEDNESDAY': Day.WEDNESDAY,
-      'THURSDAY': Day.THURSDAY,
-      'FRIDAY': Day.FRIDAY,
-      'SATURDAY': Day.SATURDAY,
-      'SUNDAY': Day.SUNDAY,
+      'MON': Day.MONDAY,
+      'TUE': Day.TUESDAY,
+      'WED': Day.WEDNESDAY,
+      'THU': Day.THURSDAY,
+      'FRI': Day.FRIDAY,
+      'SAT': Day.SATURDAY,
+      'SUN': Day.SUNDAY,
     };
 
     const day = dayMap[dayString.toUpperCase()];
