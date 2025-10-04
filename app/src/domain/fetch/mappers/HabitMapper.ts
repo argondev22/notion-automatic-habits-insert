@@ -95,18 +95,28 @@ export class HabitMapper {
   private createHabitModel(page: PageResponse, content: BlockObjectResponse): Habit {
     // 型ガードを使用して型安全にプロパティにアクセス
     if (isHabitPageObjectResponse(page)) {
+      const timeText = this.extractRichText(page.properties.TIME.rich_text);
+      const timeRange = this.parseTimeRange(timeText);
+
       return {
         name: this.extractTitle(page.properties.NAME.title),
-        time: this.extractRichText(page.properties.TIME.rich_text),
+        time: timeRange.startTime, // 後方互換性のため開始時間を設定
+        startTime: timeRange.startTime,
+        endTime: timeRange.endTime || undefined,
         days: page.properties.DAY.multi_select.map(day => this.convertStringToDay(day.name)),
         profiles: page.properties.PROFILE.relation.map(rel => rel.id),
         tobes: page.properties.TOBE.relation.map(rel => rel.id),
         content: content,
       };
     } else if (isPartialHabitPageObjectResponse(page) && page.properties) {
+      const timeText = this.extractRichText(page.properties.TIME?.rich_text);
+      const timeRange = this.parseTimeRange(timeText);
+
       return {
         name: this.extractTitle(page.properties.NAME?.title),
-        time: this.extractRichText(page.properties.TIME?.rich_text),
+        time: timeRange.startTime, // 後方互換性のため開始時間を設定
+        startTime: timeRange.startTime,
+        endTime: timeRange.endTime || undefined,
         days: page.properties.DAY?.multi_select?.map(day => this.convertStringToDay(day.name)) || [],
         profiles: page.properties.PROFILE?.relation?.map(rel => rel.id) || [],
         tobes: page.properties.TOBE?.relation?.map(rel => rel.id) || [],
@@ -147,6 +157,11 @@ export class HabitMapper {
       return "";
     }
 
+    // 時間範囲の場合はそのまま返す（parseTimeRangeで処理される）
+    if (text.includes('-')) {
+      return text;
+    }
+
     return this.normalizeTimeFormat(text);
   }
 
@@ -156,16 +171,6 @@ export class HabitMapper {
   private normalizeTimeFormat(time: string): string {
     if (!time || time.trim().length === 0) {
       return "";
-    }
-
-    // 時間範囲（例：20:00-21:45）の場合は開始時間を返す
-    const timeRangePattern = /^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/;
-    const timeRangeMatch = time.match(timeRangePattern);
-    if (timeRangeMatch) {
-      const startHour = timeRangeMatch[1].padStart(2, '0');
-      const startMinute = timeRangeMatch[2];
-      this.logger.debug(`時間範囲を検出: "${time}" -> 開始時間: ${startHour}:${startMinute}`);
-      return `${startHour}:${startMinute}`;
     }
 
     // 既にHH:MM形式の場合はそのまま返す
@@ -221,6 +226,35 @@ export class HabitMapper {
 
     this.logger.warn(`認識できない時間形式: "${time}"`);
     return time; // 変換できない場合は元の値を返す
+  }
+
+  /**
+   * 時間範囲を解析して開始時間と終了時間を返す
+   */
+  private parseTimeRange(time: string): { startTime: string; endTime: string | null } {
+    if (!time || time.trim().length === 0) {
+      return { startTime: "", endTime: null };
+    }
+
+    // 時間範囲（例：20:00-21:45）の場合は開始時間と終了時間を分離
+    const timeRangePattern = /^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/;
+    const timeRangeMatch = time.match(timeRangePattern);
+    if (timeRangeMatch) {
+      const startHour = timeRangeMatch[1].padStart(2, '0');
+      const startMinute = timeRangeMatch[2];
+      const endHour = timeRangeMatch[3].padStart(2, '0');
+      const endMinute = timeRangeMatch[4];
+
+      const startTime = `${startHour}:${startMinute}`;
+      const endTime = `${endHour}:${endMinute}`;
+
+      this.logger.debug(`時間範囲を検出: "${time}" -> 開始時間: ${startTime}, 終了時間: ${endTime}`);
+      return { startTime, endTime };
+    }
+
+    // 単一時間の場合は開始時間として扱う
+    const normalizedTime = this.normalizeTimeFormat(time);
+    return { startTime: normalizedTime, endTime: null };
   }
 
   /**

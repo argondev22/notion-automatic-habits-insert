@@ -1,5 +1,6 @@
 import { Habit, Day } from "../../../model";
 import { FetchError, ERROR_CODES } from "../errors/FetchError";
+import { ConsoleLogger } from "../logger/Logger";
 
 /**
  * バリデーション結果の型定義
@@ -20,6 +21,8 @@ export interface IValidator<T> {
  * Habitバリデーター
  */
 export class HabitValidator implements IValidator<Habit> {
+  private logger = new ConsoleLogger();
+
   validate(habit: Habit): ValidationResult {
     const errors: string[] = [];
 
@@ -30,11 +33,44 @@ export class HabitValidator implements IValidator<Habit> {
       errors.push('名前は100文字以内である必要があります');
     }
 
-    // 時間のバリデーション
+    // 時間のバリデーション（後方互換性のため）
     if (!habit.time || habit.time.trim().length === 0) {
       errors.push('時間は必須です');
     } else if (!this.isValidTimeFormat(habit.time)) {
       errors.push('時間はHH:MM形式である必要があります');
+    }
+
+    // 開始時間のバリデーション
+    if (habit.startTime !== undefined) {
+      if (!habit.startTime || habit.startTime.trim().length === 0) {
+        errors.push('開始時間は空でない文字列である必要があります');
+      } else if (!this.isValidTimeFormat(habit.startTime)) {
+        errors.push('開始時間はHH:MM形式である必要があります');
+      }
+    }
+
+    // 終了時間のバリデーション
+    if (habit.endTime !== undefined) {
+      if (!habit.endTime || habit.endTime.trim().length === 0) {
+        errors.push('終了時間は空でない文字列である必要があります');
+      } else if (!this.isValidTimeFormat(habit.endTime)) {
+        errors.push('終了時間はHH:MM形式である必要があります');
+      }
+    }
+
+    // 開始時間と終了時間の整合性チェック
+    if (habit.startTime && habit.endTime) {
+      // 日をまたぐ時間範囲（例：22:00-6:00）の場合は特別処理
+      const startHour = parseInt(habit.startTime.split(':')[0]);
+      const endHour = parseInt(habit.endTime.split(':')[0]);
+
+      // 日をまたぐ場合（開始時間が終了時間より大きい場合）は有効
+      if (startHour > endHour) {
+        // 日をまたぐ時間範囲は有効
+        this.logger.debug(`日をまたぐ時間範囲を検出: ${habit.startTime} - ${habit.endTime}`);
+      } else if (habit.startTime >= habit.endTime) {
+        errors.push('開始時間は終了時間より早い必要があります');
+      }
     }
 
     // 曜日のバリデーション
