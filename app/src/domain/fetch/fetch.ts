@@ -1,69 +1,261 @@
-import { notionClient } from "../../lib/notionhq/init";
-import {
-  BlockObjectResponse,
-  DatabaseObjectResponse,
-} from "../../lib/notionhq/type";
-import { Habit } from "../model";
+import { Habit } from '../model';
+import { EnvironmentConfig } from '../../config/EnvironmentConfig';
+import { ServiceFactory } from './factories/ServiceFactory';
+import { HabitRepository } from './repositories/HabitRepository';
+import { FetchError } from '../../shared/errors/FetchError';
+import { LoggerFactory } from '../../shared/logger/Logger';
 
-export async function fetchHabits(): Promise<Habit[]> {
+/**
+ * 結果の型定義
+ */
+export interface FetchResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  metadata?: {
+    timestamp: Date;
+    executionTime: number;
+    cacheHit?: boolean;
+  };
+}
+
+/**
+ * Habitデータの取得結果
+ */
+export type FetchHabitsResult = FetchResult<Habit[]>;
+
+/**
+ * 単一Habitデータの取得結果
+ */
+export type FetchHabitResult = FetchResult<Habit>;
+
+/**
+ * メインのHabitデータ取得関数
+ */
+export async function fetchHabits(): Promise<FetchHabitsResult> {
+  const logger = LoggerFactory.getLogger();
+  const startTime = Date.now();
+
   try {
-    // 特定のデータベースの詳細情報を取得
-    const habitsDatabaseId = process.env.HABITS_DATABASE_ID;
+    // データベースIDを取得
+    const habitsDatabaseId = EnvironmentConfig.getHabitsDatabaseId();
     if (!habitsDatabaseId) {
-      console.log("データベースIDが指定されていません");
-      return [];
+      const errorMessage = 'データベースIDが指定されていません';
+      logger.warn(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
+      };
     }
 
-    // データベース内のページを取得
-    const habitPages = await notionClient.databases.query({
-      database_id: habitsDatabaseId,
-    });
+    // サービスファクトリーを初期化
+    ServiceFactory.initialize();
+    ServiceFactory.setDatabaseId(habitsDatabaseId);
 
-    return await extractHabitsFromPages(habitPages.results);
+    // リポジトリを取得
+    const habitRepository =
+      ServiceFactory.getService<HabitRepository>('habitRepository');
+
+    logger.info(`データベース ${habitsDatabaseId} からHabitsを取得開始`);
+
+    // データを取得
+    const habits = await habitRepository.fetchHabits(habitsDatabaseId);
+
+    logger.info(`${habits.length}個のHabitsが正常に取得されました`);
+
+    return {
+      success: true,
+      data: habits,
+      metadata: {
+        timestamp: new Date(),
+        executionTime: Date.now() - startTime,
+      },
+    };
   } catch (error) {
-    console.error("Notion API call error:", error);
-    return [];
+    const executionTime = Date.now() - startTime;
+    logger.error('Habits取得エラー', error as Error, { executionTime });
+
+    if (error instanceof FetchError) {
+      return {
+        success: false,
+        error: error.message,
+        metadata: {
+          timestamp: new Date(),
+          executionTime,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: `不明なエラーが発生しました: ${error}`,
+      metadata: {
+        timestamp: new Date(),
+        executionTime,
+      },
+    };
   }
 }
 
-async function extractHabitsFromPages(
-  habitPages: DatabaseObjectResponse
-): Promise<Habit[]> {
-  // 取得したページから必要なデータを抽出
-  return await Promise.all(
-    habitPages.map(async (page) => {
-      // ページのコンテンツ（ブロック）を取得
-      let content: BlockObjectResponse = [];
-      try {
-        // @ts-ignore
-        const blocks = await notionClient.blocks.children.list({
-          block_id: page.id,
-        });
+/**
+ * 特定のHabitデータを取得
+ */
+export async function fetchHabitById(
+  pageId: string
+): Promise<FetchHabitResult> {
+  const logger = LoggerFactory.getLogger();
+  const startTime = Date.now();
 
-        content = blocks.results;
-      } catch (error) {
-        console.error(`ページ ${page.id} のコンテンツ取得エラー:`, error);
-      }
-
+  try {
+    if (!pageId || pageId.trim() === '') {
+      const errorMessage = 'ページIDが指定されていません';
+      logger.warn(errorMessage);
       return {
-        name:
-          // @ts-ignore
-          page.properties.NAME?.title?.[0]?.plain_text ||
-          "タイトルが取得できませんでした",
-        time:
-          // @ts-ignore
-          page.properties.TIME?.rich_text?.[0]?.plain_text ||
-          "開始時間が取得できませんでした",
-        days:
-          // @ts-ignore
-          page.properties.DAY?.multi_select?.map((day: any) => day.name) ||
-          "曜日が取得できませんでした",
-        profiles:
-          // @ts-ignore
-          page.properties.PROFILE?.relation?.map((rel: any) => rel.id) ||
-          ["プロフィールが取得できませんでした"],
-        content: content,
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
       };
-    })
-  );
+    }
+
+    // データベースIDを取得
+    const habitsDatabaseId = EnvironmentConfig.getHabitsDatabaseId();
+    if (!habitsDatabaseId) {
+      const errorMessage = 'データベースIDが指定されていません';
+      logger.warn(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
+      };
+    }
+
+    // サービスファクトリーを初期化
+    ServiceFactory.initialize();
+    ServiceFactory.setDatabaseId(habitsDatabaseId);
+
+    // リポジトリを取得
+    const habitRepository =
+      ServiceFactory.getService<HabitRepository>('habitRepository');
+
+    logger.info(`ページID ${pageId} のHabitを取得開始`);
+
+    // データを取得
+    const habit = await habitRepository.fetchHabitById(
+      habitsDatabaseId,
+      pageId
+    );
+
+    if (!habit) {
+      const errorMessage = `ページID ${pageId} のHabitが見つかりませんでした`;
+      logger.warn(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
+      };
+    }
+
+    logger.info(`ページID ${pageId} のHabitが正常に取得されました`);
+
+    return {
+      success: true,
+      data: habit,
+      metadata: {
+        timestamp: new Date(),
+        executionTime: Date.now() - startTime,
+      },
+    };
+  } catch (error) {
+    const executionTime = Date.now() - startTime;
+    logger.error('Habit取得エラー', error as Error, { pageId, executionTime });
+
+    if (error instanceof FetchError) {
+      return {
+        success: false,
+        error: error.message,
+        metadata: {
+          timestamp: new Date(),
+          executionTime,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: `不明なエラーが発生しました: ${error}`,
+      metadata: {
+        timestamp: new Date(),
+        executionTime,
+      },
+    };
+  }
+}
+
+/**
+ * キャッシュをクリア
+ */
+export function clearCache(): void {
+  ServiceFactory.clearAllCaches();
+  LoggerFactory.getLogger().info('すべてのキャッシュをクリアしました');
+}
+
+/**
+ * キャッシュ統計を取得
+ */
+export function getCacheStats() {
+  return ServiceFactory.getCacheStats();
+}
+
+/**
+ * 設定を更新
+ */
+export function updateConfig(config: any): void {
+  ServiceFactory.updateConfig(config);
+  LoggerFactory.getLogger().info('設定を更新しました', { config });
+}
+
+/**
+ * ヘルスチェック
+ */
+export async function healthCheck(): Promise<{
+  status: 'healthy' | 'unhealthy';
+  details: any;
+}> {
+  try {
+    ServiceFactory.initialize();
+    // const _logger = ServiceFactory.getService<ILogger>('logger');
+
+    return {
+      status: 'healthy',
+      details: {
+        timestamp: new Date().toISOString(),
+        services: {
+          logger: 'initialized',
+          cache: 'initialized',
+          retryManager: 'initialized',
+        },
+      },
+    };
+  } catch (error) {
+    return {
+      status: 'unhealthy',
+      details: {
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+    };
+  }
 }

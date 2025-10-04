@@ -1,10 +1,12 @@
-import { BlockObjectResponse } from "../lib/notionhq/type";
+import { BlockObjectResponse } from '../lib/notionhq/type';
 
 export interface Habit {
   name: string;
-  time: string;
+  startTime: string; // HH:MM形式
+  endTime?: string; // HH:MM形式
   days: Array<Day>;
   profiles: Array<string>;
+  tobes: Array<string>;
   content: BlockObjectResponse;
 }
 
