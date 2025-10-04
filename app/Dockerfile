@@ -1,5 +1,5 @@
 # Use Node.js 20 with Debian Bullseye
-FROM node:20-bullseye
+FROM node:24-bullseye
 
 # Set timezone to JST
 ENV TZ=Asia/Tokyo
