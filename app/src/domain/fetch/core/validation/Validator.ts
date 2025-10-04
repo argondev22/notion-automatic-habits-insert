@@ -33,20 +33,11 @@ export class HabitValidator implements IValidator<Habit> {
       errors.push('名前は100文字以内である必要があります');
     }
 
-    // 時間のバリデーション（後方互換性のため）
-    if (!habit.time || habit.time.trim().length === 0) {
-      errors.push('時間は必須です');
-    } else if (!this.isValidTimeFormat(habit.time)) {
-      errors.push('時間はHH:MM形式である必要があります');
-    }
-
-    // 開始時間のバリデーション
-    if (habit.startTime !== undefined) {
-      if (!habit.startTime || habit.startTime.trim().length === 0) {
-        errors.push('開始時間は空でない文字列である必要があります');
-      } else if (!this.isValidTimeFormat(habit.startTime)) {
-        errors.push('開始時間はHH:MM形式である必要があります');
-      }
+    // 開始時間のバリデーション（必須）
+    if (!habit.startTime || habit.startTime.trim().length === 0) {
+      errors.push('開始時間は必須です');
+    } else if (!this.isValidTimeFormat(habit.startTime)) {
+      errors.push('開始時間はHH:MM形式である必要があります');
     }
 
     // 終了時間のバリデーション

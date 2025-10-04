@@ -100,7 +100,6 @@ export class HabitMapper {
 
       return {
         name: this.extractTitle(page.properties.NAME.title),
-        time: timeRange.startTime, // 後方互換性のため開始時間を設定
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
         days: page.properties.DAY.multi_select.map(day => this.convertStringToDay(day.name)),
@@ -114,7 +113,6 @@ export class HabitMapper {
 
       return {
         name: this.extractTitle(page.properties.NAME?.title),
-        time: timeRange.startTime, // 後方互換性のため開始時間を設定
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
         days: page.properties.DAY?.multi_select?.map(day => this.convertStringToDay(day.name)) || [],

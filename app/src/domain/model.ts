@@ -2,9 +2,8 @@ import { BlockObjectResponse } from "../lib/notionhq/type";
 
 export interface Habit {
   name: string;
-  time: string; // 後方互換性のため保持
-  startTime?: string; // 開始時間（HH:MM形式）
-  endTime?: string; // 終了時間（HH:MM形式）
+  startTime: string; // HH:MM形式
+  endTime?: string; // HH:MM形式
   days: Array<Day>;
   profiles: Array<string>;
   tobes: Array<string>;
