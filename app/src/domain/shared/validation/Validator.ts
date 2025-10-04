@@ -1,4 +1,4 @@
-import { Habit, Day } from "../../../model";
+import { Habit, Day } from "../../model";
 import { FetchError, ERROR_CODES } from "../errors/FetchError";
 import { ConsoleLogger } from "../logger/Logger";
 
@@ -69,21 +69,21 @@ export class HabitValidator implements IValidator<Habit> {
       errors.push('曜日は配列である必要があります');
     } else if (habit.days.length === 0) {
       errors.push('少なくとも1つの曜日を選択してください');
-    } else if (!habit.days.every(day => Object.values(Day).includes(day))) {
+    } else if (!habit.days.every((day: Day) => Object.values(Day).includes(day))) {
       errors.push('無効な曜日が含まれています');
     }
 
     // プロファイルのバリデーション
     if (!Array.isArray(habit.profiles)) {
       errors.push('プロファイルは配列である必要があります');
-    } else if (habit.profiles.some(profile => typeof profile !== 'string' || profile.trim().length === 0)) {
+    } else if (habit.profiles.some((profile: string) => typeof profile !== 'string' || profile.trim().length === 0)) {
       errors.push('プロファイルIDは空でない文字列である必要があります');
     }
 
     // TOBEのバリデーション
     if (!Array.isArray(habit.tobes)) {
       errors.push('TOBEは配列である必要があります');
-    } else if (habit.tobes.some(tobe => typeof tobe !== 'string' || tobe.trim().length === 0)) {
+    } else if (habit.tobes.some((tobe: string) => typeof tobe !== 'string' || tobe.trim().length === 0)) {
       errors.push('TOBE IDは空でない文字列である必要があります');
     }
 

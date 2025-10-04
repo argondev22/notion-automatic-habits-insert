@@ -5,9 +5,9 @@ import {
   isPartialHabitPageObjectResponse,
   BlockObjectResponse
 } from "../../../lib/notionhq/type";
-import { FetchError, ERROR_CODES } from "../core/errors/FetchError";
-import { ILogger } from "../core/logger/Logger";
-import { ValidatorFactory } from "../core/validation/Validator";
+import { FetchError, ERROR_CODES } from "../../shared/errors/FetchError";
+import { ILogger } from "../../shared/logger/Logger";
+import { ValidatorFactory } from "../../shared/validation/Validator";
 
 /**
  * NotionページをHabitモデルに変換するマッパークラス
