@@ -1,15 +1,21 @@
-import { DIContainer, SERVICE_TOKENS } from "../../../shared/di/Container";
-import { ILogger, LoggerFactory } from "../../../shared/logger/Logger";
-import { ICache, CacheFactory } from "../../../shared/cache/Cache";
-import { RetryManager, RetryManagerFactory } from "../../../shared/retry/RetryManager";
-import { ConfigManager } from "../../../shared/config/Config";
-import { ValidatorFactory } from "../../../shared/validation/Validator";
-import { NotionDatabaseService } from "../services/NotionDatabaseService";
-import { HabitMapper } from "../mappers/HabitMapper";
-import { HabitRepository } from "../repositories/HabitRepository";
-import { DatabaseResponse, BlockObjectResponse } from "../../../lib/notionhq/type";
-import { Habit } from "../../model";
-import { notionClient } from "../../../lib/notionhq/init";
+import { DIContainer, SERVICE_TOKENS } from '../../../shared/di/Container';
+import { ILogger, LoggerFactory } from '../../../shared/logger/Logger';
+import { ICache, CacheFactory } from '../../../shared/cache/Cache';
+import {
+  RetryManager,
+  RetryManagerFactory,
+} from '../../../shared/retry/RetryManager';
+import { ConfigManager } from '../../../shared/config/Config';
+import { ValidatorFactory } from '../../../shared/validation/Validator';
+import { NotionDatabaseService } from '../services/NotionDatabaseService';
+import { HabitMapper } from '../mappers/HabitMapper';
+import { HabitRepository } from '../repositories/HabitRepository';
+import {
+  DatabaseResponse,
+  BlockObjectResponse,
+} from '../../../lib/notionhq/type';
+import { Habit } from '../../model';
+import { notionClient } from '../../../lib/notionhq/init';
 
 /**
  * サービスファクトリー - 依存性注入コンテナを管理
@@ -30,19 +36,40 @@ export class ServiceFactory {
     this.container.register(SERVICE_TOKENS.LOGGER, LoggerFactory.getLogger());
 
     // キャッシュ
-    this.container.register(SERVICE_TOKENS.CACHE, CacheFactory.getCache<DatabaseResponse>('database'));
-    this.container.register('contentCache', CacheFactory.getCache<BlockObjectResponse>('content'));
-    this.container.register('habitsCache', CacheFactory.getCache<Habit[]>('habits'));
+    this.container.register(
+      SERVICE_TOKENS.CACHE,
+      CacheFactory.getCache<DatabaseResponse>('database')
+    );
+    this.container.register(
+      'contentCache',
+      CacheFactory.getCache<BlockObjectResponse>('content')
+    );
+    this.container.register(
+      'habitsCache',
+      CacheFactory.getCache<Habit[]>('habits')
+    );
 
     // リトライマネージャー
-    this.container.register(SERVICE_TOKENS.RETRY_MANAGER, RetryManagerFactory.getInstance());
+    this.container.register(
+      SERVICE_TOKENS.RETRY_MANAGER,
+      RetryManagerFactory.getInstance()
+    );
 
     // 設定マネージャー
-    this.container.register(SERVICE_TOKENS.CONFIG_MANAGER, ConfigManager.getInstance());
+    this.container.register(
+      SERVICE_TOKENS.CONFIG_MANAGER,
+      ConfigManager.getInstance()
+    );
 
     // バリデーター
-    this.container.register(SERVICE_TOKENS.HABIT_VALIDATOR, ValidatorFactory.getHabitValidator());
-    this.container.register(SERVICE_TOKENS.DATABASE_ID_VALIDATOR, ValidatorFactory.getDatabaseIdValidator());
+    this.container.register(
+      SERVICE_TOKENS.HABIT_VALIDATOR,
+      ValidatorFactory.getHabitValidator()
+    );
+    this.container.register(
+      SERVICE_TOKENS.DATABASE_ID_VALIDATOR,
+      ValidatorFactory.getDatabaseIdValidator()
+    );
 
     // Notionクライアント（既存のものを使用）
     this.container.register(SERVICE_TOKENS.NOTION_CLIENT, notionClient);
@@ -50,11 +77,21 @@ export class ServiceFactory {
     // サービスクラス
     this.container.registerFactory('notionDatabaseService', () => {
       const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
-      const cache = this.container.get<ICache<DatabaseResponse>>(SERVICE_TOKENS.CACHE);
-      const contentCache = this.container.get<ICache<BlockObjectResponse>>('contentCache');
-      const retryManager = this.container.get<RetryManager>(SERVICE_TOKENS.RETRY_MANAGER);
+      const cache = this.container.get<ICache<DatabaseResponse>>(
+        SERVICE_TOKENS.CACHE
+      );
+      const contentCache =
+        this.container.get<ICache<BlockObjectResponse>>('contentCache');
+      const retryManager = this.container.get<RetryManager>(
+        SERVICE_TOKENS.RETRY_MANAGER
+      );
 
-      return new NotionDatabaseService(logger, cache, contentCache, retryManager);
+      return new NotionDatabaseService(
+        logger,
+        cache,
+        contentCache,
+        retryManager
+      );
     });
 
     this.container.registerFactory('habitMapper', () => {
@@ -63,7 +100,9 @@ export class ServiceFactory {
     });
 
     this.container.registerFactory('habitRepository', () => {
-      const databaseService = this.container.get<NotionDatabaseService>('notionDatabaseService');
+      const databaseService = this.container.get<NotionDatabaseService>(
+        'notionDatabaseService'
+      );
       const habitMapper = this.container.get<HabitMapper>('habitMapper');
       const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
       const cache = this.container.get<ICache<Habit[]>>('habitsCache');
@@ -86,7 +125,9 @@ export class ServiceFactory {
    * 設定を更新
    */
   static updateConfig(updates: any): void {
-    const configManager = this.getService<ConfigManager>(SERVICE_TOKENS.CONFIG_MANAGER);
+    const configManager = this.getService<ConfigManager>(
+      SERVICE_TOKENS.CONFIG_MANAGER
+    );
     configManager.updateConfig(updates);
   }
 
@@ -94,7 +135,9 @@ export class ServiceFactory {
    * データベースIDを設定
    */
   static setDatabaseId(databaseId: string): void {
-    const configManager = this.getService<ConfigManager>(SERVICE_TOKENS.CONFIG_MANAGER);
+    const configManager = this.getService<ConfigManager>(
+      SERVICE_TOKENS.CONFIG_MANAGER
+    );
     configManager.setDatabaseId(databaseId);
   }
 

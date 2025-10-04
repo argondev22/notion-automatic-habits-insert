@@ -1,6 +1,6 @@
-import { Habit } from "../model";
-import { Todo } from "../model";
+import { Habit } from '../model';
+import { Todo } from '../model';
 
-export function convertHabitsToTodos(habits: Habit[]): Todo[] {
+export function convertHabitsToTodos(_habits: Habit[]): Todo[] {
   return [];
 }

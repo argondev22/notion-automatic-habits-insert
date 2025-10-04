@@ -5,6 +5,7 @@
 ## 🏗️ アーキテクチャ概要
 
 ### 📁 ディレクトリ構造
+
 ```
 fetch/
 ├── core/                    # コア機能
@@ -37,36 +38,43 @@ fetch/
 ## 🎯 主要な特徴
 
 ### 1. 🛡️ **包括的なエラーハンドリング**
+
 - **カスタムエラークラス**: 詳細なエラー情報とコンテキスト
 - **エラーコードシステム**: 構造化されたエラー管理
 - **型安全なエラー処理**: コンパイル時エラー検出
 
 ### 2. 📊 **高度なロギングシステム**
+
 - **構造化ログ**: JSON形式での詳細なログ出力
 - **ログレベル管理**: DEBUG, INFO, WARN, ERROR
 - **コンテキスト情報**: リクエストID、実行時間、メタデータ
 
 ### 3. ⚡ **インテリジェントキャッシュ**
+
 - **マルチレベルキャッシュ**: データベース、コンテンツ、Habits別
 - **TTL管理**: 自動的な期限切れ処理
 - **キャッシュ統計**: ヒット率、サイズ、パフォーマンス
 
 ### 4. 🔄 **自動リトライ機能**
+
 - **指数バックオフ**: 賢い遅延計算
 - **ジッター**: ランダム遅延で負荷分散
 - **リトライ可能エラー判定**: 一時的なエラーのみリトライ
 
 ### 5. ✅ **包括的バリデーション**
+
 - **データバリデーション**: Habitモデルの完全性チェック
 - **入力バリデーション**: データベースID、ページID
 - **型安全な変換**: 文字列からDay型への安全な変換
 
 ### 6. 🏭 **依存性注入パターン**
+
 - **DIコンテナ**: 自動的な依存関係解決
 - **シングルトン管理**: 効率的なリソース使用
 - **テスト容易性**: モック注入が簡単
 
 ### 7. ⚙️ **設定管理システム**
+
 - **動的設定**: 実行時の設定変更
 - **デフォルト値**: 安全な初期設定
 - **型安全な設定**: コンパイル時設定検証
@@ -74,8 +82,14 @@ fetch/
 ## 🚀 使用方法
 
 ### 基本的な使用
+
 ```typescript
-import { fetchHabits, fetchHabitById, clearCache, getCacheStats } from './fetch';
+import {
+  fetchHabits,
+  fetchHabitById,
+  clearCache,
+  getCacheStats,
+} from './fetch';
 
 // すべてのHabitsを取得
 const result = await fetchHabits();
@@ -94,6 +108,7 @@ if (habitResult.success) {
 ```
 
 ### 高度な使用
+
 ```typescript
 import { updateConfig, healthCheck, getCacheStats } from './fetch';
 
@@ -102,7 +117,7 @@ updateConfig({
   cacheEnabled: true,
   cacheTtl: 10 * 60 * 1000, // 10分
   retryAttempts: 5,
-  logLevel: 'debug'
+  logLevel: 'debug',
 });
 
 // ヘルスチェック
@@ -119,9 +134,11 @@ console.log(`キャッシュヒット率: ${stats.habits.size}個のHabits`);
 ### メイン関数
 
 #### `fetchHabits(): Promise<FetchHabitsResult>`
+
 すべてのHabitデータを取得します。
 
 **戻り値:**
+
 ```typescript
 interface FetchHabitsResult {
   success: boolean;
@@ -136,23 +153,29 @@ interface FetchHabitsResult {
 ```
 
 #### `fetchHabitById(pageId: string): Promise<FetchHabitResult>`
+
 特定のHabitデータを取得します。
 
 #### `clearCache(): void`
+
 すべてのキャッシュをクリアします。
 
 #### `getCacheStats(): object`
+
 キャッシュ統計情報を取得します。
 
 #### `updateConfig(config: Partial<IFetchConfig>): void`
+
 設定を動的に更新します。
 
 #### `healthCheck(): Promise<HealthStatus>`
+
 システムの健全性をチェックします。
 
 ## 🏗️ アーキテクチャパターン
 
 ### 1. **レイヤードアーキテクチャ**
+
 ```
 ┌─────────────────────────────────────┐
 │           Presentation Layer         │  ← fetch.ts
@@ -168,12 +191,15 @@ interface FetchHabitsResult {
 ```
 
 ### 2. **依存性注入パターン**
+
 ```typescript
 // 自動的な依存関係解決
-const repository = ServiceFactory.getService<HabitRepository>('habitRepository');
+const repository =
+  ServiceFactory.getService<HabitRepository>('habitRepository');
 ```
 
 ### 3. **ファクトリーパターン**
+
 ```typescript
 // 統一されたサービス作成
 ServiceFactory.initialize();
@@ -183,6 +209,7 @@ const service = ServiceFactory.getService<SomeService>('serviceName');
 ## 🧪 テスト戦略
 
 ### 単体テスト
+
 ```typescript
 // モック注入が簡単
 ServiceFactory.reset(); // テスト用リセット
@@ -191,6 +218,7 @@ ServiceFactory.register('logger', mockLogger);
 ```
 
 ### 統合テスト
+
 ```typescript
 // 実際のNotion APIを使用したテスト
 const result = await fetchHabits();
@@ -200,15 +228,18 @@ expect(result.success).toBe(true);
 ## 📈 パフォーマンス最適化
 
 ### キャッシュ戦略
+
 - **L1キャッシュ**: メモリ内高速キャッシュ
 - **L2キャッシュ**: 永続化キャッシュ（将来実装可能）
 - **キャッシュ無効化**: 自動的な期限切れ処理
 
 ### 並列処理
+
 - **Promise.all**: 複数ページの並列取得
 - **Promise.allSettled**: 部分的な失敗を許容
 
 ### リトライ戦略
+
 - **指数バックオフ**: 効率的なリトライ間隔
 - **ジッター**: 負荷分散
 - **サーキットブレーカー**: 将来実装可能
@@ -216,6 +247,7 @@ expect(result.success).toBe(true);
 ## 🔒 セキュリティ
 
 ### 入力バリデーション
+
 ```typescript
 // すべての入力が検証される
 ValidatorFactory.validateDatabaseId(databaseId);
@@ -223,26 +255,33 @@ ValidatorFactory.validateHabit(habit);
 ```
 
 ### エラー情報の制限
+
 ```typescript
 // 機密情報を除外したエラーメッセージ
-throw new FetchError('データベースアクセスエラー', ERROR_CODES.DATABASE_NOT_FOUND);
+throw new FetchError(
+  'データベースアクセスエラー',
+  ERROR_CODES.DATABASE_NOT_FOUND
+);
 ```
 
 ## 🚀 将来の拡張性
 
 ### プラグインシステム
+
 ```typescript
 // 新しいデータソースの追加が簡単
 ServiceFactory.register('customDataSource', new CustomDataSource());
 ```
 
 ### メトリクス収集
+
 ```typescript
 // パフォーマンスメトリクスの自動収集
 const metrics = getPerformanceMetrics();
 ```
 
 ### 分散キャッシュ
+
 ```typescript
 // Redis等の外部キャッシュへの拡張
 const redisCache = new RedisCache();

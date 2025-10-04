@@ -1,7 +1,5 @@
-
 // import { notionClient } from "../../lib/notionhq/init";
 // import { DatabaseObjectResponse } from "../../lib/notionhq/type";
-
 
 // export async function insertTodosToDatabase(todosDatabaseId: string, todos: DatabaseObjectResponse): Promise<void> {
 //   for (const todo of todos) {

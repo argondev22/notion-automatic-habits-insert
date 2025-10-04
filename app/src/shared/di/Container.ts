@@ -86,4 +86,4 @@ export const SERVICE_TOKENS = {
   DATABASE_ID_VALIDATOR: 'databaseIdValidator',
 } as const;
 
-export type ServiceToken = typeof SERVICE_TOKENS[keyof typeof SERVICE_TOKENS];
+export type ServiceToken = (typeof SERVICE_TOKENS)[keyof typeof SERVICE_TOKENS];

@@ -1,13 +1,13 @@
-import { Habit, Day } from "../../model";
+import { Habit, Day } from '../../model';
 import {
   PageResponse,
   isHabitPageObjectResponse,
   isPartialHabitPageObjectResponse,
-  BlockObjectResponse
-} from "../../../lib/notionhq/type";
-import { FetchError, ERROR_CODES } from "../../../shared/errors/FetchError";
-import { ILogger } from "../../../shared/logger/Logger";
-import { ValidatorFactory } from "../../../shared/validation/Validator";
+  BlockObjectResponse,
+} from '../../../lib/notionhq/type';
+import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { ILogger } from '../../../shared/logger/Logger';
+import { ValidatorFactory } from '../../../shared/validation/Validator';
 
 /**
  * NotionページをHabitモデルに変換するマッパークラス
@@ -17,13 +17,13 @@ export class HabitMapper {
 
   // 曜日マッピング定数（パフォーマンス最適化）
   private static readonly DAY_MAP: Record<string, Day> = {
-    'MON': Day.MONDAY,
-    'TUE': Day.TUESDAY,
-    'WED': Day.WEDNESDAY,
-    'THU': Day.THURSDAY,
-    'FRI': Day.FRIDAY,
-    'SAT': Day.SATURDAY,
-    'SUN': Day.SUNDAY,
+    MON: Day.MONDAY,
+    TUE: Day.TUESDAY,
+    WED: Day.WEDNESDAY,
+    THU: Day.THURSDAY,
+    FRI: Day.FRIDAY,
+    SAT: Day.SATURDAY,
+    SUN: Day.SUNDAY,
   };
 
   constructor(logger: ILogger) {
@@ -33,7 +33,10 @@ export class HabitMapper {
   /**
    * ページレスポンスをHabitモデルに変換
    */
-  async mapToHabit(page: PageResponse, content: BlockObjectResponse): Promise<Habit> {
+  async mapToHabit(
+    page: PageResponse,
+    content: BlockObjectResponse
+  ): Promise<Habit> {
     try {
       this.logger.debug(`ページ ${page.id} をHabitモデルに変換中`);
 
@@ -45,7 +48,9 @@ export class HabitMapper {
       this.logger.debug(`ページ ${page.id} の変換が完了しました`);
       return habit;
     } catch (error) {
-      this.logger.error(`ページ ${page.id} の変換エラー`, error as Error, { pageId: page.id });
+      this.logger.error(`ページ ${page.id} の変換エラー`, error as Error, {
+        pageId: page.id,
+      });
 
       if (error instanceof FetchError) {
         throw error;
@@ -62,10 +67,13 @@ export class HabitMapper {
   /**
    * 複数のページレスポンスをHabitモデルの配列に変換
    */
-  async mapToHabits(pages: PageResponse[], contents: BlockObjectResponse[]): Promise<Habit[]> {
+  async mapToHabits(
+    pages: PageResponse[],
+    contents: BlockObjectResponse[]
+  ): Promise<Habit[]> {
     if (pages.length !== contents.length) {
       throw new FetchError(
-        "ページ数とコンテンツ数が一致しません",
+        'ページ数とコンテンツ数が一致しません',
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageCount: pages.length, contentCount: contents.length }
       );
@@ -74,9 +82,7 @@ export class HabitMapper {
     this.logger.info(`${pages.length}個のページをHabitモデルに変換中`);
 
     const results = await Promise.allSettled(
-      pages.map((page, index) =>
-        this.mapToHabit(page, contents[index])
-      )
+      pages.map((page, index) => this.mapToHabit(page, contents[index]))
     );
 
     // 成功した結果のみを返す
@@ -88,7 +94,10 @@ export class HabitMapper {
         successfulHabits.push(result.value);
       } else {
         errors.push(result.reason);
-        this.logger.error(`ページ ${pages[index].id} の変換に失敗`, result.reason);
+        this.logger.error(
+          `ページ ${pages[index].id} の変換に失敗`,
+          result.reason
+        );
       }
     });
 
@@ -96,14 +105,19 @@ export class HabitMapper {
       this.logger.warn(`${errors.length}個のページの変換に失敗しました`);
     }
 
-    this.logger.info(`${successfulHabits.length}個のHabitモデルが正常に変換されました`);
+    this.logger.info(
+      `${successfulHabits.length}個のHabitモデルが正常に変換されました`
+    );
     return successfulHabits;
   }
 
   /**
    * ページレスポンスからHabitモデルを作成
    */
-  private createHabitModel(page: PageResponse, content: BlockObjectResponse): Habit {
+  private createHabitModel(
+    page: PageResponse,
+    content: BlockObjectResponse
+  ): Habit {
     // 型ガードを使用して型安全にプロパティにアクセス
     if (isHabitPageObjectResponse(page)) {
       const timeText = this.extractRichText(page.properties.TIME.rich_text);
@@ -113,7 +127,9 @@ export class HabitMapper {
         name: this.extractTitle(page.properties.NAME.title),
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
-        days: page.properties.DAY.multi_select.map(day => this.convertStringToDay(day.name)),
+        days: page.properties.DAY.multi_select.map(day =>
+          this.convertStringToDay(day.name)
+        ),
         profiles: page.properties.PROFILE.relation.map(rel => rel.id),
         tobes: page.properties.TOBE.relation.map(rel => rel.id),
         content: content,
@@ -126,7 +142,10 @@ export class HabitMapper {
         name: this.extractTitle(page.properties.NAME?.title),
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
-        days: page.properties.DAY?.multi_select?.map(day => this.convertStringToDay(day.name)) || [],
+        days:
+          page.properties.DAY?.multi_select?.map(day =>
+            this.convertStringToDay(day.name)
+          ) || [],
         profiles: page.properties.PROFILE?.relation?.map(rel => rel.id) || [],
         tobes: page.properties.TOBE?.relation?.map(rel => rel.id) || [],
         content: content,
@@ -143,27 +162,31 @@ export class HabitMapper {
   /**
    * タイトル配列からテキストを抽出
    */
-  private extractTitle(titleArray: Array<{ plain_text: string }> | undefined): string {
+  private extractTitle(
+    titleArray: Array<{ plain_text: string }> | undefined
+  ): string {
     if (!titleArray || titleArray.length === 0) {
-      return "";
+      return '';
     }
-    return titleArray[0]?.plain_text || "";
+    return titleArray[0]?.plain_text || '';
   }
 
   /**
    * リッチテキスト配列からテキストを抽出
    */
-  private extractRichText(richTextArray: Array<{ plain_text: string }> | undefined): string {
+  private extractRichText(
+    richTextArray: Array<{ plain_text: string }> | undefined
+  ): string {
     if (!richTextArray || richTextArray.length === 0) {
-      this.logger.debug("時間プロパティが空または存在しません");
-      return "";
+      this.logger.debug('時間プロパティが空または存在しません');
+      return '';
     }
-    const text = richTextArray[0]?.plain_text || "";
+    const text = richTextArray[0]?.plain_text || '';
     this.logger.debug(`抽出された時間テキスト: "${text}"`);
 
     if (!text || text.trim().length === 0) {
-      this.logger.warn("時間テキストが空です");
-      return "";
+      this.logger.warn('時間テキストが空です');
+      return '';
     }
 
     // 時間範囲の場合はそのまま返す（parseTimeRangeで処理される）
@@ -179,7 +202,7 @@ export class HabitMapper {
    */
   private normalizeTimeFormat(time: string): string {
     if (!time || time.trim().length === 0) {
-      return "";
+      return '';
     }
 
     // 既にHH:MM形式の場合はそのまま返す
@@ -240,9 +263,12 @@ export class HabitMapper {
   /**
    * 時間範囲を解析して開始時間と終了時間を返す
    */
-  private parseTimeRange(time: string): { startTime: string; endTime: string | null } {
+  private parseTimeRange(time: string): {
+    startTime: string;
+    endTime: string | null;
+  } {
     if (!time || time.trim().length === 0) {
-      return { startTime: "", endTime: null };
+      return { startTime: '', endTime: null };
     }
 
     // 時間範囲（例：20:00-21:45）の場合は開始時間と終了時間を分離
@@ -257,7 +283,9 @@ export class HabitMapper {
       const startTime = `${startHour}:${startMinute}`;
       const endTime = `${endHour}:${endMinute}`;
 
-      this.logger.debug(`時間範囲を検出: "${time}" -> 開始時間: ${startTime}, 終了時間: ${endTime}`);
+      this.logger.debug(
+        `時間範囲を検出: "${time}" -> 開始時間: ${startTime}, 終了時間: ${endTime}`
+      );
       return { startTime, endTime };
     }
 

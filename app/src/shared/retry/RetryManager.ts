@@ -1,4 +1,4 @@
-import { ILogger, LoggerFactory } from "../logger/Logger";
+import { ILogger, LoggerFactory } from '../logger/Logger';
 
 /**
  * リトライ設定
@@ -30,7 +30,9 @@ export type RetryableErrorPredicate = (error: Error) => boolean;
 /**
  * デフォルトのリトライ可能エラー判定
  */
-export const isRetryableError: RetryableErrorPredicate = (error: Error): boolean => {
+export const isRetryableError: RetryableErrorPredicate = (
+  error: Error
+): boolean => {
   // ネットワークエラー
   if (error.message.includes('network') || error.message.includes('timeout')) {
     return true;
@@ -42,7 +44,11 @@ export const isRetryableError: RetryableErrorPredicate = (error: Error): boolean
   }
 
   // 一時的なサーバーエラー
-  if (error.message.includes('500') || error.message.includes('502') || error.message.includes('503')) {
+  if (
+    error.message.includes('500') ||
+    error.message.includes('502') ||
+    error.message.includes('503')
+  ) {
     return true;
   }
 
@@ -76,7 +82,9 @@ export class RetryManager {
 
     for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
       try {
-        this.logger.debug(`実行中: ${operationName} (試行 ${attempt}/${this.config.maxAttempts})`);
+        this.logger.debug(
+          `実行中: ${operationName} (試行 ${attempt}/${this.config.maxAttempts})`
+        );
         return await operation();
       } catch (error) {
         lastError = error as Error;
@@ -113,7 +121,9 @@ export class RetryManager {
    * 遅延時間を計算
    */
   private calculateDelay(attempt: number): number {
-    let delay = this.config.baseDelay * Math.pow(this.config.backoffMultiplier, attempt - 1);
+    let delay =
+      this.config.baseDelay *
+      Math.pow(this.config.backoffMultiplier, attempt - 1);
 
     // 最大遅延時間を適用
     delay = Math.min(delay, this.config.maxDelay);

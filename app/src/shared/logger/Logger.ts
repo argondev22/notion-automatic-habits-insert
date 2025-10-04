@@ -52,10 +52,18 @@ export class ConsoleLogger implements ILogger {
   }
 
   error(message: string, error?: Error, context?: Record<string, any>): void {
-    this.log(LogLevel.ERROR, message, { ...context, error: error?.message, stack: error?.stack });
+    this.log(LogLevel.ERROR, message, {
+      ...context,
+      error: error?.message,
+      stack: error?.stack,
+    });
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, any>): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, any>
+  ): void {
     if (level < this.minLevel) return;
 
     const entry: LogEntry = {
@@ -93,7 +101,7 @@ export class ConsoleLogger implements ILogger {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
     });
     const level = LogLevel[entry.level];
     const contextStr = entry.context ? ` ${JSON.stringify(entry.context)}` : '';

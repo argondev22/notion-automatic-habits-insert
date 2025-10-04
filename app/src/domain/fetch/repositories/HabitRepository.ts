@@ -1,10 +1,10 @@
-import { Habit } from "../../model";
-import { PageResponse } from "../../../lib/notionhq/type";
-import { NotionDatabaseService } from "../services/NotionDatabaseService";
-import { HabitMapper } from "../mappers/HabitMapper";
-import { FetchError, ERROR_CODES } from "../../../shared/errors/FetchError";
-import { ILogger } from "../../../shared/logger/Logger";
-import { ICache } from "../../../shared/cache/Cache";
+import { Habit } from '../../model';
+import { PageResponse } from '../../../lib/notionhq/type';
+import { NotionDatabaseService } from '../services/NotionDatabaseService';
+import { HabitMapper } from '../mappers/HabitMapper';
+import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { ILogger } from '../../../shared/logger/Logger';
+import { ICache } from '../../../shared/cache/Cache';
 
 /**
  * Habitデータの取得と変換を行うリポジトリクラス
@@ -36,7 +36,9 @@ export class HabitRepository {
     // キャッシュから取得を試行
     const cached = this.cache.get(cacheKey);
     if (cached) {
-      this.logger.debug(`データベース ${databaseId} のHabitsをキャッシュから取得`);
+      this.logger.debug(
+        `データベース ${databaseId} のHabitsをキャッシュから取得`
+      );
       return cached;
     }
 
@@ -47,12 +49,12 @@ export class HabitRepository {
       const pages = await this.databaseService.queryDatabase(databaseId);
 
       // ページオブジェクトのみをフィルタリング
-      const validPages = pages.filter((page): page is PageResponse =>
-        page.object === "page"
+      const validPages = pages.filter(
+        (page): page is PageResponse => page.object === 'page'
       );
 
       if (validPages.length === 0) {
-        this.logger.warn("有効なページが見つかりませんでした");
+        this.logger.warn('有効なページが見つかりませんでした');
         return [];
       }
 
@@ -68,11 +70,15 @@ export class HabitRepository {
 
       // キャッシュに保存
       this.cache.set(cacheKey, habits);
-      this.logger.debug(`データベース ${databaseId} のHabitsをキャッシュに保存`);
+      this.logger.debug(
+        `データベース ${databaseId} のHabitsをキャッシュに保存`
+      );
 
       return habits;
     } catch (error) {
-      this.logger.error("Habitデータの取得エラー", error as Error, { databaseId });
+      this.logger.error('Habitデータの取得エラー', error as Error, {
+        databaseId,
+      });
 
       if (error instanceof FetchError) {
         throw error;
@@ -89,7 +95,10 @@ export class HabitRepository {
   /**
    * 単一のHabitデータを取得
    */
-  async fetchHabitById(databaseId: string, pageId: string): Promise<Habit | null> {
+  async fetchHabitById(
+    databaseId: string,
+    pageId: string
+  ): Promise<Habit | null> {
     this.logger.info(`ページID ${pageId} のHabitを取得中`);
 
     try {
@@ -97,8 +106,8 @@ export class HabitRepository {
       const pages = await this.databaseService.queryDatabase(databaseId);
 
       // 指定されたページIDのページを検索
-      const targetPage = pages.find(page =>
-        page.object === "page" && page.id === pageId
+      const targetPage = pages.find(
+        page => page.object === 'page' && page.id === pageId
       ) as PageResponse | undefined;
 
       if (!targetPage) {
@@ -115,7 +124,10 @@ export class HabitRepository {
       this.logger.debug(`ページID ${pageId} のHabitが正常に取得されました`);
       return habit;
     } catch (error) {
-      this.logger.error(`ページID ${pageId} の取得エラー`, error as Error, { pageId, databaseId });
+      this.logger.error(`ページID ${pageId} の取得エラー`, error as Error, {
+        pageId,
+        databaseId,
+      });
 
       if (error instanceof FetchError) {
         throw error;
@@ -135,7 +147,7 @@ export class HabitRepository {
   clearCache(): void {
     this.cache.clear();
     this.databaseService.clearCache();
-    this.logger.info("HabitRepositoryのキャッシュをクリアしました");
+    this.logger.info('HabitRepositoryのキャッシュをクリアしました');
   }
 
   /**

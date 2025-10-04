@@ -1,4 +1,4 @@
-import { BlockObjectResponse } from "../lib/notionhq/type";
+import { BlockObjectResponse } from '../lib/notionhq/type';
 
 export interface Habit {
   name: string;

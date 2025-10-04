@@ -1,10 +1,13 @@
-import { notionClient } from "../../../lib/notionhq/init";
-import { DatabaseResponse, BlockObjectResponse } from "../../../lib/notionhq/type";
-import { FetchError, ERROR_CODES } from "../../../shared/errors/FetchError";
-import { ILogger } from "../../../shared/logger/Logger";
-import { ICache } from "../../../shared/cache/Cache";
-import { RetryManager } from "../../../shared/retry/RetryManager";
-import { ValidatorFactory } from "../../../shared/validation/Validator";
+import { notionClient } from '../../../lib/notionhq/init';
+import {
+  DatabaseResponse,
+  BlockObjectResponse,
+} from '../../../lib/notionhq/type';
+import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { ILogger } from '../../../shared/logger/Logger';
+import { ICache } from '../../../shared/cache/Cache';
+import { RetryManager } from '../../../shared/retry/RetryManager';
+import { ValidatorFactory } from '../../../shared/validation/Validator';
 
 /**
  * Notionデータベース操作のためのサービスクラス
@@ -47,24 +50,21 @@ export class NotionDatabaseService {
     this.logger.info(`データベース ${databaseId} をNotion APIから取得`);
 
     // リトライ付きでAPI呼び出し
-    const results = await this.retryManager.executeWithRetry(
-      async () => {
-        const response = await notionClient.databases.query({
-          database_id: databaseId,
-        });
+    const results = await this.retryManager.executeWithRetry(async () => {
+      const response = await notionClient.databases.query({
+        database_id: databaseId,
+      });
 
-        if (!response.results) {
-          throw new FetchError(
-            "データベースから結果を取得できませんでした",
-            ERROR_CODES.DATABASE_NOT_FOUND,
-            { databaseId }
-          );
-        }
+      if (!response.results) {
+        throw new FetchError(
+          'データベースから結果を取得できませんでした',
+          ERROR_CODES.DATABASE_NOT_FOUND,
+          { databaseId }
+        );
+      }
 
-        return response.results;
-      },
-      `データベース ${databaseId} の取得`
-    );
+      return response.results;
+    }, `データベース ${databaseId} の取得`);
 
     // キャッシュに保存
     this.cache.set(cacheKey, results);
@@ -77,9 +77,9 @@ export class NotionDatabaseService {
    * ページのコンテンツ（ブロック）を取得（キャッシュ付き）
    */
   async getPageContent(pageId: string): Promise<BlockObjectResponse> {
-    if (!pageId || pageId.trim() === "") {
+    if (!pageId || pageId.trim() === '') {
       throw new FetchError(
-        "ページIDが指定されていません",
+        'ページIDが指定されていません',
         ERROR_CODES.INVALID_PAGE_ID,
         { pageId }
       );
@@ -98,16 +98,13 @@ export class NotionDatabaseService {
     this.logger.info(`ページ ${pageId} のコンテンツをNotion APIから取得`);
 
     // リトライ付きでAPI呼び出し
-    const results = await this.retryManager.executeWithRetry(
-      async () => {
-        const response = await notionClient.blocks.children.list({
-          block_id: pageId,
-        });
+    const results = await this.retryManager.executeWithRetry(async () => {
+      const response = await notionClient.blocks.children.list({
+        block_id: pageId,
+      });
 
-        return response.results;
-      },
-      `ページ ${pageId} のコンテンツ取得`
-    );
+      return response.results;
+    }, `ページ ${pageId} のコンテンツ取得`);
 
     // キャッシュに保存
     this.contentCache.set(cacheKey, results);
@@ -122,7 +119,7 @@ export class NotionDatabaseService {
   clearCache(): void {
     this.cache.clear();
     this.contentCache.clear();
-    this.logger.info("キャッシュをクリアしました");
+    this.logger.info('キャッシュをクリアしました');
   }
 
   /**

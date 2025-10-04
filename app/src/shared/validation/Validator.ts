@@ -1,6 +1,6 @@
-import { Habit, Day } from "../../domain/model";
-import { FetchError, ERROR_CODES } from "../errors/FetchError";
-import { ConsoleLogger } from "../logger/Logger";
+import { Habit, Day } from '../../domain/model';
+import { FetchError, ERROR_CODES } from '../errors/FetchError';
+import { ConsoleLogger } from '../logger/Logger';
 
 /**
  * バリデーション結果の型定義
@@ -58,7 +58,9 @@ export class HabitValidator implements IValidator<Habit> {
       // 日をまたぐ場合（開始時間が終了時間より大きい場合）は有効
       if (startHour > endHour) {
         // 日をまたぐ時間範囲は有効
-        this.logger.debug(`日をまたぐ時間範囲を検出: ${habit.startTime} - ${habit.endTime}`);
+        this.logger.debug(
+          `日をまたぐ時間範囲を検出: ${habit.startTime} - ${habit.endTime}`
+        );
       } else if (habit.startTime >= habit.endTime) {
         errors.push('開始時間は終了時間より早い必要があります');
       }
@@ -69,21 +71,32 @@ export class HabitValidator implements IValidator<Habit> {
       errors.push('曜日は配列である必要があります');
     } else if (habit.days.length === 0) {
       errors.push('少なくとも1つの曜日を選択してください');
-    } else if (!habit.days.every((day: Day) => Object.values(Day).includes(day))) {
+    } else if (
+      !habit.days.every((day: Day) => Object.values(Day).includes(day))
+    ) {
       errors.push('無効な曜日が含まれています');
     }
 
     // プロファイルのバリデーション
     if (!Array.isArray(habit.profiles)) {
       errors.push('プロファイルは配列である必要があります');
-    } else if (habit.profiles.some((profile: string) => typeof profile !== 'string' || profile.trim().length === 0)) {
+    } else if (
+      habit.profiles.some(
+        (profile: string) =>
+          typeof profile !== 'string' || profile.trim().length === 0
+      )
+    ) {
       errors.push('プロファイルIDは空でない文字列である必要があります');
     }
 
     // TOBEのバリデーション
     if (!Array.isArray(habit.tobes)) {
       errors.push('TOBEは配列である必要があります');
-    } else if (habit.tobes.some((tobe: string) => typeof tobe !== 'string' || tobe.trim().length === 0)) {
+    } else if (
+      habit.tobes.some(
+        (tobe: string) => typeof tobe !== 'string' || tobe.trim().length === 0
+      )
+    ) {
       errors.push('TOBE IDは空でない文字列である必要があります');
     }
 
@@ -131,7 +144,8 @@ export class DatabaseIdValidator implements IValidator<string> {
    */
   private isValidNotionId(id: string): boolean {
     // Notion IDは32文字の英数字（ハイフンなし）または36文字のUUID形式
-    const notionIdRegex = /^[a-zA-Z0-9]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const notionIdRegex =
+      /^[a-zA-Z0-9]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return notionIdRegex.test(id);
   }
 }

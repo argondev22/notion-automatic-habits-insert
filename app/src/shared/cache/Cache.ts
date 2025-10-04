@@ -27,7 +27,8 @@ export class MemoryCache<T> implements ICache<T> {
   private cache = new Map<string, CacheEntry<T>>();
   private defaultTtl: number;
 
-  constructor(defaultTtl: number = 5 * 60 * 1000) { // デフォルト5分
+  constructor(defaultTtl: number = 5 * 60 * 1000) {
+    // デフォルト5分
     this.defaultTtl = defaultTtl;
   }
 
@@ -70,7 +71,7 @@ export class MemoryCache<T> implements ICache<T> {
     if (!entry) return true;
 
     const now = Date.now();
-    return (now - entry.timestamp) > entry.ttl;
+    return now - entry.timestamp > entry.ttl;
   }
 
   /**
@@ -79,7 +80,7 @@ export class MemoryCache<T> implements ICache<T> {
   cleanup(): void {
     const now = Date.now();
     for (const [key, entry] of this.cache.entries()) {
-      if ((now - entry.timestamp) > entry.ttl) {
+      if (now - entry.timestamp > entry.ttl) {
         this.cache.delete(key);
       }
     }
