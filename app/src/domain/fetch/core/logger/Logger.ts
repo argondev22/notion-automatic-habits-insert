@@ -84,7 +84,17 @@ export class ConsoleLogger implements ILogger {
   }
 
   private formatLogEntry(entry: LogEntry): string {
-    const timestamp = entry.timestamp.toISOString();
+    // 日本時間でタイムスタンプを出力
+    const timestamp = entry.timestamp.toLocaleString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
     const level = LogLevel[entry.level];
     const contextStr = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
 
