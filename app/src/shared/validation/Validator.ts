@@ -34,7 +34,7 @@ export class HabitValidator implements IValidator<Habit> {
     }
 
     // 開始時間のバリデーション（必須）
-    if (!habit.startTime || habit.startTime.trim().length === 0) {
+    if (habit.startTime.trim().length === 0) {
       errors.push('開始時間は必須です');
     } else if (!this.isValidTimeFormat(habit.startTime)) {
       errors.push('開始時間はHH:MM形式である必要があります');

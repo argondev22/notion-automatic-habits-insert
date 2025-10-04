@@ -72,7 +72,7 @@ export class RetryManager {
     operationName: string,
     isRetryable: RetryableErrorPredicate = isRetryableError
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
       try {
@@ -102,7 +102,11 @@ export class RetryManager {
       }
     }
 
-    throw lastError!;
+    if (lastError) {
+      throw lastError;
+    } else {
+      throw new Error(`${operationName} failed, but no error was captured.`);
+    }
   }
 
   /**

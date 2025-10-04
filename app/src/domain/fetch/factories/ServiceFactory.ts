@@ -9,6 +9,7 @@ import { HabitMapper } from "../mappers/HabitMapper";
 import { HabitRepository } from "../repositories/HabitRepository";
 import { DatabaseResponse, BlockObjectResponse } from "../../../lib/notionhq/type";
 import { Habit } from "../../model";
+import { notionClient } from "../../../lib/notionhq/init";
 
 /**
  * サービスファクトリー - 依存性注入コンテナを管理
@@ -44,7 +45,7 @@ export class ServiceFactory {
     this.container.register(SERVICE_TOKENS.DATABASE_ID_VALIDATOR, ValidatorFactory.getDatabaseIdValidator());
 
     // Notionクライアント（既存のものを使用）
-    this.container.register(SERVICE_TOKENS.NOTION_CLIENT, require("../../../lib/notionhq/init").notionClient);
+    this.container.register(SERVICE_TOKENS.NOTION_CLIENT, notionClient);
 
     // サービスクラス
     this.container.registerFactory('notionDatabaseService', () => {

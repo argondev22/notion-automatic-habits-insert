@@ -15,6 +15,17 @@ import { ValidatorFactory } from "../../../shared/validation/Validator";
 export class HabitMapper {
   private logger: ILogger;
 
+  // 曜日マッピング定数（パフォーマンス最適化）
+  private static readonly DAY_MAP: Record<string, Day> = {
+    'MON': Day.MONDAY,
+    'TUE': Day.TUESDAY,
+    'WED': Day.WEDNESDAY,
+    'THU': Day.THURSDAY,
+    'FRI': Day.FRIDAY,
+    'SAT': Day.SATURDAY,
+    'SUN': Day.SUNDAY,
+  };
+
   constructor(logger: ILogger) {
     this.logger = logger;
   }
@@ -259,22 +270,12 @@ export class HabitMapper {
    * 文字列をDay型に変換
    */
   private convertStringToDay(dayString: string): Day {
-    const dayMap: Record<string, Day> = {
-      'MON': Day.MONDAY,
-      'TUE': Day.TUESDAY,
-      'WED': Day.WEDNESDAY,
-      'THU': Day.THURSDAY,
-      'FRI': Day.FRIDAY,
-      'SAT': Day.SATURDAY,
-      'SUN': Day.SUNDAY,
-    };
-
-    const day = dayMap[dayString.toUpperCase()];
+    const day = HabitMapper.DAY_MAP[dayString.toUpperCase()];
     if (day === undefined) {
       throw new FetchError(
         `無効な曜日: ${dayString}`,
         ERROR_CODES.VALIDATION_FAILED,
-        { dayString, validDays: Object.keys(dayMap) }
+        { dayString, validDays: Object.keys(HabitMapper.DAY_MAP) }
       );
     }
 
