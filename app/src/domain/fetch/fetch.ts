@@ -1,5 +1,5 @@
 import { Habit } from '../model';
-import { EnvironmentConfig } from '../../config/EnvironmentConfig';
+import { EnvironmentConfig } from '../../shared/config/EnvironmentConfig';
 import { ServiceFactory } from './factories/ServiceFactory';
 import { HabitRepository } from './repositories/HabitRepository';
 import { FetchError } from '../../shared/errors/FetchError';

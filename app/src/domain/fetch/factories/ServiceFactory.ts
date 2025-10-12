@@ -5,7 +5,7 @@ import {
   RetryManager,
   RetryManagerFactory,
 } from '../../../shared/retry/RetryManager';
-import { ConfigManager } from '../../../shared/config/Config';
+import { ConfigManager } from '../../../shared/config/ApplicationConfig';
 import { ValidatorFactory } from '../../../shared/validation/Validator';
 import { NotionDatabaseService } from '../services/NotionDatabaseService';
 import { HabitMapper } from '../mappers/HabitMapper';
