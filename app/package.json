@@ -1,7 +1,6 @@
 {
   "name": "notion-automatic-habits-insert",
   "version": "1.0.0",
-  "type": "module",
   "main": "src/main.ts",
   "scripts": {
     "start": "docker compose down && docker compose up --build",
