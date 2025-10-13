@@ -1,4 +1,5 @@
 ---
+description: コーディングパターンとスタイルに関するルール
 globs: app/src/**/*.ts
 ---
 

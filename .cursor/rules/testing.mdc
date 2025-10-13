@@ -1,4 +1,5 @@
 ---
+description: テスト戦略とパターンに関するルール
 globs: app/src/**/*.test.ts,app/src/**/*.spec.ts
 ---
 
