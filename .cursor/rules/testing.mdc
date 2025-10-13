@@ -1,0 +1,467 @@
+---
+globs: app/src/**/*.test.ts,app/src/**/*.spec.ts
+---
+
+# テスト戦略とパターン
+
+## 🧪 テストアーキテクチャ
+
+### 1. **テストの階層構造**
+
+```
+[feature]/
+├── __tests__/                 # 統合テスト
+│   ├── integration/          # 統合テスト
+│   └── e2e/                  # エンドツーエンドテスト
+├── repositories/
+│   └── [Feature]Repository.test.ts
+├── services/
+│   └── [Feature]Service.test.ts
+├── mappers/
+│   └── [Feature]Mapper.test.ts
+└── factories/
+    └── ServiceFactory.test.ts
+```
+
+### 2. **テストの種類と責任**
+
+```typescript
+// ✅ 単体テスト - 個別クラスのテスト
+describe('[Feature]Repository', () => {
+  // モック注入による単体テスト
+});
+
+// ✅ 統合テスト - 複数クラスの連携テスト
+describe('[Feature] Integration', () => {
+  // 実際の依存関係を使用したテスト
+});
+
+// ✅ E2Eテスト - エンドツーエンドテスト
+describe('E2E [Feature] Flow', () => {
+  // 実際のAPIを使用したテスト
+});
+```
+
+## 🔧 テストパターン
+
+### 1. **Repository層のテスト**
+
+```typescript
+describe('[Feature]Repository', () => {
+  let repository: [Feature]Repository;
+  let mockService: jest.Mocked<[Feature]Service>;
+  let mockMapper: jest.Mocked<[Feature]Mapper>;
+  let mockLogger: jest.Mocked<ILogger>;
+  let mockCache: jest.Mocked<ICache<[Feature][]>>;
+
+  beforeEach(() => {
+    // ✅ モックの設定
+    mockService = {
+      queryData: jest.fn(),
+      getContent: jest.fn(),
+    } as jest.Mocked<[Feature]Service>;
+
+    mockMapper = {
+      mapTo[Feature]: jest.fn(),
+    } as jest.Mocked<[Feature]Mapper>;
+
+    mockLogger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    } as jest.Mocked<ILogger>;
+
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+    } as jest.Mocked<ICache<[Feature][]>>;
+
+    repository = new [Feature]Repository(
+      mockService,
+      mockMapper,
+      mockLogger,
+      mockCache
+    );
+  });
+
+  describe('fetch[Features]', () => {
+    it('キャッシュからデータを取得する', async () => {
+      // ✅ キャッシュヒットのテスト
+      const cached[Features] = [mock[Feature]];
+      mockCache.get.mockReturnValue(cached[Features]);
+
+      const result = await repository.fetch[Features]('id');
+
+      expect(result).toBe(cached[Features]);
+      expect(mockCache.get).toHaveBeenCalledWith('[features]:id');
+      expect(mockService.queryData).not.toHaveBeenCalled();
+    });
+
+    it('キャッシュミス時にデータベースから取得する', async () => {
+      // ✅ キャッシュミスのテスト
+      mockCache.get.mockReturnValue(null);
+      mockService.queryData.mockResolvedValue(mockDataResponse);
+      mockMapper.mapTo[Feature].mockResolvedValue(mock[Feature]);
+
+      const result = await repository.fetch[Features]('id');
+
+      expect(mockService.queryData).toHaveBeenCalledWith('id');
+      expect(mockCache.set).toHaveBeenCalledWith('[features]:id', [mock[Feature]]);
+      expect(result).toEqual([mock[Feature]]);
+    });
+
+    it('エラー時に適切にログ出力する', async () => {
+      // ✅ エラーハンドリングのテスト
+      const error = new Error('Database error');
+      mockCache.get.mockReturnValue(null);
+      mockService.queryData.mockRejectedValue(error);
+
+      await expect(repository.fetch[Features]('id')).rejects.toThrow(error);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        '[Features]取得エラー',
+        error,
+        expect.any(Object)
+      );
+    });
+  });
+});
+```
+
+### 2. **Service層のテスト**
+
+```typescript
+describe('NotionDatabaseService', () => {
+  let service: NotionDatabaseService;
+  let mockLogger: jest.Mocked<ILogger>;
+  let mockCache: jest.Mocked<ICache<DatabaseResponse>>;
+  let mockContentCache: jest.Mocked<ICache<BlockObjectResponse>>;
+  let mockRetryManager: jest.Mocked<RetryManager>;
+
+  beforeEach(() => {
+    // ✅ モックの設定
+    mockLogger = createMockLogger();
+    mockCache = createMockCache<DatabaseResponse>();
+    mockContentCache = createMockCache<BlockObjectResponse>();
+    mockRetryManager = createMockRetryManager();
+
+    service = new NotionDatabaseService(
+      mockLogger,
+      mockCache,
+      mockContentCache,
+      mockRetryManager
+    );
+  });
+
+  describe('queryDatabase', () => {
+    it('バリデーションエラー時にFetchErrorを投げる', async () => {
+      // ✅ バリデーションエラーのテスト
+      await expect(service.queryDatabase('')).rejects.toThrow(FetchError);
+      await expect(service.queryDatabase('invalid-id')).rejects.toThrow(FetchError);
+    });
+
+    it('キャッシュヒット時にキャッシュデータを返す', async () => {
+      // ✅ キャッシュ機能のテスト
+      const cachedData = mockDatabaseResponse;
+      mockCache.get.mockReturnValue(cachedData);
+
+      const result = await service.queryDatabase('database-id');
+
+      expect(result).toBe(cachedData);
+      expect(mockCache.get).toHaveBeenCalledWith('database:database-id');
+    });
+
+    it('リトライ機能が正しく動作する', async () => {
+      // ✅ リトライ機能のテスト
+      mockCache.get.mockReturnValue(null);
+      mockRetryManager.execute.mockResolvedValue(mockDatabaseResponse);
+
+      const result = await service.queryDatabase('database-id');
+
+      expect(mockRetryManager.execute).toHaveBeenCalled();
+      expect(mockCache.set).toHaveBeenCalledWith('database:database-id', mockDatabaseResponse);
+      expect(result).toBe(mockDatabaseResponse);
+    });
+  });
+});
+```
+
+### 3. **Mapper層のテスト**
+
+```typescript
+describe('HabitMapper', () => {
+  let mapper: HabitMapper;
+  let mockLogger: jest.Mocked<ILogger>;
+
+  beforeEach(() => {
+    mockLogger = createMockLogger();
+    mapper = new HabitMapper(mockLogger);
+  });
+
+  describe('mapToHabit', () => {
+    it('正常なページをHabitモデルに変換する', async () => {
+      // ✅ 正常な変換のテスト
+      const mockPage = createMockPage();
+      const mockContent = createMockContent();
+
+      const result = await mapper.mapToHabit(mockPage, mockContent);
+
+      expect(result).toEqual({
+        name: 'Test Habit',
+        startTime: '07:00',
+        endTime: '08:00',
+        days: [Day.MONDAY, Day.WEDNESDAY],
+        profiles: ['健康維持'],
+        tobes: ['体力向上'],
+        content: mockContent,
+      });
+    });
+
+    it('無効なデータでFetchErrorを投げる', async () => {
+      // ✅ バリデーションエラーのテスト
+      const invalidPage = createInvalidPage();
+      const mockContent = createMockContent();
+
+      await expect(mapper.mapToHabit(invalidPage, mockContent)).rejects.toThrow(FetchError);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        `変換エラー: ${invalidPage.id}`,
+        expect.any(Error)
+      );
+    });
+
+    it('曜日の変換が正しく動作する', async () => {
+      // ✅ 曜日変換のテスト
+      const pageWithDays = createPageWithDays(['MON', 'TUE', 'WED']);
+      const mockContent = createMockContent();
+
+      const result = await mapper.mapToHabit(pageWithDays, mockContent);
+
+      expect(result.days).toEqual([Day.MONDAY, Day.TUESDAY, Day.WEDNESDAY]);
+    });
+  });
+});
+```
+
+### 4. **Factory層のテスト**
+
+```typescript
+describe('ServiceFactory', () => {
+  beforeEach(() => {
+    // ✅ テスト前のリセット
+    ServiceFactory.reset();
+  });
+
+  afterEach(() => {
+    // ✅ テスト後のクリーンアップ
+    ServiceFactory.reset();
+  });
+
+  describe('initialize', () => {
+    it('すべてのサービスが正しく登録される', () => {
+      // ✅ サービス登録のテスト
+      ServiceFactory.initialize();
+
+      expect(ServiceFactory.getService<ILogger>('logger')).toBeDefined();
+      expect(ServiceFactory.getService<ICache<DatabaseResponse>>('cache')).toBeDefined();
+      expect(ServiceFactory.getService<HabitRepository>('habitRepository')).toBeDefined();
+    });
+  });
+
+  describe('getService', () => {
+    it('登録されていないサービスでエラーを投げる', () => {
+      // ✅ エラーハンドリングのテスト
+      expect(() => {
+        ServiceFactory.getService('nonExistentService');
+      }).toThrow('Service not found: nonExistentService');
+    });
+  });
+});
+```
+
+## 🔧 テストユーティリティ
+
+### 1. **モックファクトリー**
+
+```typescript
+// ✅ 統一されたモック作成
+export function createMockLogger(): jest.Mocked<ILogger> {
+  return {
+    info: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  } as jest.Mocked<ILogger>;
+}
+
+export function createMockCache<T>(): jest.Mocked<ICache<T>> {
+  return {
+    get: jest.fn(),
+    set: jest.fn(),
+    clear: jest.fn(),
+    has: jest.fn(),
+  } as jest.Mocked<ICache<T>>;
+}
+
+export function createMockRetryManager(): jest.Mocked<RetryManager> {
+  return {
+    execute: jest.fn(),
+  } as jest.Mocked<RetryManager>;
+}
+```
+
+### 2. **テストデータファクトリー**
+
+```typescript
+// ✅ 統一されたテストデータ作成
+export function createMockHabit(): Habit {
+  return {
+    name: 'Test Habit',
+    startTime: '07:00',
+    endTime: '08:00',
+    days: [Day.MONDAY, Day.WEDNESDAY],
+    profiles: ['健康維持'],
+    tobes: ['体力向上'],
+    content: createMockContent(),
+  };
+}
+
+export function createMockPage(): PageResponse {
+  return {
+    id: 'test-page-id',
+    object: 'page',
+    created_time: '2023-01-01T00:00:00.000Z',
+    last_edited_time: '2023-01-01T00:00:00.000Z',
+    properties: {
+      Name: { title: [{ plain_text: 'Test Habit' }] },
+      StartTime: { rich_text: [{ plain_text: '07:00' }] },
+      // その他のプロパティ
+    },
+  } as PageResponse;
+}
+```
+
+## 📋 テストの必須項目
+
+### 1. **すべてのテストで必須**
+
+```typescript
+// ✅ 必須: beforeEach/afterEachでのクリーンアップ
+beforeEach(() => {
+  jest.clearAllMocks();
+  ServiceFactory.reset();
+});
+
+afterEach(() => {
+  ServiceFactory.reset();
+});
+
+// ✅ 必須: 適切なアサーション
+expect(result).toBeDefined();
+expect(mockFunction).toHaveBeenCalledWith(expectedArgs);
+expect(mockFunction).toHaveBeenCalledTimes(expectedCount);
+```
+
+### 2. **Repository層のテストで必須**
+
+```typescript
+// ✅ 必須: キャッシュ機能のテスト
+it('キャッシュヒット時にキャッシュデータを返す', async () => {
+  mockCache.get.mockReturnValue(cachedData);
+  const result = await repository.fetchHabits('id');
+  expect(result).toBe(cachedData);
+});
+
+// ✅ 必須: エラーハンドリングのテスト
+it('エラー時に適切にログ出力する', async () => {
+  const error = new Error('Test error');
+  mockDatabaseService.queryDatabase.mockRejectedValue(error);
+  await expect(repository.fetchHabits('id')).rejects.toThrow(error);
+});
+```
+
+### 3. **Service層のテストで必須**
+
+```typescript
+// ✅ 必須: バリデーションのテスト
+it('無効な入力でFetchErrorを投げる', async () => {
+  await expect(service.queryDatabase('')).rejects.toThrow(FetchError);
+});
+
+// ✅ 必須: リトライ機能のテスト
+it('リトライ機能が正しく動作する', async () => {
+  mockRetryManager.execute.mockResolvedValue(mockData);
+  const result = await service.queryDatabase('id');
+  expect(mockRetryManager.execute).toHaveBeenCalled();
+});
+```
+
+### 4. **Mapper層のテストで必須**
+
+```typescript
+// ✅ 必須: 型安全な変換のテスト
+it('正常なデータを正しく変換する', async () => {
+  const result = await mapper.mapToHabit(mockPage, mockContent);
+  expect(result).toEqual(expectedHabit);
+});
+
+// ✅ 必須: バリデーションエラーのテスト
+it('無効なデータでFetchErrorを投げる', async () => {
+  await expect(mapper.mapToHabit(invalidPage, mockContent)).rejects.toThrow(FetchError);
+});
+```
+
+## 🚫 テストの禁止事項
+
+### 1. **テストの分離違反**
+
+```typescript
+// ❌ 禁止: テスト間での状態共有
+let sharedState = {};
+
+// ❌ 禁止: グローバル状態の変更
+global.someState = 'modified';
+```
+
+### 2. **不適切なモック**
+
+```typescript
+// ❌ 禁止: 過度なモック
+jest.mock('../../../shared/logger/Logger', () => ({
+  LoggerFactory: {
+    getLogger: jest.fn().mockReturnValue({
+      info: jest.fn(),
+      debug: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    }),
+  },
+}));
+
+// ❌ 禁止: 実際のAPI呼び出し（単体テストで）
+const result = await fetchHabits(); // 実際のNotion APIを呼び出し
+```
+
+### 3. **テストの不完全性**
+
+```typescript
+// ❌ 禁止: アサーションなしのテスト
+it('should work', async () => {
+  await someFunction();
+  // アサーションなし - 禁止
+});
+
+// ❌ 禁止: エラーケースのテストなし
+it('正常ケースのみ', async () => {
+  const result = await function();
+  expect(result).toBeDefined();
+  // エラーケースのテストなし - 禁止
+});
+```
+
+## 📚 参考実装
+
+- [convert.test.ts](mdc:app/src/domain/convert/convert.test.ts) - テストの実装例
+- [feature].ts - テスト対象のメインAPI
+- [Feature]Repository.ts - Repository層のテスト対象
+- [Feature]Service.ts - Service層のテスト対象
+- [Feature]Mapper.ts - Mapper層のテスト対象
