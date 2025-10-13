@@ -1,88 +1,166 @@
-import { Habit, Todo, Day } from '../model';
+import { Habit, Todo } from '../model';
+import { ServiceFactory } from '../fetch/factories/ServiceFactory';
+import { ConvertRepository } from './repositories/ConvertRepository';
+import { ILogger } from '../../shared/logger/Logger';
 
 /**
- * HabitモデルをTodoモデルに変換する
+ * 変換結果の型定義
+ */
+export interface ConvertResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+/**
+ * HabitモデルをTodoモデルに変換する（メインAPI）
  * @param habits - 変換対象のHabit配列
- * @returns 変換されたTodo配列
+ * @returns 変換結果
  */
-export function convertHabitsToTodos(habits: Habit[]): Todo[] {
-  const todos: Todo[] = [];
+export async function convertHabitsToTodos(
+  habits: Habit[]
+): Promise<ConvertResult<Todo[]>> {
+  const logger = ServiceFactory.getService<ILogger>('logger');
 
-  for (const habit of habits) {
-    const habitTodos = convertHabitToTodos(habit);
-    todos.push(...habitTodos);
-  }
+  try {
+    logger.info('convertHabitsToTodos: 変換処理開始', {
+      habitCount: habits.length,
+    });
 
-  return todos;
-}
+    // 入力値のバリデーション
+    if (!Array.isArray(habits)) {
+      throw new Error('habitsは配列である必要があります');
+    }
 
-/**
- * 単一のHabitを複数のTodoに変換する
- * @param habit - 変換対象のHabit
- * @returns 変換されたTodo配列
- */
-function convertHabitToTodos(habit: Habit): Todo[] {
-  const todos: Todo[] = [];
+    if (habits.length === 0) {
+      logger.warn('convertHabitsToTodos: 空のHabit配列が渡されました');
+      return {
+        success: true,
+        data: [],
+      };
+    }
 
-  // 現在の週の日付を取得
-  const weekDates = getCurrentWeekDates();
+    // Repository層を使用して変換処理を実行
+    const repository =
+      ServiceFactory.getService<ConvertRepository>('convertRepository');
+    const todos = await repository.convertHabitsToTodos(habits);
 
-  for (const day of habit.days) {
-    const targetDate = weekDates[day];
-    if (!targetDate) continue;
+    logger.info('convertHabitsToTodos: 変換処理完了', {
+      todoCount: todos.length,
+    });
 
-    const startDateTime = createDateTime(targetDate, habit.startTime);
-    const endDateTime = habit.endTime
-      ? createDateTime(targetDate, habit.endTime)
-      : new Date(startDateTime.getTime() + 60 * 60 * 1000); // デフォルト1時間
-
-    const todo: Todo = {
-      name: habit.name,
-      startTime: startDateTime,
-      endTime: endDateTime,
-      profiles: [...habit.profiles],
-      tobes: [...habit.tobes],
-      content: habit.content
+    return {
+      success: true,
+      data: todos,
     };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    logger.error(
+      'convertHabitsToTodos: 変換処理に失敗',
+      error instanceof Error ? error : new Error('Unknown error'),
+      {
+        habitCount: habits.length,
+      }
+    );
 
-    todos.push(todo);
+    return {
+      success: false,
+      error: errorMessage,
+    };
   }
-
-  return todos;
 }
 
 /**
- * 現在の週の日付を取得する
- * @returns Day enumをキーとした日付マップ
+ * 単一のHabitをTodo配列に変換する（メインAPI）
+ * @param habit - 変換対象のHabit
+ * @returns 変換結果
  */
-function getCurrentWeekDates(): Record<Day, Date> {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
+export async function convertHabitToTodos(
+  habit: Habit
+): Promise<ConvertResult<Todo[]>> {
+  const logger = ServiceFactory.getService<ILogger>('logger');
 
-  // 月曜日を週の開始とする
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - dayOfWeek + 1);
+  try {
+    logger.info('convertHabitToTodos: 単一Habit変換処理開始', {
+      habitName: habit.name,
+    });
 
-  return {
-    [Day.MONDAY]: new Date(monday),
-    [Day.TUESDAY]: new Date(monday.getTime() + 24 * 60 * 60 * 1000),
-    [Day.WEDNESDAY]: new Date(monday.getTime() + 2 * 24 * 60 * 60 * 1000),
-    [Day.THURSDAY]: new Date(monday.getTime() + 3 * 24 * 60 * 60 * 1000),
-    [Day.FRIDAY]: new Date(monday.getTime() + 4 * 24 * 60 * 60 * 1000),
-    [Day.SATURDAY]: new Date(monday.getTime() + 5 * 24 * 60 * 60 * 1000),
-    [Day.SUNDAY]: new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000),
-  };
+    // 入力値のバリデーション
+    if (!habit || typeof habit.name !== 'string') {
+      throw new Error('有効なHabitオブジェクトが必要です');
+    }
+
+    // Repository層を使用して変換処理を実行
+    const repository =
+      ServiceFactory.getService<ConvertRepository>('convertRepository');
+    const todos = await repository.convertHabitToTodos(habit);
+
+    logger.info('convertHabitToTodos: 単一Habit変換処理完了', {
+      habitName: habit.name,
+      todoCount: todos.length,
+    });
+
+    return {
+      success: true,
+      data: todos,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    logger.error(
+      'convertHabitToTodos: 単一Habit変換処理に失敗',
+      error instanceof Error ? error : new Error('Unknown error'),
+      {
+        habitName: habit?.name || 'Unknown',
+      }
+    );
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
 }
 
 /**
- * 指定された日付と時間文字列からDateオブジェクトを作成する
- * @param date - 基準日付
- * @param timeString - HH:MM形式の時間文字列
- * @returns 作成されたDateオブジェクト
+ * キャッシュをクリアする
  */
-function createDateTime(date: Date, timeString: string): Date {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const dateTime = new Date(date);
-  dateTime.setHours(hours, minutes, 0, 0);
-  return dateTime;
+export function clearConvertCache(): void {
+  const logger = ServiceFactory.getService<ILogger>('logger');
+
+  try {
+    const repository =
+      ServiceFactory.getService<ConvertRepository>('convertRepository');
+    repository.clearCache();
+
+    logger.info('clearConvertCache: キャッシュクリア完了');
+  } catch (error) {
+    logger.error(
+      'clearConvertCache: キャッシュクリアに失敗',
+      error instanceof Error ? error : new Error('Unknown error')
+    );
+  }
+}
+
+/**
+ * キャッシュ統計を取得する
+ */
+export function getConvertCacheStats() {
+  const logger = ServiceFactory.getService<ILogger>('logger');
+
+  try {
+    const repository =
+      ServiceFactory.getService<ConvertRepository>('convertRepository');
+    const stats = repository.getCacheStats();
+
+    logger.debug('getConvertCacheStats: キャッシュ統計取得完了', { stats });
+    return stats;
+  } catch (error) {
+    logger.error(
+      'getConvertCacheStats: キャッシュ統計取得に失敗',
+      error instanceof Error ? error : new Error('Unknown error')
+    );
+    return null;
+  }
 }
