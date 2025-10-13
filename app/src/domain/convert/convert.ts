@@ -1,5 +1,5 @@
 import { Habit, Todo } from '../model';
-import { ServiceFactory } from '../fetch/factories/ServiceFactory';
+import { ServiceFactory } from '../../shared/factories/ServiceFactory';
 import { ConvertRepository } from './repositories/ConvertRepository';
 import { ILogger } from '../../shared/logger/Logger';
 

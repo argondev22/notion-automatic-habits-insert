@@ -1,4 +1,4 @@
-import { ServiceFactory } from './domain/fetch/factories/ServiceFactory';
+import { ServiceFactory } from './shared/factories/ServiceFactory';
 import { ILogger } from './shared/logger/Logger';
 import { fetchHabits } from './domain/fetch/fetch';
 import { convertHabitsToTodos } from './domain/convert/convert';
