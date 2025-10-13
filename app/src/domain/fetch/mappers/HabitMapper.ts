@@ -267,7 +267,12 @@ export class HabitMapper {
     startTime: string;
     endTime: string | null;
   } {
+    this.logger.info('HabitMapper: 時間範囲解析開始', {
+      originalTime: time,
+    });
+
     if (!time || time.trim().length === 0) {
+      this.logger.info('HabitMapper: 空の時間文字列');
       return { startTime: '', endTime: null };
     }
 
@@ -283,14 +288,20 @@ export class HabitMapper {
       const startTime = `${startHour}:${startMinute}`;
       const endTime = `${endHour}:${endMinute}`;
 
-      this.logger.debug(
-        `時間範囲を検出: "${time}" -> 開始時間: ${startTime}, 終了時間: ${endTime}`
-      );
+      this.logger.info('HabitMapper: 時間範囲を検出', {
+        originalTime: time,
+        startTime,
+        endTime,
+      });
       return { startTime, endTime };
     }
 
     // 単一時間の場合は開始時間として扱う
     const normalizedTime = this.normalizeTimeFormat(time);
+    this.logger.info('HabitMapper: 単一時間として処理', {
+      originalTime: time,
+      normalizedTime,
+    });
     return { startTime: normalizedTime, endTime: null };
   }
 
