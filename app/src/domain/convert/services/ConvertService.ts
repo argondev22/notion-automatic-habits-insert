@@ -1,0 +1,257 @@
+import { Habit, Todo, Day } from '../../model';
+import { ILogger } from '../../../shared/logger/Logger';
+import { ICache } from '../../../shared/cache/Cache';
+import { RetryManager } from '../../../shared/retry/RetryManager';
+import { ConvertMapper } from '../mappers/ConvertMapper';
+
+/**
+ * ConvertService - サービス層
+ * HabitからTodoへの変換ビジネスロジックを管理
+ */
+export class ConvertService {
+  constructor(
+    private mapper: ConvertMapper,
+    private logger: ILogger,
+    private cache: ICache<Date>,
+    private retryManager: RetryManager
+  ) {}
+
+  /**
+   * Habit配列をTodo配列に変換する
+   * @param habits - 変換対象のHabit配列
+   * @returns 変換されたTodo配列
+   */
+  async convertHabitsToTodos(habits: Habit[]): Promise<Todo[]> {
+    this.logger.info('ConvertService: Habit配列の変換処理開始', {
+      habitCount: habits.length,
+    });
+
+    const todos: Todo[] = [];
+
+    for (const habit of habits) {
+      try {
+        const habitTodos = await this.convertHabitToTodos(habit);
+        todos.push(...habitTodos);
+      } catch (error) {
+        this.logger.error(
+          'ConvertService: 単一Habitの変換に失敗',
+          error instanceof Error ? error : new Error('Unknown error'),
+          {
+            habitName: habit.name,
+          }
+        );
+        // 個別のHabit変換失敗は全体の処理を止めない
+        continue;
+      }
+    }
+
+    this.logger.info('ConvertService: Habit配列の変換処理完了', {
+      todoCount: todos.length,
+    });
+
+    return todos;
+  }
+
+  /**
+   * 単一のHabitをTodo配列に変換する
+   * @param habit - 変換対象のHabit
+   * @returns 変換されたTodo配列
+   */
+  async convertHabitToTodos(habit: Habit): Promise<Todo[]> {
+    this.logger.info('ConvertService: 単一Habitの変換処理開始', {
+      habitName: habit.name,
+    });
+
+    const todos: Todo[] = [];
+
+    try {
+      // 現在の週の日付を取得（キャッシュ付き）
+      const weekDates = await this.getCurrentWeekDates();
+
+      for (const day of habit.days) {
+        const targetDate = weekDates[day];
+        if (!targetDate) {
+          this.logger.warn('ConvertService: 対象日付が見つかりません', {
+            day,
+            habitName: habit.name,
+          });
+          continue;
+        }
+
+        const todo = await this.createTodoFromHabit(habit, targetDate);
+        todos.push(todo);
+      }
+
+      this.logger.info('ConvertService: 単一Habitの変換処理完了', {
+        habitName: habit.name,
+        todoCount: todos.length,
+      });
+
+      return todos;
+    } catch (error) {
+      this.logger.error(
+        'ConvertService: 単一Habitの変換に失敗',
+        error instanceof Error ? error : new Error('Unknown error'),
+        {
+          habitName: habit.name,
+        }
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Habitと日付からTodoを作成する
+   * @param habit - 元のHabit
+   * @param targetDate - 対象日付
+   * @returns 作成されたTodo
+   */
+  private async createTodoFromHabit(
+    habit: Habit,
+    targetDate: Date
+  ): Promise<Todo> {
+    try {
+      const startDateTime = this.createDateTime(targetDate, habit.startTime);
+      const endDateTime = habit.endTime
+        ? this.createDateTime(targetDate, habit.endTime)
+        : new Date(startDateTime.getTime() + 60 * 60 * 1000); // デフォルト1時間
+
+      const todo: Todo = {
+        name: habit.name,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        profiles: [...habit.profiles],
+        tobes: [...habit.tobes],
+        content: habit.content,
+      };
+
+      this.logger.debug('ConvertService: Todo作成完了', {
+        habitName: habit.name,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+      });
+
+      return todo;
+    } catch (error) {
+      this.logger.error(
+        'ConvertService: Todo作成に失敗',
+        error instanceof Error ? error : new Error('Unknown error'),
+        {
+          habitName: habit.name,
+          targetDate: targetDate.toISOString(),
+        }
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * 現在の週の日付を取得する（キャッシュ付き）
+   * @returns Day enumをキーとした日付マップ
+   */
+  private async getCurrentWeekDates(): Promise<Record<Day, Date>> {
+    const cacheKey = 'currentWeekDates';
+
+    try {
+      // キャッシュから取得を試行
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        this.logger.debug('ConvertService: キャッシュから週の日付を取得');
+        return this.reconstructWeekDates(cached);
+      }
+
+      // リトライ機能付きで週の日付を計算
+      const weekDates = await this.retryManager.executeWithRetry(async () => {
+        return this.calculateCurrentWeekDates();
+      }, '週の日付計算');
+
+      // 月曜日の日付をキャッシュに保存
+      this.cache.set(cacheKey, weekDates[Day.MONDAY]);
+
+      this.logger.debug('ConvertService: 週の日付を計算してキャッシュに保存');
+      return weekDates;
+    } catch (error) {
+      this.logger.error(
+        'ConvertService: 週の日付取得に失敗',
+        error instanceof Error ? error : new Error('Unknown error')
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * 現在の週の日付を計算する
+   * @returns Day enumをキーとした日付マップ
+   */
+  private calculateCurrentWeekDates(): Record<Day, Date> {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+
+    // 月曜日を週の開始とする
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dayOfWeek + 1);
+
+    return {
+      [Day.MONDAY]: new Date(monday),
+      [Day.TUESDAY]: new Date(monday.getTime() + 24 * 60 * 60 * 1000),
+      [Day.WEDNESDAY]: new Date(monday.getTime() + 2 * 24 * 60 * 60 * 1000),
+      [Day.THURSDAY]: new Date(monday.getTime() + 3 * 24 * 60 * 60 * 1000),
+      [Day.FRIDAY]: new Date(monday.getTime() + 4 * 24 * 60 * 60 * 1000),
+      [Day.SATURDAY]: new Date(monday.getTime() + 5 * 24 * 60 * 60 * 1000),
+      [Day.SUNDAY]: new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000),
+    };
+  }
+
+  /**
+   * キャッシュされた月曜日の日付から週の日付を再構築する
+   * @param mondayDate - キャッシュされた月曜日の日付
+   * @returns Day enumをキーとした日付マップ
+   */
+  private reconstructWeekDates(mondayDate: Date): Record<Day, Date> {
+    const monday = new Date(mondayDate);
+    return {
+      [Day.MONDAY]: new Date(monday),
+      [Day.TUESDAY]: new Date(monday.getTime() + 24 * 60 * 60 * 1000),
+      [Day.WEDNESDAY]: new Date(monday.getTime() + 2 * 24 * 60 * 60 * 1000),
+      [Day.THURSDAY]: new Date(monday.getTime() + 3 * 24 * 60 * 60 * 1000),
+      [Day.FRIDAY]: new Date(monday.getTime() + 4 * 24 * 60 * 60 * 1000),
+      [Day.SATURDAY]: new Date(monday.getTime() + 5 * 24 * 60 * 60 * 1000),
+      [Day.SUNDAY]: new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000),
+    };
+  }
+
+  /**
+   * 指定された日付と時間文字列からDateオブジェクトを作成する
+   * @param date - 基準日付
+   * @param timeString - HH:MM形式の時間文字列
+   * @returns 作成されたDateオブジェクト
+   */
+  private createDateTime(date: Date, timeString: string): Date {
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+
+      if (isNaN(hours) || isNaN(minutes)) {
+        throw new Error(`無効な時間形式: ${timeString}`);
+      }
+
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        throw new Error(`時間が範囲外: ${timeString}`);
+      }
+
+      const dateTime = new Date(date);
+      dateTime.setHours(hours, minutes, 0, 0);
+
+      return dateTime;
+    } catch (error) {
+      this.logger.error(
+        'ConvertService: 日時作成に失敗',
+        error instanceof Error ? error : new Error('Unknown error'),
+        {
+          date: date.toISOString(),
+          timeString,
+        }
+      );
+      throw error;
+    }
+  }
+}
