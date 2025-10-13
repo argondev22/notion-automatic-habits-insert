@@ -1,23 +1,245 @@
 import { Todo } from '../model';
-// import { convertToTodosDatabase } from './convertToTodosDatabase';
-import { getTodosDatabaseId } from './getTodosDatabaseId';
-// import { insertTodosToDatabase } from "./insertTodosToDatabase";
+import { EnvironmentConfig } from '../../shared/config/EnvironmentConfig';
+import { ServiceFactory } from '../../shared/factories/ServiceFactory';
+import { InsertRepository } from './repositories/InsertRepository';
+import { AppError } from '../../shared/errors/AppError';
+import { LoggerFactory } from '../../shared/logger/Logger';
 
-export async function insertTodos(_todos: Todo[]): Promise<void> {
+/**
+ * 結果の型定義
+ */
+export interface InsertResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  metadata?: {
+    timestamp: Date;
+    executionTime: number;
+    cacheHit?: boolean;
+  };
+}
+
+/**
+ * Todoデータの挿入結果
+ */
+export type InsertTodosResult = InsertResult<Todo[]>;
+
+/**
+ * 単一Todoデータの挿入結果
+ */
+export type InsertTodoResult = InsertResult<Todo>;
+
+/**
+ * メインのTodoデータ挿入関数
+ */
+export async function insertTodos(todos: Todo[]): Promise<InsertTodosResult> {
+  const logger = LoggerFactory.getLogger();
+  const startTime = Date.now();
+
   try {
-    // TodoモデルをDB_TODOSのデータに変換
-    // const _results = convertToTodosDatabase(todos);
-
-    // DB_TODOSのIDを取得
-    const todosDatabaseId = getTodosDatabaseId();
+    // データベースIDを取得
+    const todosDatabaseId = EnvironmentConfig.getTodosDatabaseId();
     if (!todosDatabaseId) {
-      console.log('データベースIDが指定されていません');
-      return;
+      const errorMessage = 'データベースIDが指定されていません';
+      logger.warn(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
+      };
     }
 
-    // DB_TODOSにデータを追加
-    // await insertTodosToDatabase(todosDatabaseId, results);
+    // サービスファクトリーを初期化
+    ServiceFactory.initialize();
+    ServiceFactory.setDatabaseId(todosDatabaseId);
+
+    // リポジトリを取得
+    const insertRepository =
+      ServiceFactory.getService<InsertRepository>('insertRepository');
+
+    logger.info(`データベース ${todosDatabaseId} にTodosを挿入開始`);
+
+    // データを挿入
+    const insertedTodos = await insertRepository.insertTodos(todos, todosDatabaseId);
+
+    logger.info(`${insertedTodos.length}個のTodosが正常に挿入されました`);
+
+    return {
+      success: true,
+      data: insertedTodos,
+      metadata: {
+        timestamp: new Date(),
+        executionTime: Date.now() - startTime,
+      },
+    };
   } catch (error) {
-    console.error(error);
+    const executionTime = Date.now() - startTime;
+    logger.error('Todos挿入エラー', error as Error, { executionTime });
+
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: error.message,
+        metadata: {
+          timestamp: new Date(),
+          executionTime,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: `不明なエラーが発生しました: ${error}`,
+      metadata: {
+        timestamp: new Date(),
+        executionTime,
+      },
+    };
+  }
+}
+
+/**
+ * 特定のTodoデータを挿入
+ */
+export async function insertTodo(
+  todo: Todo
+): Promise<InsertTodoResult> {
+  const logger = LoggerFactory.getLogger();
+  const startTime = Date.now();
+
+  try {
+    if (!todo || typeof todo.name !== 'string') {
+      const errorMessage = '有効なTodoオブジェクトが必要です';
+      logger.warn(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
+      };
+    }
+
+    // データベースIDを取得
+    const todosDatabaseId = EnvironmentConfig.getTodosDatabaseId();
+    if (!todosDatabaseId) {
+      const errorMessage = 'データベースIDが指定されていません';
+      logger.warn(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+        metadata: {
+          timestamp: new Date(),
+          executionTime: Date.now() - startTime,
+        },
+      };
+    }
+
+    // サービスファクトリーを初期化
+    ServiceFactory.initialize();
+    ServiceFactory.setDatabaseId(todosDatabaseId);
+
+    // リポジトリを取得
+    const insertRepository =
+      ServiceFactory.getService<InsertRepository>('insertRepository');
+
+    logger.info(`Todo ${todo.name} をデータベースに挿入開始`);
+
+    // データを挿入
+    const insertedTodo = await insertRepository.insertTodo(todo, todosDatabaseId);
+
+    logger.info(`Todo ${todo.name} が正常に挿入されました`);
+
+    return {
+      success: true,
+      data: insertedTodo,
+      metadata: {
+        timestamp: new Date(),
+        executionTime: Date.now() - startTime,
+      },
+    };
+  } catch (error) {
+    const executionTime = Date.now() - startTime;
+    logger.error('Todo挿入エラー', error as Error, { todoName: todo?.name, executionTime });
+
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: error.message,
+        metadata: {
+          timestamp: new Date(),
+          executionTime,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: `不明なエラーが発生しました: ${error}`,
+      metadata: {
+        timestamp: new Date(),
+        executionTime,
+      },
+    };
+  }
+}
+
+/**
+ * キャッシュをクリア
+ */
+export function clearInsertCache(): void {
+  ServiceFactory.clearAllCaches();
+  LoggerFactory.getLogger().info('すべてのキャッシュをクリアしました');
+}
+
+/**
+ * キャッシュ統計を取得
+ */
+export function getInsertCacheStats() {
+  return ServiceFactory.getCacheStats();
+}
+
+/**
+ * 設定を更新
+ */
+export function updateInsertConfig(config: any): void {
+  ServiceFactory.updateConfig(config);
+  LoggerFactory.getLogger().info('設定を更新しました', { config });
+}
+
+/**
+ * ヘルスチェック
+ */
+export async function insertHealthCheck(): Promise<{
+  status: 'healthy' | 'unhealthy';
+  details: any;
+}> {
+  try {
+    ServiceFactory.initialize();
+    // const _logger = ServiceFactory.getService<ILogger>('logger');
+
+    return {
+      status: 'healthy',
+      details: {
+        timestamp: new Date().toISOString(),
+        services: {
+          logger: 'initialized',
+          cache: 'initialized',
+          retryManager: 'initialized',
+        },
+      },
+    };
+  } catch (error) {
+    return {
+      status: 'unhealthy',
+      details: {
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+    };
   }
 }

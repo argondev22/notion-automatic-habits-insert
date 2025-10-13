@@ -1,5 +1,5 @@
-import { Habit, Day } from '../../domain/model';
-import { FetchError, ERROR_CODES } from '../errors/FetchError';
+import { Habit, Day, Todo } from '../../domain/model';
+import { AppError, ERROR_CODES } from '../errors/AppError';
 import { ConsoleLogger } from '../logger/Logger';
 
 /**
@@ -121,6 +121,67 @@ export class HabitValidator implements IValidator<Habit> {
 }
 
 /**
+ * Todoバリデーター
+ */
+export class TodoValidator implements IValidator<Todo> {
+  private logger = new ConsoleLogger();
+
+  validate(todo: Todo): ValidationResult {
+    const errors: string[] = [];
+
+    // 名前のバリデーション
+    if (!todo.name || todo.name.trim().length === 0) {
+      errors.push('Todo名は必須です');
+    } else if (todo.name.length > 100) {
+      errors.push('Todo名は100文字以内である必要があります');
+    }
+
+    // 開始時間のバリデーション
+    if (!todo.startTime || !(todo.startTime instanceof Date)) {
+      errors.push('開始時間は有効なDateオブジェクトである必要があります');
+    }
+
+    // 終了時間のバリデーション
+    if (!todo.endTime || !(todo.endTime instanceof Date)) {
+      errors.push('終了時間は有効なDateオブジェクトである必要があります');
+    }
+
+    // 開始時間と終了時間の整合性チェック
+    if (todo.startTime && todo.endTime && todo.startTime >= todo.endTime) {
+      errors.push('開始時間は終了時間より早い必要があります');
+    }
+
+    // プロファイルのバリデーション
+    if (!Array.isArray(todo.profiles)) {
+      errors.push('プロファイルは配列である必要があります');
+    } else if (
+      todo.profiles.some(
+        (profile: string) =>
+          typeof profile !== 'string' || profile.trim().length === 0
+      )
+    ) {
+      errors.push('プロファイルIDは空でない文字列である必要があります');
+    }
+
+    // TOBEのバリデーション
+    if (!Array.isArray(todo.tobes)) {
+      errors.push('TOBEは配列である必要があります');
+    } else if (
+      todo.tobes.some(
+        (tobe: string) => typeof tobe !== 'string' || tobe.trim().length === 0
+      )
+    ) {
+      errors.push('TOBE IDは空でない文字列である必要があります');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+}
+
+/**
  * データベースIDバリデーター
  */
 export class DatabaseIdValidator implements IValidator<string> {
@@ -155,10 +216,15 @@ export class DatabaseIdValidator implements IValidator<string> {
  */
 export class ValidatorFactory {
   private static habitValidator = new HabitValidator();
+  private static todoValidator = new TodoValidator();
   private static databaseIdValidator = new DatabaseIdValidator();
 
   static getHabitValidator(): IValidator<Habit> {
     return this.habitValidator;
+  }
+
+  static getTodoValidator(): IValidator<Todo> {
+    return this.todoValidator;
   }
 
   static getDatabaseIdValidator(): IValidator<string> {
@@ -166,12 +232,12 @@ export class ValidatorFactory {
   }
 
   /**
-   * Habitデータをバリデーションし、エラーがある場合はFetchErrorを投げる
+   * Habitデータをバリデーションし、エラーがある場合はAppErrorを投げる
    */
   static validateHabit(habit: Habit): void {
     const result = this.habitValidator.validate(habit);
     if (!result.isValid) {
-      throw new FetchError(
+      throw new AppError(
         `Habitデータのバリデーションに失敗しました: ${result.errors.join(', ')}`,
         ERROR_CODES.VALIDATION_FAILED,
         { habit, errors: result.errors }
@@ -180,12 +246,26 @@ export class ValidatorFactory {
   }
 
   /**
-   * データベースIDをバリデーションし、エラーがある場合はFetchErrorを投げる
+   * Todoデータをバリデーションし、エラーがある場合はAppErrorを投げる
+   */
+  static validateTodo(todo: Todo): void {
+    const result = this.todoValidator.validate(todo);
+    if (!result.isValid) {
+      throw new AppError(
+        `Todoデータのバリデーションに失敗しました: ${result.errors.join(', ')}`,
+        ERROR_CODES.VALIDATION_FAILED,
+        { todo, errors: result.errors }
+      );
+    }
+  }
+
+  /**
+   * データベースIDをバリデーションし、エラーがある場合はAppErrorを投げる
    */
   static validateDatabaseId(databaseId: string): void {
     const result = this.databaseIdValidator.validate(databaseId);
     if (!result.isValid) {
-      throw new FetchError(
+      throw new AppError(
         `データベースIDのバリデーションに失敗しました: ${result.errors.join(', ')}`,
         ERROR_CODES.INVALID_DATABASE_ID,
         { databaseId, errors: result.errors }

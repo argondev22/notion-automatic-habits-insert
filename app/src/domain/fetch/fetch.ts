@@ -2,7 +2,7 @@ import { Habit } from '../model';
 import { EnvironmentConfig } from '../../shared/config/EnvironmentConfig';
 import { ServiceFactory } from '../../shared/factories/ServiceFactory';
 import { HabitRepository } from './repositories/HabitRepository';
-import { FetchError } from '../../shared/errors/FetchError';
+import { AppError } from '../../shared/errors/AppError';
 import { LoggerFactory } from '../../shared/logger/Logger';
 
 /**
@@ -79,7 +79,7 @@ export async function fetchHabits(): Promise<FetchHabitsResult> {
     const executionTime = Date.now() - startTime;
     logger.error('Habits取得エラー', error as Error, { executionTime });
 
-    if (error instanceof FetchError) {
+    if (error instanceof AppError) {
       return {
         success: false,
         error: error.message,
@@ -182,7 +182,7 @@ export async function fetchHabitById(
     const executionTime = Date.now() - startTime;
     logger.error('Habit取得エラー', error as Error, { pageId, executionTime });
 
-    if (error instanceof FetchError) {
+    if (error instanceof AppError) {
       return {
         success: false,
         error: error.message,

@@ -5,7 +5,7 @@ import {
   isPartialHabitPageObjectResponse,
   BlockObjectResponse,
 } from '../../../lib/notionhq/type';
-import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ValidatorFactory } from '../../../shared/validation/Validator';
 
@@ -52,11 +52,11 @@ export class HabitMapper {
         pageId: page.id,
       });
 
-      if (error instanceof FetchError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
-      throw new FetchError(
+      throw new AppError(
         `ページ ${page.id} の変換に失敗しました: ${error}`,
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageId: page.id, originalError: error }
@@ -72,7 +72,7 @@ export class HabitMapper {
     contents: BlockObjectResponse[]
   ): Promise<Habit[]> {
     if (pages.length !== contents.length) {
-      throw new FetchError(
+      throw new AppError(
         'ページ数とコンテンツ数が一致しません',
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageCount: pages.length, contentCount: contents.length }
@@ -151,7 +151,7 @@ export class HabitMapper {
         content: content,
       };
     } else {
-      throw new FetchError(
+      throw new AppError(
         `ページ ${page.id} のプロパティが期待される形式ではありません`,
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageId: page.id, pageObject: page.object }
@@ -300,7 +300,7 @@ export class HabitMapper {
   private convertStringToDay(dayString: string): Day {
     const day = HabitMapper.DAY_MAP[dayString.toUpperCase()];
     if (day === undefined) {
-      throw new FetchError(
+      throw new AppError(
         `無効な曜日: ${dayString}`,
         ERROR_CODES.VALIDATION_FAILED,
         { dayString, validDays: Object.keys(HabitMapper.DAY_MAP) }

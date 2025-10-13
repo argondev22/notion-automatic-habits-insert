@@ -1,7 +1,7 @@
 /**
- * カスタムエラークラス - より詳細なエラー情報を提供
+ * アプリケーションエラークラス - より詳細なエラー情報を提供
  */
-export class FetchError extends Error {
+export class AppError extends Error {
   public readonly code: string;
   public readonly context?: Record<string, any>;
   public readonly timestamp: Date;
@@ -14,7 +14,7 @@ export class FetchError extends Error {
     originalError?: Error
   ) {
     super(message);
-    this.name = 'FetchError';
+    this.name = 'AppError';
     this.code = code;
     this.context = context;
     this.timestamp = new Date();
@@ -52,6 +52,7 @@ export const ERROR_CODES = {
   PROPERTY_MAPPING_FAILED: 'PROPERTY_MAPPING_FAILED',
   CONTENT_FETCH_FAILED: 'CONTENT_FETCH_FAILED',
   VALIDATION_FAILED: 'VALIDATION_FAILED',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
   NOTION_API_ERROR: 'NOTION_API_ERROR',
   NETWORK_ERROR: 'NETWORK_ERROR',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',

@@ -2,7 +2,7 @@ import { Habit } from '../../model';
 import { PageResponse } from '../../../lib/notionhq/type';
 import { NotionDatabaseService } from '../services/NotionDatabaseService';
 import { HabitMapper } from '../mappers/HabitMapper';
-import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ICache } from '../../../shared/cache/Cache';
 
@@ -80,11 +80,11 @@ export class HabitRepository {
         databaseId,
       });
 
-      if (error instanceof FetchError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
-      throw new FetchError(
+      throw new AppError(
         `Habitデータの取得に失敗しました: ${error}`,
         ERROR_CODES.DATABASE_NOT_FOUND,
         { databaseId, originalError: error }
@@ -129,11 +129,11 @@ export class HabitRepository {
         databaseId,
       });
 
-      if (error instanceof FetchError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
-      throw new FetchError(
+      throw new AppError(
         `ページID ${pageId} の取得に失敗しました: ${error}`,
         ERROR_CODES.PAGE_NOT_FOUND,
         { pageId, databaseId, originalError: error }
