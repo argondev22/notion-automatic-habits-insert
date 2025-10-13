@@ -28,7 +28,9 @@ export class InsertMapper {
         NAME: {
           title: [
             {
-              plain_text: todo.name,
+              text: {
+                content: todo.name,
+              },
             },
           ],
         },
@@ -212,12 +214,12 @@ export class InsertMapper {
    * @returns 抽出されたテキスト
    */
   private extractTitle(
-    titleArray: Array<{ plain_text: string }> | undefined
+    titleArray: Array<{ text: { content: string } }> | undefined
   ): string {
     if (!titleArray || titleArray.length === 0) {
       return '';
     }
-    return titleArray[0]?.plain_text || '';
+    return titleArray[0]?.text?.content || '';
   }
 
   /**
