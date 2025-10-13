@@ -111,10 +111,26 @@ export class ConvertService {
     targetDate: Date
   ): Promise<Todo> {
     try {
+      this.logger.info('ConvertService: Habit時間データ確認', {
+        habitName: habit.name,
+        startTime: habit.startTime,
+        endTime: habit.endTime,
+        targetDate: targetDate.toISOString(),
+      });
+
       const startDateTime = this.createDateTime(targetDate, habit.startTime);
       const endDateTime = habit.endTime
-        ? this.createDateTime(targetDate, habit.endTime)
+        ? this.createEndDateTime(startDateTime, habit.endTime, targetDate)
         : new Date(startDateTime.getTime() + 60 * 60 * 1000); // デフォルト1時間
+
+      this.logger.info('ConvertService: 時間比較確認', {
+        habitName: habit.name,
+        startDateTime: startDateTime.toISOString(),
+        endDateTime: endDateTime.toISOString(),
+        startTimeMs: startDateTime.getTime(),
+        endTimeMs: endDateTime.getTime(),
+        isStartBeforeEnd: startDateTime < endDateTime,
+      });
 
       const todo: Todo = {
         name: habit.name,
@@ -249,6 +265,57 @@ export class ConvertService {
         {
           date: date.toISOString(),
           timeString,
+        }
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * 日をまたぐ時間範囲を考慮して終了時間を作成する
+   * @param startDateTime - 開始時間
+   * @param endTimeString - 終了時間文字列（HH:MM形式）
+   * @param targetDate - 対象日付
+   * @returns 作成された終了時間Dateオブジェクト
+   */
+  private createEndDateTime(
+    startDateTime: Date,
+    endTimeString: string,
+    targetDate: Date
+  ): Date {
+    try {
+      const [hours, minutes] = endTimeString.split(':').map(Number);
+
+      if (isNaN(hours) || isNaN(minutes)) {
+        throw new Error(`無効な時間形式: ${endTimeString}`);
+      }
+
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        throw new Error(`時間が範囲外: ${endTimeString}`);
+      }
+
+      // 終了時間の日付を決定
+      let endDate = new Date(targetDate);
+      endDate.setHours(hours, minutes, 0, 0);
+
+      // 終了時間が開始時間より前の場合（日をまたぐ場合）、翌日に設定
+      if (endDate <= startDateTime) {
+        endDate.setDate(endDate.getDate() + 1);
+        this.logger.debug('ConvertService: 日をまたぐ時間範囲を検出', {
+          startTime: startDateTime.toISOString(),
+          endTime: endDate.toISOString(),
+        });
+      }
+
+      return endDate;
+    } catch (error) {
+      this.logger.error(
+        'ConvertService: 終了時間作成に失敗',
+        error instanceof Error ? error : new Error('Unknown error'),
+        {
+          startDateTime: startDateTime.toISOString(),
+          endTimeString,
+          targetDate: targetDate.toISOString(),
         }
       );
       throw error;
