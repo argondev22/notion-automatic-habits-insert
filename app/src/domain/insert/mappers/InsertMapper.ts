@@ -1,5 +1,5 @@
 import { Todo } from '../../model';
-import { TodoProperties, PageResponse } from '../../../lib/notionhq/type';
+import { TodoProperties, PageResponse, BlockObjectResponse } from '../../../lib/notionhq/type';
 import { notionClient } from '../../../lib/notionhq/init';
 import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
@@ -104,19 +104,30 @@ export class InsertMapper {
    * Notionデータベースにページを作成する
    * @param databaseId - データベースID
    * @param properties - ページのプロパティ
+   * @param content - ページのコンテンツ（オプション）
    * @returns 作成されたページ
    */
   async createNotionPage(
     databaseId: string,
-    properties: TodoProperties
+    properties: TodoProperties,
+    content?: BlockObjectResponse
   ): Promise<PageResponse> {
     try {
       this.logger.debug(`データベース ${databaseId} にページを作成中`);
 
-      const response = await notionClient.pages.create({
+      // mention要素を含むコンテンツの場合はスキップ
+      if (content && this.hasMentionElement(content)) {
+        this.logger.warn(`コンテンツにmention要素が含まれているため、コンテンツなしでページを作成します`);
+        content = undefined;
+      }
+
+      const pageData: any = {
         parent: { database_id: databaseId },
         properties: properties as any,
-      });
+        children: content as any,
+      };
+
+      const response = await notionClient.pages.create(pageData);
 
       this.logger.debug(`データベース ${databaseId} にページを作成完了`, {
         pageId: response.id,
@@ -235,4 +246,36 @@ export class InsertMapper {
     }
     return relationArray.map(rel => rel.id);
   }
+
+
+  /**
+   * mention要素が含まれているかチェック
+   * @param content - チェック対象のコンテンツ
+   * @returns mention要素が含まれているかどうか
+   */
+  private hasMentionElement(content: any): boolean {
+    if (!content || typeof content !== 'object') {
+      return false;
+    }
+
+    // 直接mention要素があるかチェック
+    if (content.mention) {
+      return true;
+    }
+
+    // リッチテキスト配列をチェック
+    if (Array.isArray(content)) {
+      return content.some(item => this.hasMentionElement(item));
+    }
+
+    // 各プロパティを再帰的にチェック
+    for (const key in content) {
+      if (content.hasOwnProperty(key) && this.hasMentionElement(content[key])) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
 }

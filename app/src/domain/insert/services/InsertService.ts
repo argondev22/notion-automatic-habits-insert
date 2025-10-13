@@ -83,9 +83,9 @@ export class InsertService {
       // TodoをNotionデータベース用のプロパティに変換
       const properties = await this.mapper.mapToNotionProperties(todo);
 
-      // リトライ機能付きでNotion APIに挿入
+      // Notion APIに挿入
       const insertedPage = await this.retryManager.executeWithRetry(async () => {
-        return await this.mapper.createNotionPage(databaseId, properties);
+        return await this.mapper.createNotionPage(databaseId, properties, todo.content);
       }, `Todo ${todo.name} の挿入`);
 
       // 挿入されたTodoを返す
