@@ -10,11 +10,14 @@ import { ValidatorFactory } from '../../../shared/validation/Validator';
 import { NotionDatabaseService } from '../services/NotionDatabaseService';
 import { HabitMapper } from '../mappers/HabitMapper';
 import { HabitRepository } from '../repositories/HabitRepository';
+import { ConvertMapper } from '../../convert/mappers/ConvertMapper';
+import { ConvertService } from '../../convert/services/ConvertService';
+import { ConvertRepository } from '../../convert/repositories/ConvertRepository';
 import {
   DatabaseResponse,
   BlockObjectResponse,
 } from '../../../lib/notionhq/type';
-import { Habit } from '../../model';
+import { Habit, Todo } from '../../model';
 import { notionClient } from '../../../lib/notionhq/init';
 
 /**
@@ -47,6 +50,14 @@ export class ServiceFactory {
     this.container.register(
       'habitsCache',
       CacheFactory.getCache<Habit[]>('habits')
+    );
+    this.container.register(
+      'todosCache',
+      CacheFactory.getCache<Todo[]>('todos')
+    );
+    this.container.register(
+      'weekDatesCache',
+      CacheFactory.getCache<Date>('weekDates')
     );
 
     // リトライマネージャー
@@ -108,6 +119,43 @@ export class ServiceFactory {
       const cache = this.container.get<ICache<Habit[]>>('habitsCache');
 
       return new HabitRepository(databaseService, habitMapper, logger, cache);
+    });
+
+    // Convert関連のサービス
+    this.container.registerFactory('convertMapper', () => {
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      return new ConvertMapper(logger);
+    });
+
+    this.container.registerFactory('convertService', () => {
+      const convertMapper = this.container.get<ConvertMapper>('convertMapper');
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      const weekDatesCache = this.container.get<ICache<Date>>('weekDatesCache');
+      const retryManager = this.container.get<RetryManager>(
+        SERVICE_TOKENS.RETRY_MANAGER
+      );
+
+      return new ConvertService(
+        convertMapper,
+        logger,
+        weekDatesCache,
+        retryManager
+      );
+    });
+
+    this.container.registerFactory('convertRepository', () => {
+      const convertService =
+        this.container.get<ConvertService>('convertService');
+      const convertMapper = this.container.get<ConvertMapper>('convertMapper');
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      const todosCache = this.container.get<ICache<Todo[]>>('todosCache');
+
+      return new ConvertRepository(
+        convertService,
+        convertMapper,
+        logger,
+        todosCache
+      );
     });
   }
 
