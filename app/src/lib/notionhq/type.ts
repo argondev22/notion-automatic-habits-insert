@@ -59,7 +59,9 @@ export interface PartialHabitPageObjectResponse
 export interface TodoProperties {
   NAME: {
     title: Array<{
-      plain_text: string;
+      text: {
+        content: string;
+      };
     }>;
   };
   EXPECTED: {
