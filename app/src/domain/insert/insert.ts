@@ -1,4 +1,4 @@
-import { Todo } from '../model';
+import { Todo, Habit } from '../model';
 import { EnvironmentConfig } from '../../shared/config/EnvironmentConfig';
 import { ServiceFactory } from '../../shared/factories/ServiceFactory';
 import { InsertRepository } from './repositories/InsertRepository';
@@ -327,6 +327,108 @@ export async function insertHealthCheck(): Promise<{
       details: {
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
+      },
+    };
+  }
+}
+
+/**
+ * TodoをHabitの名前でマッチングして挿入し、リンクする
+ *
+ * @param todos - 挿入するTodo配列
+ * @param habits - マッチング用のHabit配列
+ * @returns 挿入されたTodoの配列とリンク統計
+ */
+export async function insertTodosWithHabitMatching(
+  todos: Todo[],
+  habits: Habit[]
+): Promise<
+  InsertResult<{
+    insertedTodos: Todo[];
+    linkedCount: number;
+    totalCount: number;
+  }>
+> {
+  const logger = LoggerFactory.getLogger();
+  const startTime = Date.now();
+
+  try {
+    // Habitの名前→IDのマッピングを作成
+    const habitNameToIdMap = new Map<string, string>();
+    for (const habit of habits) {
+      if (habit.id) {
+        habitNameToIdMap.set(habit.name, habit.id);
+      }
+    }
+
+    logger.info('Habit名前マッピングを作成', {
+      habitCount: habits.length,
+      mappedCount: habitNameToIdMap.size,
+    });
+
+    // 各Todoを個別に挿入し、同じ名前のHabitにリンク
+    const insertedTodos: Todo[] = [];
+    let linkedCount = 0;
+
+    for (const todo of todos) {
+      // Todoを挿入
+      const habitId = habitNameToIdMap.get(todo.name);
+      const habitIds = habitId ? [habitId] : [];
+
+      logger.info(`Todo ${todo.name} を挿入`, {
+        todoName: todo.name,
+        matchedHabitId: habitId,
+        willLink: habitIds.length > 0,
+      });
+
+      const insertResult = await insertTodo(todo, habitIds);
+
+      if (insertResult.success && insertResult.data) {
+        insertedTodos.push(insertResult.data);
+        if (habitIds.length > 0) {
+          linkedCount++;
+        }
+      } else {
+        logger.error(`Todo ${todo.name} の挿入に失敗`, undefined, {
+          error: insertResult.error,
+        });
+      }
+    }
+
+    logger.info('Todoの挿入とHabitリンクが完了', {
+      totalCount: todos.length,
+      insertedCount: insertedTodos.length,
+      linkedCount: linkedCount,
+    });
+
+    return {
+      success: true,
+      data: {
+        insertedTodos,
+        linkedCount,
+        totalCount: todos.length,
+      },
+      metadata: {
+        timestamp: new Date(),
+        executionTime: Date.now() - startTime,
+      },
+    };
+  } catch (error) {
+    logger.error(
+      'TodoのHabitマッチング挿入中にエラーが発生しました',
+      error instanceof Error ? error : new Error('Unknown error')
+    );
+    return {
+      success: false,
+      error:
+        error instanceof AppError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error occurred',
+      metadata: {
+        timestamp: new Date(),
+        executionTime: Date.now() - startTime,
       },
     };
   }
