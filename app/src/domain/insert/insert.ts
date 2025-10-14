@@ -31,8 +31,14 @@ export type InsertTodoResult = InsertResult<Todo>;
 
 /**
  * メインのTodoデータ挿入関数
+ * @param todos - 挿入するTodo配列
+ * @param habitIds - TodoをリンクするHabitページID配列（オプション）
+ *                   指定された場合、すべての挿入されたTodoが同じHabitページにリンクされます
  */
-export async function insertTodos(todos: Todo[]): Promise<InsertTodosResult> {
+export async function insertTodos(
+  todos: Todo[],
+  habitIds?: string[]
+): Promise<InsertTodosResult> {
   const logger = LoggerFactory.getLogger();
   const startTime = Date.now();
 
@@ -66,6 +72,37 @@ export async function insertTodos(todos: Todo[]): Promise<InsertTodosResult> {
     const insertedTodos = await insertRepository.insertTodos(todos, todosDatabaseId);
 
     logger.info(`${insertedTodos.length}個のTodosが正常に挿入されました`);
+
+    // Habitページへのリンクがある場合は実行
+    if (habitIds && habitIds.length > 0) {
+      logger.info(`${insertedTodos.length}個のTodoを${habitIds.length}個のHabitページにリンク開始`);
+
+      let linkedCount = 0;
+      let failedCount = 0;
+
+      for (const insertedTodo of insertedTodos) {
+        if (!insertedTodo.id) {
+          logger.warn(`Todo ${insertedTodo.name} にページIDが含まれていません`);
+          failedCount++;
+          continue;
+        }
+
+        try {
+          await insertRepository.linkTodoToHabits(insertedTodo.id, habitIds);
+          linkedCount++;
+        } catch (error) {
+          logger.error(`Todo ${insertedTodo.name} のHabitページへのリンクエラー`, error as Error, {
+            todoPageId: insertedTodo.id,
+            habitIds,
+          });
+          failedCount++;
+        }
+      }
+
+      logger.info(
+        `Habitページへのリンク完了: 成功=${linkedCount}, 失敗=${failedCount}`
+      );
+    }
 
     return {
       success: true,
@@ -103,9 +140,12 @@ export async function insertTodos(todos: Todo[]): Promise<InsertTodosResult> {
 
 /**
  * 特定のTodoデータを挿入
+ * @param todo - 挿入するTodoデータ
+ * @param habitIds - TodoをリンクするHabitページID配列（オプション）
  */
 export async function insertTodo(
-  todo: Todo
+  todo: Todo,
+  habitIds?: string[]
 ): Promise<InsertTodoResult> {
   const logger = LoggerFactory.getLogger();
   const startTime = Date.now();
@@ -153,6 +193,35 @@ export async function insertTodo(
     const insertedTodo = await insertRepository.insertTodo(todo, todosDatabaseId);
 
     logger.info(`Todo ${todo.name} が正常に挿入されました`);
+
+    // Habitページへのリンクがある場合は実行
+    if (habitIds && habitIds.length > 0) {
+      if (!insertedTodo.id) {
+        logger.error('挿入されたTodoにページIDが含まれていません');
+        return {
+          success: false,
+          error: '挿入されたTodoにページIDが含まれていません',
+          metadata: {
+            timestamp: new Date(),
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+
+      logger.info(`Todo ${todo.name} を${habitIds.length}個のHabitページにリンク開始`);
+
+      try {
+        await insertRepository.linkTodoToHabits(insertedTodo.id, habitIds);
+        logger.info(`Todo ${todo.name} のHabitページへのリンクが完了しました`);
+      } catch (error) {
+        logger.error('Habitページへのリンクエラー', error as Error, {
+          todoPageId: insertedTodo.id,
+          habitIds,
+        });
+        // リンクエラーは警告として扱い、Todo自体の挿入は成功として返す
+        logger.warn('Todo挿入は成功しましたが、Habitページへのリンクに失敗しました');
+      }
+    }
 
     return {
       success: true,
