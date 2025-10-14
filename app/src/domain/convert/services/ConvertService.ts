@@ -330,7 +330,7 @@ export class ConvertService {
       // 終了時間が開始時間より前の場合（日をまたぐ場合）、翌日に設定
       if (endDate <= startDateTime) {
         endDate.setDate(endDate.getDate() + 1);
-        this.logger.debug('ConvertService: 日をまたぐ時間範囲を検出', {
+        this.logger.info('ConvertService: 日をまたぐ時間範囲を検出', {
           startTime: startDateTime.toISOString(),
           endTime: endDate.toISOString(),
         });
