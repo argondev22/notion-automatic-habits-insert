@@ -1,6 +1,7 @@
 import { Habit, Todo, Day } from '../../model';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ValidatorFactory } from '../../../shared/validation/Validator';
+import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 
 /**
  * ConvertMapper - データ変換層
@@ -206,23 +207,35 @@ export class ConvertMapper {
    */
   private validateTodo(todo: Todo): void {
     if (!todo.name || todo.name.trim() === '') {
-      throw new Error('Todo名が空です');
+      throw new AppError('Todo名が空です', ERROR_CODES.VALIDATION_FAILED);
     }
 
     if (!todo.startTime || !todo.endTime) {
-      throw new Error('Todoの開始時間または終了時間が設定されていません');
+      throw new AppError(
+        'Todoの開始時間または終了時間が設定されていません',
+        ERROR_CODES.VALIDATION_FAILED
+      );
     }
 
     if (todo.startTime >= todo.endTime) {
-      throw new Error('Todoの開始時間が終了時間より後になっています');
+      throw new AppError(
+        'Todoの開始時間が終了時間より後になっています',
+        ERROR_CODES.VALIDATION_FAILED
+      );
     }
 
     if (!Array.isArray(todo.profiles)) {
-      throw new Error('Todoのprofilesが配列ではありません');
+      throw new AppError(
+        'Todoのprofilesが配列ではありません',
+        ERROR_CODES.VALIDATION_FAILED
+      );
     }
 
     if (!Array.isArray(todo.tobes)) {
-      throw new Error('Todoのtobesが配列ではありません');
+      throw new AppError(
+        'Todoのtobesが配列ではありません',
+        ERROR_CODES.VALIDATION_FAILED
+      );
     }
 
     this.logger.debug('ConvertMapper: Todoバリデーション完了', {
