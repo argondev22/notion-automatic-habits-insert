@@ -259,13 +259,13 @@ export class InsertMapper {
    * @param content - チェック対象のコンテンツ
    * @returns mention要素が含まれているかどうか
    */
-  private hasMentionElement(content: any): boolean {
+  private hasMentionElement(content: unknown): boolean {
     if (!content || typeof content !== 'object') {
       return false;
     }
 
     // 直接mention要素があるかチェック
-    if (content.mention) {
+    if ('mention' in content && content.mention) {
       return true;
     }
 
@@ -278,7 +278,7 @@ export class InsertMapper {
     for (const key in content) {
       if (
         Object.prototype.hasOwnProperty.call(content, key) &&
-        this.hasMentionElement(content[key])
+        this.hasMentionElement((content as Record<string, unknown>)[key])
       ) {
         return true;
       }
