@@ -76,7 +76,7 @@ export class InsertService {
     });
 
     // バリデーション
-    this.validateTodo(todo);
+    ValidatorFactory.validateTodo(todo);
     ValidatorFactory.validateDatabaseId(databaseId);
 
     try {
@@ -138,63 +138,7 @@ export class InsertService {
     }
 
     for (const todo of todos) {
-      this.validateTodo(todo);
-    }
-  }
-
-  /**
-   * 単一Todoのバリデーション
-   * @param todo - バリデーション対象のTodo
-   */
-  private validateTodo(todo: Todo): void {
-    if (!todo) {
-      throw new AppError(
-        'Todoオブジェクトが必要です',
-        ERROR_CODES.VALIDATION_FAILED
-      );
-    }
-
-    if (
-      !todo.name ||
-      typeof todo.name !== 'string' ||
-      todo.name.trim() === ''
-    ) {
-      throw new AppError('Todoの名前が必要です', ERROR_CODES.VALIDATION_FAILED);
-    }
-
-    if (!todo.startTime || !(todo.startTime instanceof Date)) {
-      throw new AppError(
-        'Todoの開始時間が必要です',
-        ERROR_CODES.VALIDATION_FAILED
-      );
-    }
-
-    if (!todo.endTime || !(todo.endTime instanceof Date)) {
-      throw new AppError(
-        'Todoの終了時間が必要です',
-        ERROR_CODES.VALIDATION_FAILED
-      );
-    }
-
-    if (todo.startTime >= todo.endTime) {
-      throw new AppError(
-        'Todoの開始時間は終了時間より前である必要があります',
-        ERROR_CODES.VALIDATION_FAILED
-      );
-    }
-
-    if (!Array.isArray(todo.profiles)) {
-      throw new AppError(
-        'Todoのプロファイルは配列である必要があります',
-        ERROR_CODES.VALIDATION_FAILED
-      );
-    }
-
-    if (!Array.isArray(todo.tobes)) {
-      throw new AppError(
-        'Todoのtobesは配列である必要があります',
-        ERROR_CODES.VALIDATION_FAILED
-      );
+      ValidatorFactory.validateTodo(todo);
     }
   }
 
