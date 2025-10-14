@@ -208,6 +208,7 @@ export class InsertMapper {
     const tobes = this.extractRelations(properties.TOBE?.relation);
 
     const todo: Todo = {
+      id: page.id, // NotionページIDを追加
       name,
       startTime,
       endTime,
@@ -276,6 +277,96 @@ export class InsertMapper {
     }
 
     return false;
+  }
+
+  /**
+   * HabitページのTODOリレーションにTodoを追加する
+   * @param habitPageId - HabitページのID
+   * @param todoPageId - 追加するTodoページのID
+   * @returns 更新されたページレスポンス
+   */
+  async addTodoRelationToHabit(
+    habitPageId: string,
+    todoPageId: string
+  ): Promise<PageResponse> {
+    try {
+      this.logger.debug(
+        `HabitページID ${habitPageId} にTodoページID ${todoPageId} を追加中`
+      );
+
+      // 現在のHabitページを取得
+      const currentPage = await notionClient.pages.retrieve({
+        page_id: habitPageId,
+      });
+
+      // 型チェック
+      if (currentPage.object !== 'page') {
+        throw new AppError(
+          `ページID ${habitPageId} は有効なページオブジェクトではありません`,
+          ERROR_CODES.PROPERTY_MAPPING_FAILED,
+          { habitPageId }
+        );
+      }
+
+      // プロパティの存在確認
+      if (!('properties' in currentPage) || !currentPage.properties) {
+        throw new AppError(
+          `ページID ${habitPageId} のプロパティが存在しません`,
+          ERROR_CODES.PROPERTY_MAPPING_FAILED,
+          { habitPageId }
+        );
+      }
+
+      const properties = currentPage.properties as any;
+
+      // 既存のTODOリレーションを取得
+      const existingTodoRelations = properties.TODO?.relation || [];
+      const existingTodoIds = existingTodoRelations.map((rel: any) => rel.id);
+
+      // 重複チェック
+      if (existingTodoIds.includes(todoPageId)) {
+        this.logger.warn(
+          `TodoページID ${todoPageId} は既にHabitページID ${habitPageId} に関連付けられています`
+        );
+        return currentPage as PageResponse;
+      }
+
+      // 新しいTODOリレーションを作成
+      const updatedTodoRelations = [...existingTodoRelations, { id: todoPageId }];
+
+      // ページを更新
+      const updatedPage = await notionClient.pages.update({
+        page_id: habitPageId,
+        properties: {
+          TODO: {
+            relation: updatedTodoRelations,
+          },
+        } as any,
+      });
+
+      this.logger.debug(
+        `HabitページID ${habitPageId} のTODOリレーションを更新しました`,
+        { addedTodoId: todoPageId, totalTodos: updatedTodoRelations.length }
+      );
+
+      return updatedPage as PageResponse;
+    } catch (error) {
+      this.logger.error(
+        `HabitページID ${habitPageId} のTODOリレーション更新エラー`,
+        error as Error,
+        { habitPageId, todoPageId }
+      );
+
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError(
+        `HabitページID ${habitPageId} のTODOリレーション更新に失敗しました: ${error}`,
+        ERROR_CODES.PROPERTY_MAPPING_FAILED,
+        { habitPageId, todoPageId, originalError: error }
+      );
+    }
   }
 
 }
