@@ -124,6 +124,7 @@ export class HabitMapper {
       const timeRange = this.parseTimeRange(timeText);
 
       return {
+        id: page.id, // NotionページIDを追加
         name: this.extractTitle(page.properties.NAME.title),
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
@@ -132,6 +133,7 @@ export class HabitMapper {
         ),
         profiles: page.properties.PROFILE.relation.map(rel => rel.id),
         tobes: page.properties.TOBE.relation.map(rel => rel.id),
+        todos: page.properties.TODO?.relation?.map(rel => rel.id) || [],
         content: content,
       };
     } else if (isPartialHabitPageObjectResponse(page) && page.properties) {
@@ -139,6 +141,7 @@ export class HabitMapper {
       const timeRange = this.parseTimeRange(timeText);
 
       return {
+        id: page.id, // NotionページIDを追加
         name: this.extractTitle(page.properties.NAME?.title),
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
@@ -148,6 +151,7 @@ export class HabitMapper {
           ) || [],
         profiles: page.properties.PROFILE?.relation?.map(rel => rel.id) || [],
         tobes: page.properties.TOBE?.relation?.map(rel => rel.id) || [],
+        todos: page.properties.TODO?.relation?.map(rel => rel.id) || [],
         content: content,
       };
     } else {
