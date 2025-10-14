@@ -1,5 +1,9 @@
 import { Todo } from '../../model';
-import { TodoProperties, PageResponse, BlockObjectResponse } from '../../../lib/notionhq/type';
+import {
+  TodoProperties,
+  PageResponse,
+  BlockObjectResponse,
+} from '../../../lib/notionhq/type';
 import { notionClient } from '../../../lib/notionhq/init';
 import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
@@ -117,7 +121,9 @@ export class InsertMapper {
 
       // mention要素を含むコンテンツの場合はスキップ
       if (content && this.hasMentionElement(content)) {
-        this.logger.warn(`コンテンツにmention要素が含まれているため、コンテンツなしでページを作成します`);
+        this.logger.warn(
+          `コンテンツにmention要素が含まれているため、コンテンツなしでページを作成します`
+        );
         content = undefined;
       }
 
@@ -248,7 +254,6 @@ export class InsertMapper {
     return relationArray.map(rel => rel.id);
   }
 
-
   /**
    * mention要素が含まれているかチェック
    * @param content - チェック対象のコンテンツ
@@ -271,7 +276,10 @@ export class InsertMapper {
 
     // 各プロパティを再帰的にチェック
     for (const key in content) {
-      if (content.hasOwnProperty(key) && this.hasMentionElement(content[key])) {
+      if (
+        Object.prototype.hasOwnProperty.call(content, key) &&
+        this.hasMentionElement(content[key])
+      ) {
         return true;
       }
     }
@@ -332,7 +340,10 @@ export class InsertMapper {
       }
 
       // 新しいTODOリレーションを作成
-      const updatedTodoRelations = [...existingTodoRelations, { id: todoPageId }];
+      const updatedTodoRelations = [
+        ...existingTodoRelations,
+        { id: todoPageId },
+      ];
 
       // ページを更新
       const updatedPage = await notionClient.pages.update({
@@ -368,5 +379,4 @@ export class InsertMapper {
       );
     }
   }
-
 }
