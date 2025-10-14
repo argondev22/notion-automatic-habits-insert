@@ -1,21 +1,21 @@
-import { DIContainer, SERVICE_TOKENS } from '../../../shared/di/Container';
-import { ILogger, LoggerFactory } from '../../../shared/logger/Logger';
-import { ICache, CacheFactory } from '../../../shared/cache/Cache';
-import {
-  RetryManager,
-  RetryManagerFactory,
-} from '../../../shared/retry/RetryManager';
-import { ConfigManager } from '../../../shared/config/Config';
-import { ValidatorFactory } from '../../../shared/validation/Validator';
-import { NotionDatabaseService } from '../services/NotionDatabaseService';
-import { HabitMapper } from '../mappers/HabitMapper';
-import { HabitRepository } from '../repositories/HabitRepository';
-import {
-  DatabaseResponse,
-  BlockObjectResponse,
-} from '../../../lib/notionhq/type';
-import { Habit } from '../../model';
-import { notionClient } from '../../../lib/notionhq/init';
+import { DIContainer, SERVICE_TOKENS } from '../di/Container';
+import { ILogger, LoggerFactory } from '../logger/Logger';
+import { ICache, CacheFactory } from '../cache/Cache';
+import { RetryManager, RetryManagerFactory } from '../retry/RetryManager';
+import { ConfigManager } from '../config/ApplicationConfig';
+import { ValidatorFactory } from '../validation/Validator';
+import { NotionDatabaseService } from '../../domain/fetch/services/NotionDatabaseService';
+import { HabitMapper } from '../../domain/fetch/mappers/HabitMapper';
+import { HabitRepository } from '../../domain/fetch/repositories/HabitRepository';
+import { ConvertMapper } from '../../domain/convert/mappers/ConvertMapper';
+import { ConvertService } from '../../domain/convert/services/ConvertService';
+import { ConvertRepository } from '../../domain/convert/repositories/ConvertRepository';
+import { InsertMapper } from '../../domain/insert/mappers/InsertMapper';
+import { InsertService } from '../../domain/insert/services/InsertService';
+import { InsertRepository } from '../../domain/insert/repositories/InsertRepository';
+import { DatabaseResponse, BlockObjectResponse } from '../../lib/notionhq/type';
+import { Habit, Todo } from '../../domain/model';
+import { notionClient } from '../../lib/notionhq/init';
 
 /**
  * サービスファクトリー - 依存性注入コンテナを管理
@@ -47,6 +47,14 @@ export class ServiceFactory {
     this.container.register(
       'habitsCache',
       CacheFactory.getCache<Habit[]>('habits')
+    );
+    this.container.register(
+      'todosCache',
+      CacheFactory.getCache<Todo[]>('todos')
+    );
+    this.container.register(
+      'weekDatesCache',
+      CacheFactory.getCache<Date>('weekDates')
     );
 
     // リトライマネージャー
@@ -108,6 +116,74 @@ export class ServiceFactory {
       const cache = this.container.get<ICache<Habit[]>>('habitsCache');
 
       return new HabitRepository(databaseService, habitMapper, logger, cache);
+    });
+
+    // Convert関連のサービス
+    this.container.registerFactory('convertMapper', () => {
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      return new ConvertMapper(logger);
+    });
+
+    this.container.registerFactory('convertService', () => {
+      const convertMapper = this.container.get<ConvertMapper>('convertMapper');
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      const weekDatesCache = this.container.get<ICache<Date>>('weekDatesCache');
+      const retryManager = this.container.get<RetryManager>(
+        SERVICE_TOKENS.RETRY_MANAGER
+      );
+
+      return new ConvertService(
+        convertMapper,
+        logger,
+        weekDatesCache,
+        retryManager
+      );
+    });
+
+    this.container.registerFactory('convertRepository', () => {
+      const convertService =
+        this.container.get<ConvertService>('convertService');
+      const convertMapper = this.container.get<ConvertMapper>('convertMapper');
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      const todosCache = this.container.get<ICache<Todo[]>>('todosCache');
+
+      return new ConvertRepository(
+        convertService,
+        convertMapper,
+        logger,
+        todosCache
+      );
+    });
+
+    // Insert関連のサービス
+    this.container.registerFactory('insertMapper', () => {
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      return new InsertMapper(logger);
+    });
+
+    this.container.registerFactory('insertService', () => {
+      const insertMapper = this.container.get<InsertMapper>('insertMapper');
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      const todosCache = this.container.get<ICache<Todo[]>>('todosCache');
+      const retryManager = this.container.get<RetryManager>(
+        SERVICE_TOKENS.RETRY_MANAGER
+      );
+
+      return new InsertService(insertMapper, logger, todosCache, retryManager);
+    });
+
+    this.container.registerFactory('insertRepository', () => {
+      const insertService = this.container.get<InsertService>('insertService');
+      const insertMapper = this.container.get<InsertMapper>('insertMapper');
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      const todosCache = this.container.get<ICache<Todo[]>>('todosCache');
+
+      return new InsertRepository(
+        insertService,
+        insertMapper,
+        logger,
+        todosCache
+      );
     });
   }
 

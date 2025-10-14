@@ -1,0 +1,285 @@
+---
+description: レイヤードアーキテクチャとパターンに関するルール
+globs: app/src/**/*.ts
+---
+
+# レイヤードアーキテクチャ - ガイドライン
+
+## 🏗️ アーキテクチャ概要
+
+このプロジェクトは、**レイヤードアーキテクチャ**と**依存性注入パターン**に基づいた実装です。
+
+### 📁 ディレクトリ構造と責任
+
+```
+domain/
+├── [feature]/               # 機能別ディレクトリ
+│   ├── [feature].ts        # プレゼンテーション層 - メインAPI
+│   ├── repositories/       # データアクセス層 - ビジネスロジック
+│   ├── services/           # サービス層 - 外部API操作
+│   ├── mappers/            # データ変換層 - モデル変換
+│   ├── factories/          # ファクトリーパターン - 依存性注入
+│   └── README.md           # アーキテクチャドキュメント
+└── model.ts                # ドメインモデル
+```
+
+## 🎯 設計原則
+
+### 1. **レイヤードアーキテクチャの厳守**
+
+```typescript
+// ✅ 正しい依存関係の方向
+[feature].ts → [Feature]Repository → [Feature]Service → [Feature]Mapper
+
+// ❌ 逆方向の依存関係は禁止
+[Feature]Mapper → [Feature]Repository  // 禁止
+```
+
+### 2. **依存性注入パターンの使用**
+
+```typescript
+// ✅ ServiceFactoryを使用した依存性注入
+const repository = ServiceFactory.getService<[Feature]Repository>('[feature]Repository');
+
+// ❌ 直接インスタンス化は禁止
+const repository = new [Feature]Repository(...);  // 禁止
+```
+
+### 3. **統一されたエラーハンドリング**
+
+```typescript
+// ✅ カスタムエラーを使用した構造化エラー
+throw new [Feature]Error('データベースアクセスエラー', ERROR_CODES.DATABASE_NOT_FOUND);
+
+// ❌ 一般的なErrorは禁止
+throw new Error('エラー');  // 禁止
+```
+
+## 🔧 実装パターン
+
+### 1. **Repository パターン**
+
+Repository パターンの実装例：
+
+```typescript
+export class [Feature]Repository {
+  // 依存性注入によるコンストラクタ
+  constructor(
+    private service: [Feature]Service,
+    private mapper: [Feature]Mapper,
+    private logger: ILogger,
+    private cache: ICache<[Feature][]>
+  ) {}
+
+  // キャッシュ付きデータ取得
+  async fetch[Features](id: string): Promise<[Feature][]> {
+    const cacheKey = `[features]:${id}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    // データ取得とキャッシュ保存
+    const data = await this.service.queryData(id);
+    this.cache.set(cacheKey, data);
+    return data;
+  }
+}
+```
+
+### 2. **Service パターン**
+
+Service パターンの実装例：
+
+```typescript
+export class [Feature]Service {
+  // リトライ機能付きAPI呼び出し
+  async queryData(id: string): Promise<[Feature]Response> {
+    return await this.retryManager.execute(async () => {
+      return await this.externalApi.query({
+        id: id,
+      });
+    });
+  }
+}
+```
+
+### 3. **Mapper パターン**
+
+Mapper パターンの実装例：
+
+```typescript
+export class [Feature]Mapper {
+  // 型安全な変換
+  async mapTo[Feature](data: [Feature]Response, content: ContentResponse): Promise<[Feature]> {
+    const [feature] = this.create[Feature]Model(data, content);
+    ValidatorFactory.validate[Feature]([feature]);  // バリデーション必須
+    return [feature];
+  }
+}
+```
+
+### 4. **Factory パターン**
+
+Factory パターンの実装例：
+
+```typescript
+export class ServiceFactory {
+  static initialize(): void {
+    this.container = DIContainer.getInstance();
+    this.registerServices();
+  }
+
+  static getService<T>(token: string): T {
+    return this.container.resolve<T>(token);
+  }
+}
+```
+
+## 📋 実装ルール
+
+### 1. **新しいRepositoryの追加**
+
+```typescript
+// 1. Repositoryクラスを作成
+export class [Feature]Repository {
+  constructor(
+    private service: [Feature]Service,
+    private logger: ILogger,
+    private cache: ICache<[Feature][]>
+  ) {}
+}
+
+// 2. ServiceFactoryに登録
+private static registerServices(): void {
+  this.container.register('[feature]Repository', new [Feature]Repository(...));
+}
+
+// 3. [feature].tsで公開APIを追加
+export async function fetch[Features](): Promise<FetchResult<[Feature][]>> {
+  // 実装
+}
+```
+
+### 2. **新しいServiceの追加**
+
+```typescript
+// 1. Serviceクラスを作成
+export class [Feature]Service {
+  constructor(
+    private logger: ILogger,
+    private cache: ICache<[Feature]Type>,
+    private retryManager: RetryManager
+  ) {}
+}
+
+// 2. バリデーション、キャッシュ、リトライ機能を必ず実装
+```
+
+### 3. **新しいMapperの追加**
+
+```typescript
+// 1. Mapperクラスを作成
+export class [Feature]Mapper {
+  constructor(private logger: ILogger) {}
+
+  // 2. バリデーション機能を必ず実装
+  async mapTo[Feature](data: any): Promise<[Feature]> {
+    const [feature] = this.create[Feature](data);
+    ValidatorFactory.validate[Feature]([feature]);
+    return [feature];
+  }
+}
+```
+
+## 🚫 禁止事項
+
+### 1. **直接的な依存関係**
+
+```typescript
+// ❌ 禁止: 直接的なインスタンス化
+const service = new [Feature]Service(...);
+
+// ❌ 禁止: 循環依存
+// ServiceA → ServiceB → ServiceA
+```
+
+### 2. **エラーハンドリングの不備**
+
+```typescript
+// ❌ 禁止: 一般的なErrorの使用
+throw new Error('エラー');
+
+// ❌ 禁止: エラーハンドリングの省略
+try {
+  await someOperation();
+} catch (error) {
+  // 何もしない - 禁止
+}
+```
+
+### 3. **バリデーションの省略**
+
+```typescript
+// ❌ 禁止: バリデーションなしのデータ変換
+return { name: data.name };  // バリデーションなし
+
+// ❌ 禁止: 入力値の検証なし
+async function processData(input: any) {
+  // inputの検証なし - 禁止
+}
+```
+
+## ✅ 必須実装項目
+
+### 1. **すべてのクラスで必須**
+
+- 依存性注入によるコンストラクタ
+- ログ出力の実装
+- エラーハンドリング
+- 型安全性の確保
+
+### 2. **Repository層で必須**
+
+- キャッシュ機能の実装
+- データ取得の最適化
+- エラー時の適切なログ出力
+
+### 3. **Service層で必須**
+
+- リトライ機能の実装
+- バリデーション機能
+- キャッシュ機能
+
+### 4. **Mapper層で必須**
+
+- 型安全な変換
+- バリデーション機能
+- エラー時の詳細ログ
+
+## 🔍 テスト戦略
+
+### 1. **単体テスト**
+
+```typescript
+// ServiceFactoryのリセット
+ServiceFactory.reset();
+
+// モックの注入
+const mockLogger = new MockLogger();
+ServiceFactory.register('logger', mockLogger);
+```
+
+### 2. **統合テスト**
+
+```typescript
+// 実際のAPIを使用したテスト
+const result = await fetchHabits();
+expect(result.success).toBe(true);
+```
+
+## 📚 参考資料
+
+- 各機能ディレクトリのREADME.md - 詳細なアーキテクチャドキュメント
+- [feature].ts - メインAPIの実装例
+- factories/ServiceFactory.ts - 依存性注入の実装例
+
+このアーキテクチャは、**スケーラビリティ**、**保守性**、**テスタビリティ**、**パフォーマンス**をすべて考慮した実装です。

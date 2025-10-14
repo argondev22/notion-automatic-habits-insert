@@ -5,7 +5,7 @@ import {
   isPartialHabitPageObjectResponse,
   BlockObjectResponse,
 } from '../../../lib/notionhq/type';
-import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ValidatorFactory } from '../../../shared/validation/Validator';
 
@@ -52,11 +52,11 @@ export class HabitMapper {
         pageId: page.id,
       });
 
-      if (error instanceof FetchError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
-      throw new FetchError(
+      throw new AppError(
         `ページ ${page.id} の変換に失敗しました: ${error}`,
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageId: page.id, originalError: error }
@@ -72,7 +72,7 @@ export class HabitMapper {
     contents: BlockObjectResponse[]
   ): Promise<Habit[]> {
     if (pages.length !== contents.length) {
-      throw new FetchError(
+      throw new AppError(
         'ページ数とコンテンツ数が一致しません',
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageCount: pages.length, contentCount: contents.length }
@@ -124,6 +124,7 @@ export class HabitMapper {
       const timeRange = this.parseTimeRange(timeText);
 
       return {
+        id: page.id, // NotionページIDを追加
         name: this.extractTitle(page.properties.NAME.title),
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
@@ -132,6 +133,7 @@ export class HabitMapper {
         ),
         profiles: page.properties.PROFILE.relation.map(rel => rel.id),
         tobes: page.properties.TOBE.relation.map(rel => rel.id),
+        todos: page.properties.TODO?.relation?.map(rel => rel.id) || [],
         content: content,
       };
     } else if (isPartialHabitPageObjectResponse(page) && page.properties) {
@@ -139,6 +141,7 @@ export class HabitMapper {
       const timeRange = this.parseTimeRange(timeText);
 
       return {
+        id: page.id, // NotionページIDを追加
         name: this.extractTitle(page.properties.NAME?.title),
         startTime: timeRange.startTime,
         endTime: timeRange.endTime || undefined,
@@ -148,10 +151,11 @@ export class HabitMapper {
           ) || [],
         profiles: page.properties.PROFILE?.relation?.map(rel => rel.id) || [],
         tobes: page.properties.TOBE?.relation?.map(rel => rel.id) || [],
+        todos: page.properties.TODO?.relation?.map(rel => rel.id) || [],
         content: content,
       };
     } else {
-      throw new FetchError(
+      throw new AppError(
         `ページ ${page.id} のプロパティが期待される形式ではありません`,
         ERROR_CODES.PROPERTY_MAPPING_FAILED,
         { pageId: page.id, pageObject: page.object }
@@ -267,7 +271,12 @@ export class HabitMapper {
     startTime: string;
     endTime: string | null;
   } {
+    this.logger.debug('HabitMapper: 時間範囲解析開始', {
+      originalTime: time,
+    });
+
     if (!time || time.trim().length === 0) {
+      this.logger.debug('HabitMapper: 空の時間文字列');
       return { startTime: '', endTime: null };
     }
 
@@ -283,14 +292,20 @@ export class HabitMapper {
       const startTime = `${startHour}:${startMinute}`;
       const endTime = `${endHour}:${endMinute}`;
 
-      this.logger.debug(
-        `時間範囲を検出: "${time}" -> 開始時間: ${startTime}, 終了時間: ${endTime}`
-      );
+      this.logger.debug('HabitMapper: 時間範囲を検出', {
+        originalTime: time,
+        startTime,
+        endTime,
+      });
       return { startTime, endTime };
     }
 
     // 単一時間の場合は開始時間として扱う
     const normalizedTime = this.normalizeTimeFormat(time);
+    this.logger.debug('HabitMapper: 単一時間として処理', {
+      originalTime: time,
+      normalizedTime,
+    });
     return { startTime: normalizedTime, endTime: null };
   }
 
@@ -300,7 +315,7 @@ export class HabitMapper {
   private convertStringToDay(dayString: string): Day {
     const day = HabitMapper.DAY_MAP[dayString.toUpperCase()];
     if (day === undefined) {
-      throw new FetchError(
+      throw new AppError(
         `無効な曜日: ${dayString}`,
         ERROR_CODES.VALIDATION_FAILED,
         { dayString, validDays: Object.keys(HabitMapper.DAY_MAP) }

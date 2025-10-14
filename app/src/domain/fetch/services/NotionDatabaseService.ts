@@ -3,7 +3,7 @@ import {
   DatabaseResponse,
   BlockObjectResponse,
 } from '../../../lib/notionhq/type';
-import { FetchError, ERROR_CODES } from '../../../shared/errors/FetchError';
+import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ICache } from '../../../shared/cache/Cache';
 import { RetryManager } from '../../../shared/retry/RetryManager';
@@ -56,7 +56,7 @@ export class NotionDatabaseService {
       });
 
       if (!response.results) {
-        throw new FetchError(
+        throw new AppError(
           'データベースから結果を取得できませんでした',
           ERROR_CODES.DATABASE_NOT_FOUND,
           { databaseId }
@@ -78,7 +78,7 @@ export class NotionDatabaseService {
    */
   async getPageContent(pageId: string): Promise<BlockObjectResponse> {
     if (!pageId || pageId.trim() === '') {
-      throw new FetchError(
+      throw new AppError(
         'ページIDが指定されていません',
         ERROR_CODES.INVALID_PAGE_ID,
         { pageId }
