@@ -272,4 +272,18 @@ export class ValidatorFactory {
       );
     }
   }
+
+  /**
+   * Notion ID（ページIDやデータベースID）をバリデーションし、エラーがある場合はAppErrorを投げる
+   */
+  static validateId(id: string): void {
+    const result = this.databaseIdValidator.validate(id);
+    if (!result.isValid) {
+      throw new AppError(
+        `IDのバリデーションに失敗しました: ${result.errors.join(', ')}`,
+        ERROR_CODES.VALIDATION_FAILED,
+        { id, errors: result.errors }
+      );
+    }
+  }
 }
