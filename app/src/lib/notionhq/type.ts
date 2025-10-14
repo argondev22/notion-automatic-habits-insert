@@ -41,6 +41,11 @@ export interface HabitProperties {
       id: string;
     }>;
   };
+  TODO: {
+    relation: Array<{
+      id: string;
+    }>;
+  };
 }
 
 // 型安全なHabitページの型

@@ -24,13 +24,25 @@ export class ConvertService {
   async convertHabitsToTodos(habits: Habit[]): Promise<Todo[]> {
     this.logger.info('ConvertService: Habit配列の変換処理開始', {
       habitCount: habits.length,
+      habits: habits.map(h => ({ name: h.name, days: h.days, daysLength: h.days.length })),
     });
 
     const todos: Todo[] = [];
 
     for (const habit of habits) {
       try {
+        this.logger.info('ConvertService: Habitを変換中', {
+          habitName: habit.name,
+          days: habit.days,
+        });
+
         const habitTodos = await this.convertHabitToTodos(habit);
+
+        this.logger.info('ConvertService: Habit変換完了', {
+          habitName: habit.name,
+          generatedTodoCount: habitTodos.length,
+        });
+
         todos.push(...habitTodos);
       } catch (error) {
         this.logger.error(
@@ -46,7 +58,7 @@ export class ConvertService {
     }
 
     this.logger.info('ConvertService: Habit配列の変換処理完了', {
-      todoCount: todos.length,
+      totalTodoCount: todos.length,
     });
 
     return todos;
@@ -60,6 +72,8 @@ export class ConvertService {
   async convertHabitToTodos(habit: Habit): Promise<Todo[]> {
     this.logger.info('ConvertService: 単一Habitの変換処理開始', {
       habitName: habit.name,
+      days: habit.days,
+      daysLength: habit.days.length,
     });
 
     const todos: Todo[] = [];
@@ -68,11 +82,26 @@ export class ConvertService {
       // 現在の週の日付を取得（キャッシュ付き）
       const weekDates = await this.getCurrentWeekDates();
 
+      this.logger.info('ConvertService: 週の日付を取得', {
+        habitName: habit.name,
+        weekDates: Object.entries(weekDates).map(([key, value]) => ({
+          day: key,
+          date: value.toISOString(),
+        })),
+      });
+
       for (const day of habit.days) {
-        const targetDate = weekDates[day];
+        this.logger.info('ConvertService: 曜日を処理中', {
+          habitName: habit.name,
+          day,
+          dayValue: Day[day],
+        });
+
+        const targetDate = weekDates[day as Day];
         if (!targetDate) {
           this.logger.warn('ConvertService: 対象日付が見つかりません', {
             day,
+            dayValue: Day[day],
             habitName: habit.name,
           });
           continue;
