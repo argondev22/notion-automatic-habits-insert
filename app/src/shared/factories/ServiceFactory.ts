@@ -1,10 +1,7 @@
 import { DIContainer, SERVICE_TOKENS } from '../di/Container';
 import { ILogger, LoggerFactory } from '../logger/Logger';
 import { ICache, CacheFactory } from '../cache/Cache';
-import {
-  RetryManager,
-  RetryManagerFactory,
-} from '../retry/RetryManager';
+import { RetryManager, RetryManagerFactory } from '../retry/RetryManager';
 import { ConfigManager } from '../config/ApplicationConfig';
 import { ValidatorFactory } from '../validation/Validator';
 import { NotionDatabaseService } from '../../domain/fetch/services/NotionDatabaseService';
@@ -16,10 +13,7 @@ import { ConvertRepository } from '../../domain/convert/repositories/ConvertRepo
 import { InsertMapper } from '../../domain/insert/mappers/InsertMapper';
 import { InsertService } from '../../domain/insert/services/InsertService';
 import { InsertRepository } from '../../domain/insert/repositories/InsertRepository';
-import {
-  DatabaseResponse,
-  BlockObjectResponse,
-} from '../../lib/notionhq/type';
+import { DatabaseResponse, BlockObjectResponse } from '../../lib/notionhq/type';
 import { Habit, Todo } from '../../domain/model';
 import { notionClient } from '../../lib/notionhq/init';
 
@@ -175,12 +169,7 @@ export class ServiceFactory {
         SERVICE_TOKENS.RETRY_MANAGER
       );
 
-      return new InsertService(
-        insertMapper,
-        logger,
-        todosCache,
-        retryManager
-      );
+      return new InsertService(insertMapper, logger, todosCache, retryManager);
     });
 
     this.container.registerFactory('insertRepository', () => {

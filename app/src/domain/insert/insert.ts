@@ -69,13 +69,18 @@ export async function insertTodos(
     logger.info(`データベース ${todosDatabaseId} にTodosを挿入開始`);
 
     // データを挿入
-    const insertedTodos = await insertRepository.insertTodos(todos, todosDatabaseId);
+    const insertedTodos = await insertRepository.insertTodos(
+      todos,
+      todosDatabaseId
+    );
 
     logger.info(`${insertedTodos.length}個のTodosが正常に挿入されました`);
 
     // Habitページへのリンクがある場合は実行
     if (habitIds && habitIds.length > 0) {
-      logger.info(`${insertedTodos.length}個のTodoを${habitIds.length}個のHabitページにリンク開始`);
+      logger.info(
+        `${insertedTodos.length}個のTodoを${habitIds.length}個のHabitページにリンク開始`
+      );
 
       let linkedCount = 0;
       let failedCount = 0;
@@ -91,10 +96,14 @@ export async function insertTodos(
           await insertRepository.linkTodoToHabits(insertedTodo.id, habitIds);
           linkedCount++;
         } catch (error) {
-          logger.error(`Todo ${insertedTodo.name} のHabitページへのリンクエラー`, error as Error, {
-            todoPageId: insertedTodo.id,
-            habitIds,
-          });
+          logger.error(
+            `Todo ${insertedTodo.name} のHabitページへのリンクエラー`,
+            error as Error,
+            {
+              todoPageId: insertedTodo.id,
+              habitIds,
+            }
+          );
           failedCount++;
         }
       }
@@ -190,7 +199,10 @@ export async function insertTodo(
     logger.info(`Todo ${todo.name} をデータベースに挿入開始`);
 
     // データを挿入
-    const insertedTodo = await insertRepository.insertTodo(todo, todosDatabaseId);
+    const insertedTodo = await insertRepository.insertTodo(
+      todo,
+      todosDatabaseId
+    );
 
     logger.info(`Todo ${todo.name} が正常に挿入されました`);
 
@@ -208,7 +220,9 @@ export async function insertTodo(
         };
       }
 
-      logger.info(`Todo ${todo.name} を${habitIds.length}個のHabitページにリンク開始`);
+      logger.info(
+        `Todo ${todo.name} を${habitIds.length}個のHabitページにリンク開始`
+      );
 
       try {
         await insertRepository.linkTodoToHabits(insertedTodo.id, habitIds);
@@ -219,7 +233,9 @@ export async function insertTodo(
           habitIds,
         });
         // リンクエラーは警告として扱い、Todo自体の挿入は成功として返す
-        logger.warn('Todo挿入は成功しましたが、Habitページへのリンクに失敗しました');
+        logger.warn(
+          'Todo挿入は成功しましたが、Habitページへのリンクに失敗しました'
+        );
       }
     }
 
@@ -233,7 +249,10 @@ export async function insertTodo(
     };
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    logger.error('Todo挿入エラー', error as Error, { todoName: todo?.name, executionTime });
+    logger.error('Todo挿入エラー', error as Error, {
+      todoName: todo?.name,
+      executionTime,
+    });
 
     if (error instanceof AppError) {
       return {

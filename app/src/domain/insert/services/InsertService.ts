@@ -84,9 +84,16 @@ export class InsertService {
       const properties = await this.mapper.mapToNotionProperties(todo);
 
       // Notion APIに挿入
-      const insertedPage = await this.retryManager.executeWithRetry(async () => {
-        return await this.mapper.createNotionPage(databaseId, properties, todo.content);
-      }, `Todo ${todo.name} の挿入`);
+      const insertedPage = await this.retryManager.executeWithRetry(
+        async () => {
+          return await this.mapper.createNotionPage(
+            databaseId,
+            properties,
+            todo.content
+          );
+        },
+        `Todo ${todo.name} の挿入`
+      );
 
       // 挿入されたTodoを返す
       const insertedTodo = await this.mapper.mapFromNotionPage(insertedPage);
@@ -147,11 +154,12 @@ export class InsertService {
       );
     }
 
-    if (!todo.name || typeof todo.name !== 'string' || todo.name.trim() === '') {
-      throw new AppError(
-        'Todoの名前が必要です',
-        ERROR_CODES.VALIDATION_FAILED
-      );
+    if (
+      !todo.name ||
+      typeof todo.name !== 'string' ||
+      todo.name.trim() === ''
+    ) {
+      throw new AppError('Todoの名前が必要です', ERROR_CODES.VALIDATION_FAILED);
     }
 
     if (!todo.startTime || !(todo.startTime instanceof Date)) {
@@ -228,7 +236,10 @@ export class InsertService {
       // 各HabitページにTodoをリンク
       const linkPromises = habitPageIds.map(habitPageId =>
         this.retryManager.executeWithRetry(async () => {
-          return await this.mapper.addTodoRelationToHabit(habitPageId, todoPageId);
+          return await this.mapper.addTodoRelationToHabit(
+            habitPageId,
+            todoPageId
+          );
         }, `HabitページID ${habitPageId} へのリンク`)
       );
 
