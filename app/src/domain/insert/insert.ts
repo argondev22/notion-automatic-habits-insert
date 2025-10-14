@@ -308,7 +308,6 @@ export async function insertHealthCheck(): Promise<{
 }> {
   try {
     ServiceFactory.initialize();
-    // const _logger = ServiceFactory.getService<ILogger>('logger');
 
     return {
       status: 'healthy',

@@ -24,6 +24,8 @@ export class ConvertService {
   async convertHabitsToTodos(habits: Habit[]): Promise<Todo[]> {
     this.logger.info('ConvertService: Habit配列の変換処理開始', {
       habitCount: habits.length,
+    });
+    this.logger.debug('ConvertService: Habit配列の詳細', {
       habits: habits.map(h => ({
         name: h.name,
         days: h.days,

@@ -127,13 +127,17 @@ export class InsertMapper {
         content = undefined;
       }
 
-      const pageData: any = {
+      const pageData: {
+        parent: { database_id: string };
+        properties: Record<string, any>;
+        children?: any;
+      } = {
         parent: { database_id: databaseId },
-        properties: properties as any,
-        children: content as any,
+        properties: properties,
+        ...(content ? { children: content } : {}),
       };
 
-      const response = await notionClient.pages.create(pageData);
+      const response = await notionClient.pages.create(pageData as any);
 
       this.logger.debug(`データベース ${databaseId} にページを作成完了`, {
         pageId: response.id,
@@ -346,13 +350,15 @@ export class InsertMapper {
       ];
 
       // ページを更新
+      const updateProperties: Record<string, any> = {
+        TODO: {
+          relation: updatedTodoRelations,
+        },
+      };
+
       const updatedPage = await notionClient.pages.update({
         page_id: habitPageId,
-        properties: {
-          TODO: {
-            relation: updatedTodoRelations,
-          },
-        } as any,
+        properties: updateProperties,
       });
 
       this.logger.debug(
