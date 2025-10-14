@@ -189,4 +189,65 @@ export class InsertService {
       );
     }
   }
+
+  /**
+   * TodoをHabitページにリンクする
+   * @param todoPageId - リンクするTodoページのID
+   * @param habitPageIds - リンク先のHabitページID配列
+   */
+  async linkTodoToHabits(
+    todoPageId: string,
+    habitPageIds: string[]
+  ): Promise<void> {
+    this.logger.info('InsertService: TodoをHabitページにリンク開始', {
+      todoPageId,
+      habitCount: habitPageIds.length,
+    });
+
+    // バリデーション
+    ValidatorFactory.validateId(todoPageId);
+
+    if (!Array.isArray(habitPageIds)) {
+      throw new AppError(
+        'habitPageIdsは配列である必要があります',
+        ERROR_CODES.VALIDATION_FAILED
+      );
+    }
+
+    if (habitPageIds.length === 0) {
+      this.logger.warn('リンク対象のHabitページが指定されていません');
+      return;
+    }
+
+    // 各HabitページIDをバリデーション
+    for (const habitPageId of habitPageIds) {
+      ValidatorFactory.validateId(habitPageId);
+    }
+
+    try {
+      // 各HabitページにTodoをリンク
+      const linkPromises = habitPageIds.map(habitPageId =>
+        this.retryManager.executeWithRetry(async () => {
+          return await this.mapper.addTodoRelationToHabit(habitPageId, todoPageId);
+        }, `HabitページID ${habitPageId} へのリンク`)
+      );
+
+      await Promise.all(linkPromises);
+
+      this.logger.info('InsertService: TodoをHabitページにリンク完了', {
+        todoPageId,
+        linkedHabitCount: habitPageIds.length,
+      });
+    } catch (error) {
+      this.logger.error(
+        'InsertService: TodoをHabitページにリンク失敗',
+        error instanceof Error ? error : new Error('Unknown error'),
+        {
+          todoPageId,
+          habitPageIds,
+        }
+      );
+      throw error;
+    }
+  }
 }

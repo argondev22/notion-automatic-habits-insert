@@ -128,6 +128,61 @@ export class InsertRepository {
   }
 
   /**
+   * TodoをHabitページにリンクする
+   * @param todoPageId - リンクするTodoページのID
+   * @param habitPageIds - リンク先のHabitページID配列
+   */
+  async linkTodoToHabits(
+    todoPageId: string,
+    habitPageIds: string[]
+  ): Promise<void> {
+    try {
+      this.logger.info('InsertRepository: TodoをHabitページにリンク開始', {
+        todoPageId,
+        habitCount: habitPageIds.length,
+      });
+
+      // 入力値のバリデーション
+      if (!todoPageId || todoPageId.trim() === '') {
+        throw new AppError(
+          'TodoページIDが指定されていません',
+          ERROR_CODES.VALIDATION_ERROR
+        );
+      }
+
+      if (!Array.isArray(habitPageIds)) {
+        throw new AppError(
+          'habitPageIdsは配列である必要があります',
+          ERROR_CODES.VALIDATION_ERROR
+        );
+      }
+
+      if (habitPageIds.length === 0) {
+        this.logger.warn('リンク対象のHabitページが指定されていません');
+        return;
+      }
+
+      // サービス層でリンク処理を実行
+      await this.service.linkTodoToHabits(todoPageId, habitPageIds);
+
+      this.logger.info('InsertRepository: TodoをHabitページにリンク完了', {
+        todoPageId,
+        linkedHabitCount: habitPageIds.length,
+      });
+    } catch (error) {
+      this.logger.error(
+        'InsertRepository: TodoをHabitページにリンク失敗',
+        error instanceof Error ? error : new Error('Unknown error'),
+        {
+          todoPageId,
+          habitPageIds,
+        }
+      );
+      throw error;
+    }
+  }
+
+  /**
    * キャッシュをクリア
    */
   clearCache(): void {
