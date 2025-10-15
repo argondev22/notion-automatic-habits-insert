@@ -8,6 +8,7 @@ import { notionClient } from '../../../lib/notionhq/init';
 import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ValidatorFactory } from '../../../shared/validation/Validator';
+import type { CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
 
 /**
  * InsertMapper - データ変換層
@@ -127,13 +128,13 @@ export class InsertMapper {
         content = undefined;
       }
 
-      const pageData = {
+      const pageData: CreatePageParameters = {
         parent: { database_id: databaseId },
-        properties: properties as any,
+        properties: properties as TodoProperties,
         ...(content ? { children: content } : {}),
       };
 
-      const response = await notionClient.pages.create(pageData as any);
+      const response = await notionClient.pages.create(pageData);
 
       this.logger.debug(`データベース ${databaseId} にページを作成完了`, {
         pageId: response.id,
@@ -194,10 +195,15 @@ export class InsertMapper {
     }
 
     // タイトルの抽出
-    const name = this.extractTitle((properties.NAME as { title?: Array<{ text: { content: string } }> })?.title);
+    const name = this.extractTitle(
+      (properties.NAME as { title?: Array<{ text: { content: string } }> })
+        ?.title
+    );
 
     // 日付の抽出
-    const expectedDate = (properties.EXPECTED as { date?: { start?: string; end?: string } })?.date;
+    const expectedDate = (
+      properties.EXPECTED as { date?: { start?: string; end?: string } }
+    )?.date;
     if (!expectedDate || !expectedDate.start || !expectedDate.end) {
       throw new AppError(
         `ページ ${page.id} の日付プロパティが無効です`,
@@ -210,8 +216,12 @@ export class InsertMapper {
     const endTime = new Date(expectedDate.end);
 
     // リレーションの抽出
-    const profiles = this.extractRelations((properties.PROFILE as { relation?: Array<{ id: string }> })?.relation);
-    const tobes = this.extractRelations((properties.TOBE as { relation?: Array<{ id: string }> })?.relation);
+    const profiles = this.extractRelations(
+      (properties.PROFILE as { relation?: Array<{ id: string }> })?.relation
+    );
+    const tobes = this.extractRelations(
+      (properties.TOBE as { relation?: Array<{ id: string }> })?.relation
+    );
 
     const todo: Todo = {
       id: page.id, // NotionページIDを追加
