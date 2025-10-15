@@ -40,20 +40,20 @@ Presentation層は、HTTPリクエストを受け付けてビジネスロジッ�
 
 #### エンドポイント
 
-| メソッド | パス | 説明 |
-|---------|------|------|
-| GET | `/` | サーバー情報を返す |
-| GET | `/health` | ヘルスチェック |
-| POST | `/webhook` | メイン処理を実行 |
+| メソッド | パス       | 説明               |
+| -------- | ---------- | ------------------ |
+| GET      | `/`        | サーバー情報を返す |
+| GET      | `/health`  | ヘルスチェック     |
+| POST     | `/webhook` | メイン処理を実行   |
 
 ### ミドルウェア構成
 
 ```typescript
-app.use(bodyParser.json())           // JSONパーサー
-app.use(requestLogger)                // リクエストログ
-app.post('/webhook', webhookHandler)  // Webhookハンドラー
-app.use(notFoundHandler)              // 404エラー
-app.use(errorHandler)                 // エラーハンドラー
+app.use(bodyParser.json()); // JSONパーサー
+app.use(requestLogger); // リクエストログ
+app.post('/webhook', webhookHandler); // Webhookハンドラー
+app.use(notFoundHandler); // 404エラー
+app.use(errorHandler); // エラーハンドラー
 ```
 
 ## 🔐 認証フロー
@@ -85,7 +85,7 @@ const providedSecret = req.headers['x-webhook-secret'];
 if (providedSecret !== this.webhookSecret) {
   res.status(401).json({
     success: false,
-    error: '認証に失敗しました'
+    error: '認証に失敗しました',
   });
   return;
 }
@@ -144,7 +144,7 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: 'エンドポイントが見つかりません',
-    path: req.path
+    path: req.path,
   });
 });
 
@@ -153,7 +153,7 @@ app.use((error, req, res, next) => {
   logger.error('サーバーエラー', error);
   res.status(500).json({
     success: false,
-    error: '内部サーバーエラーが発生しました'
+    error: '内部サーバーエラーが発生しました',
   });
 });
 ```
@@ -245,7 +245,7 @@ describe('WebhookServer', () => {
 res.status(202).json({
   success: true,
   message: '処理を開始しました',
-  jobId: 'xxx'
+  jobId: 'xxx',
 });
 
 // バックグラウンドで処理
@@ -269,7 +269,7 @@ import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分
-  max: 100 // 最大100リクエスト
+  max: 100, // 最大100リクエスト
 });
 
 app.use('/webhook', limiter);
@@ -280,4 +280,3 @@ app.use('/webhook', limiter);
 - [OrchestrationService](../domain/orchestration/README.md)
 - [アーキテクチャガイド](../../.cursorrules/architecture.md)
 - [Express Documentation](https://expressjs.com/)
-

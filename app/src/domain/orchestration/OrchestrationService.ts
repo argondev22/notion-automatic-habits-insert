@@ -21,7 +21,11 @@ export interface OrchestrationResult {
  * OrchestrationServiceエラー
  */
 export class OrchestrationError extends AppError {
-  constructor(message: string, code: string, details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code: string,
+    details?: Record<string, unknown>
+  ) {
     super(message, code, details);
     this.name = 'OrchestrationError';
   }
@@ -51,15 +55,13 @@ export class OrchestrationService {
         this.logger.error(error, undefined, {
           error: habitsResult.error,
         });
-        throw new OrchestrationError(
-          error,
-          ERROR_CODES.FETCH_ERROR,
-          { originalError: habitsResult.error }
-        );
+        throw new OrchestrationError(error, ERROR_CODES.FETCH_ERROR, {
+          originalError: habitsResult.error,
+        });
       }
 
       this.logger.info('習慣データ取得完了', {
-        habitCount: habitsResult.data.length
+        habitCount: habitsResult.data.length,
       });
 
       // 2. HabitモデルをTodoモデルに変換
@@ -71,11 +73,9 @@ export class OrchestrationService {
         this.logger.error(error, undefined, {
           error: todosResult.error,
         });
-        throw new OrchestrationError(
-          error,
-          ERROR_CODES.CONVERSION_ERROR,
-          { originalError: todosResult.error }
-        );
+        throw new OrchestrationError(error, ERROR_CODES.CONVERSION_ERROR, {
+          originalError: todosResult.error,
+        });
       }
 
       this.logger.info('変換完了', {
@@ -108,11 +108,9 @@ export class OrchestrationService {
         this.logger.error(error, undefined, {
           error: insertResult.error,
         });
-        throw new OrchestrationError(
-          error,
-          ERROR_CODES.INSERT_ERROR,
-          { originalError: insertResult.error }
-        );
+        throw new OrchestrationError(error, ERROR_CODES.INSERT_ERROR, {
+          originalError: insertResult.error,
+        });
       }
 
       const executionTime = Date.now() - startTime;
@@ -153,4 +151,3 @@ export class OrchestrationService {
     }
   }
 }
-

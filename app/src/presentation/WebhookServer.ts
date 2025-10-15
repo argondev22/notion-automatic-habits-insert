@@ -90,10 +90,7 @@ export class WebhookServer {
   /**
    * Webhookリクエストを処理
    */
-  private async handleWebhook(
-    req: Request,
-    res: Response
-  ): Promise<void> {
+  private async handleWebhook(req: Request, res: Response): Promise<void> {
     const startTime = Date.now();
 
     // シークレット検証
@@ -162,7 +159,7 @@ export class WebhookServer {
 
     // 一般的なエラー
     this.app.use(
-      (error: Error, req: Request, res: Response, next: NextFunction) => {
+      (error: Error, req: Request, res: Response, _next: NextFunction) => {
         this.logger.error('サーバーエラー', error, {
           method: req.method,
           path: req.path,
@@ -171,7 +168,9 @@ export class WebhookServer {
         res.status(500).json({
           success: false,
           error: '内部サーバーエラーが発生しました',
-          message: EnvironmentConfig.isDevelopment() ? error.message : undefined,
+          message: EnvironmentConfig.isDevelopment()
+            ? error.message
+            : undefined,
         });
       }
     );
@@ -198,4 +197,3 @@ export class WebhookServer {
     return this.app;
   }
 }
-

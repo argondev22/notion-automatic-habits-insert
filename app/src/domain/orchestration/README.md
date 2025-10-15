@@ -280,12 +280,12 @@ import { insertTodosWithHabitMatching } from '../insert/insert';
 
 ### 実行時間の内訳
 
-| ステップ | 平均時間 | 説明 |
-|---------|---------|------|
-| Habits取得 | 500-1000ms | Notion APIからのデータ取得 |
-| Todo変換 | 100-300ms | データ変換とバリデーション |
-| Todos挿入 | 1000-3000ms | Notion APIへの複数挿入 |
-| **合計** | **2000-5000ms** | **全体の処理時間** |
+| ステップ   | 平均時間        | 説明                       |
+| ---------- | --------------- | -------------------------- |
+| Habits取得 | 500-1000ms      | Notion APIからのデータ取得 |
+| Todo変換   | 100-300ms       | データ変換とバリデーション |
+| Todos挿入  | 1000-3000ms     | Notion APIへの複数挿入     |
+| **合計**   | **2000-5000ms** | **全体の処理時間**         |
 
 ### 最適化ポイント
 
@@ -380,4 +380,3 @@ describe('OrchestrationService Integration', () => {
 - [Insert Domain](../insert/README.md)
 - [WebhookServer](../../presentation/README.md)
 - [アーキテクチャガイド](../../.cursorrules/architecture.md)
-

@@ -43,7 +43,7 @@ process.on('unhandledRejection', (reason, promise) => {
   });
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error('キャッチされていない例外', error);
   process.exit(1);
 });
