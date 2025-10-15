@@ -8,6 +8,7 @@ import { notionClient } from '../../../lib/notionhq/init';
 import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
 import { ILogger } from '../../../shared/logger/Logger';
 import { ValidatorFactory } from '../../../shared/validation/Validator';
+import type { CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
 
 /**
  * InsertMapper - データ変換層
@@ -127,17 +128,13 @@ export class InsertMapper {
         content = undefined;
       }
 
-      const pageData: {
-        parent: { database_id: string };
-        properties: Record<string, any>;
-        children?: any;
-      } = {
+      const pageData: CreatePageParameters = {
         parent: { database_id: databaseId },
-        properties: properties,
-        ...(content ? { children: content } : {}),
+        properties: properties as Record<string, any>,
+        ...(content ? { children: content as any[] } : {}),
       };
 
-      const response = await notionClient.pages.create(pageData as any);
+      const response = await notionClient.pages.create(pageData);
 
       this.logger.debug(`データベース ${databaseId} にページを作成完了`, {
         pageId: response.id,
@@ -186,7 +183,7 @@ export class InsertMapper {
       );
     }
 
-    const properties = page.properties as any;
+    const properties = page.properties as Record<string, unknown>;
 
     // 必須プロパティの存在確認
     if (!properties.NAME || !properties.EXPECTED) {
@@ -198,10 +195,15 @@ export class InsertMapper {
     }
 
     // タイトルの抽出
-    const name = this.extractTitle(properties.NAME.title);
+    const name = this.extractTitle(
+      (properties.NAME as { title?: Array<{ text: { content: string } }> })
+        ?.title
+    );
 
     // 日付の抽出
-    const expectedDate = properties.EXPECTED.date;
+    const expectedDate = (
+      properties.EXPECTED as { date?: { start?: string; end?: string } }
+    )?.date;
     if (!expectedDate || !expectedDate.start || !expectedDate.end) {
       throw new AppError(
         `ページ ${page.id} の日付プロパティが無効です`,
@@ -214,8 +216,12 @@ export class InsertMapper {
     const endTime = new Date(expectedDate.end);
 
     // リレーションの抽出
-    const profiles = this.extractRelations(properties.PROFILE?.relation);
-    const tobes = this.extractRelations(properties.TOBE?.relation);
+    const profiles = this.extractRelations(
+      (properties.PROFILE as { relation?: Array<{ id: string }> })?.relation
+    );
+    const tobes = this.extractRelations(
+      (properties.TOBE as { relation?: Array<{ id: string }> })?.relation
+    );
 
     const todo: Todo = {
       id: page.id, // NotionページIDを追加
@@ -329,11 +335,15 @@ export class InsertMapper {
         );
       }
 
-      const properties = currentPage.properties as any;
+      const properties = currentPage.properties as Record<string, unknown>;
 
       // 既存のTODOリレーションを取得
-      const existingTodoRelations = properties.TODO?.relation || [];
-      const existingTodoIds = existingTodoRelations.map((rel: any) => rel.id);
+      const existingTodoRelations =
+        (properties.TODO as { relation?: Array<{ id: string }> })?.relation ||
+        [];
+      const existingTodoIds = existingTodoRelations.map(
+        (rel: { id: string }) => rel.id
+      );
 
       // 重複チェック
       if (existingTodoIds.includes(todoPageId)) {
@@ -350,7 +360,10 @@ export class InsertMapper {
       ];
 
       // ページを更新
-      const updateProperties: Record<string, any> = {
+      const updateProperties: Record<
+        string,
+        { relation: Array<{ id: string }> }
+      > = {
         TODO: {
           relation: updatedTodoRelations,
         },

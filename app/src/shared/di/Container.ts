@@ -3,8 +3,8 @@
  */
 export class DIContainer {
   private static instance: DIContainer;
-  private services = new Map<string, any>();
-  private factories = new Map<string, () => any>();
+  private services = new Map<string, unknown>();
+  private factories = new Map<string, () => unknown>();
 
   private constructor() {}
 
@@ -35,13 +35,13 @@ export class DIContainer {
   get<T>(token: string): T {
     // 直接登録されたサービスをチェック
     if (this.services.has(token)) {
-      return this.services.get(token);
+      return this.services.get(token) as T;
     }
 
     // ファクトリーをチェック
     if (this.factories.has(token)) {
       const factory = this.factories.get(token)!;
-      const service = factory();
+      const service = factory() as T;
       this.services.set(token, service); // シングルトンとして保存
       return service;
     }

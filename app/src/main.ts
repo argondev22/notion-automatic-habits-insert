@@ -1,65 +1,51 @@
 import { ServiceFactory } from './shared/factories/ServiceFactory';
 import { ILogger } from './shared/logger/Logger';
-import { fetchHabits } from './domain/fetch/fetch';
-import { convertHabitsToTodos } from './domain/convert/convert';
-import { insertTodosWithHabitMatching } from './domain/insert/insert';
+import { WebhookServer } from './presentation/WebhookServer';
+
+/**
+ * アプリケーションのエントリーポイント
+ * Webhookサーバーを起動
+ */
 
 const logger = ServiceFactory.getService<ILogger>('logger');
 
 async function main() {
   try {
-    // DB_HABITSのデータを取得
-    const habitsResult = await fetchHabits();
-    if (!habitsResult.success || !habitsResult.data) {
-      logger.error('習慣データの取得に失敗しました', undefined, {
-        error: habitsResult.error,
-      });
-      return;
-    }
+    logger.info('アプリケーション起動中...');
 
-    // HabitモデルをTodoモデルに変換
-    logger.info('変換開始', { habitCount: habitsResult.data.length });
-    const todosResult = await convertHabitsToTodos(habitsResult.data);
-    logger.info('変換結果', {
-      success: todosResult.success,
-      todoCount: todosResult.data?.length || 0,
-      error: todosResult.error,
-    });
-    if (!todosResult.success || !todosResult.data) {
-      logger.error('変換に失敗しました', undefined, {
-        error: todosResult.error,
-      });
-      return;
-    }
+    // Webhookサーバーを起動
+    const server = new WebhookServer();
+    server.start();
 
-    if (todosResult.data.length === 0) {
-      logger.warn(
-        '変換されたTodoが0個です。今日実行すべきHabitがない可能性があります'
-      );
-      return;
-    }
-
-    // TodoをHabitにマッチングして挿入
-    const insertResult = await insertTodosWithHabitMatching(
-      todosResult.data,
-      habitsResult.data
-    );
-
-    if (!insertResult.success || !insertResult.data) {
-      logger.error('Todoの挿入に失敗しました', undefined, {
-        error: insertResult.error,
-      });
-      return;
-    }
-
-    logger.info('すべての処理が完了しました', {
-      habitCount: habitsResult.data.length,
-      todoCount: insertResult.data.insertedTodos.length,
-      linkedCount: insertResult.data.linkedCount,
-    });
+    logger.info('アプリケーションの起動が完了しました');
   } catch (error) {
-    logger.error('エラーが発生しました', undefined, { error });
+    logger.error('アプリケーションの起動に失敗しました', error as Error);
+    process.exit(1);
   }
 }
+
+// プロセス終了時のクリーンアップ
+process.on('SIGTERM', () => {
+  logger.info('SIGTERMを受信しました。シャットダウン中...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINTを受信しました。シャットダウン中...');
+  process.exit(0);
+});
+
+// 未処理のエラーをキャッチ
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('未処理のPromise拒否', undefined, {
+    reason,
+    promise,
+  });
+});
+
+process.on('uncaughtException', error => {
+  logger.error('キャッチされていない例外', error);
+  process.exit(1);
+});
 
 main();

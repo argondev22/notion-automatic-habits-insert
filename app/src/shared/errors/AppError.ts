@@ -3,14 +3,14 @@
  */
 export class AppError extends Error {
   public readonly code: string;
-  public readonly context?: Record<string, any>;
+  public readonly context?: Record<string, unknown>;
   public readonly timestamp: Date;
   public readonly originalError?: Error;
 
   constructor(
     message: string,
     code: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     originalError?: Error
   ) {
     super(message);
@@ -55,6 +55,9 @@ export const ERROR_CODES = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   NOTION_API_ERROR: 'NOTION_API_ERROR',
   NETWORK_ERROR: 'NETWORK_ERROR',
+  FETCH_ERROR: 'FETCH_ERROR',
+  CONVERSION_ERROR: 'CONVERSION_ERROR',
+  INSERT_ERROR: 'INSERT_ERROR',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const;
 

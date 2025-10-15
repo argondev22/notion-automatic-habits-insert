@@ -13,6 +13,7 @@ import { ConvertRepository } from '../../domain/convert/repositories/ConvertRepo
 import { InsertMapper } from '../../domain/insert/mappers/InsertMapper';
 import { InsertService } from '../../domain/insert/services/InsertService';
 import { InsertRepository } from '../../domain/insert/repositories/InsertRepository';
+import { OrchestrationService } from '../../domain/orchestration/OrchestrationService';
 import { DatabaseResponse, BlockObjectResponse } from '../../lib/notionhq/type';
 import { Habit, Todo } from '../../domain/model';
 import { notionClient } from '../../lib/notionhq/init';
@@ -185,6 +186,12 @@ export class ServiceFactory {
         todosCache
       );
     });
+
+    // Orchestration関連のサービス
+    this.container.registerFactory('orchestrationService', () => {
+      const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
+      return new OrchestrationService(logger);
+    });
   }
 
   /**
@@ -200,7 +207,7 @@ export class ServiceFactory {
   /**
    * 設定を更新
    */
-  static updateConfig(updates: any): void {
+  static updateConfig(updates: Record<string, unknown>): void {
     const configManager = this.getService<ConfigManager>(
       SERVICE_TOKENS.CONFIG_MANAGER
     );
