@@ -38,4 +38,19 @@ export class EnvironmentConfig {
   static isProduction(): boolean {
     return this.getNodeEnv() === 'production';
   }
+
+  /**
+   * サーバー設定
+   */
+  static getServerPort(): number {
+    return parseInt(process.env.PORT || '3000', 10);
+  }
+
+  static getWebhookSecret(): string | undefined {
+    return process.env.WEBHOOK_SECRET;
+  }
+
+  static getWebhookPath(): string {
+    return process.env.WEBHOOK_PATH || '/webhook';
+  }
 }
