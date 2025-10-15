@@ -118,12 +118,38 @@ export class LoggerFactory {
 
   static getLogger(): ILogger {
     if (!this.instance) {
-      this.instance = new ConsoleLogger();
+      // 環境に応じたログレベルを設定
+      const logLevel = this.getLogLevelForEnvironment();
+      this.instance = new ConsoleLogger(logLevel);
     }
     return this.instance;
   }
 
   static setLogger(logger: ILogger): void {
     this.instance = logger;
+  }
+
+  /**
+   * 環境に応じたログレベルを取得
+   */
+  private static getLogLevelForEnvironment(): LogLevel {
+    // 環境変数でログレベルが指定されている場合はそれを使用
+    const envLogLevel = process.env.LOG_LEVEL?.toUpperCase();
+    if (envLogLevel && envLogLevel in LogLevel) {
+      return LogLevel[envLogLevel as keyof typeof LogLevel];
+    }
+
+    // 環境に応じたデフォルトログレベル
+    const nodeEnv = process.env.NODE_ENV || 'development';
+
+    switch (nodeEnv) {
+      case 'production':
+        return LogLevel.WARN; // 本番環境ではWARN以上のみ
+      case 'test':
+        return LogLevel.ERROR; // テスト環境ではERRORのみ
+      case 'development':
+      default:
+        return LogLevel.DEBUG; // 開発環境ではすべてのログ
+    }
   }
 }

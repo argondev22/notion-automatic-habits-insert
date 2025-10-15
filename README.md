@@ -76,6 +76,7 @@ docker compose up --build
 | `WEBHOOK_PATH` | Webhookのエンドポイントパス | - | `/webhook` |
 | `WEBHOOK_SECRET` | Webhook認証用のシークレット | - | - |
 | `NODE_ENV` | 実行環境（development/production） | - | `development` |
+| `LOG_LEVEL` | ログレベル（DEBUG/INFO/WARN/ERROR） | - | 環境に応じて自動設定 |
 
 ## 📡 API エンドポイント
 
@@ -242,6 +243,38 @@ app/
 ├── docker-compose.yml
 ├── package.json
 └── tsconfig.json
+```
+
+## 📊 ログレベル設定
+
+アプリケーションは環境に応じて自動的にログレベルを設定します：
+
+### デフォルト設定
+
+| 環境 | ログレベル | 出力されるログ |
+|---|---|---|
+| `development` | `DEBUG` | すべてのログ（DEBUG, INFO, WARN, ERROR） |
+| `production` | `WARN` | WARN以上のみ（WARN, ERROR） |
+| `test` | `ERROR` | ERRORのみ |
+
+### カスタム設定
+
+環境変数 `LOG_LEVEL` でログレベルを上書きできます：
+
+```bash
+# 本番環境でもDEBUGログを出力したい場合
+LOG_LEVEL=DEBUG
+
+# 開発環境でもWARN以上のみにしたい場合
+LOG_LEVEL=WARN
+```
+
+### Docker Compose での設定例
+
+```yaml
+environment:
+  - NODE_ENV=production
+  - LOG_LEVEL=WARN  # 本番環境ではWARN以上のみ
 ```
 
 ## 🔍 トラブルシューティング
