@@ -294,7 +294,7 @@ export function getInsertCacheStats() {
 /**
  * 設定を更新
  */
-export function updateInsertConfig(config: any): void {
+export function updateInsertConfig(config: Record<string, unknown>): void {
   ServiceFactory.updateConfig(config);
   LoggerFactory.getLogger().info('設定を更新しました', { config });
 }
@@ -304,7 +304,7 @@ export function updateInsertConfig(config: any): void {
  */
 export async function insertHealthCheck(): Promise<{
   status: 'healthy' | 'unhealthy';
-  details: any;
+  details: Record<string, unknown>;
 }> {
   try {
     ServiceFactory.initialize();

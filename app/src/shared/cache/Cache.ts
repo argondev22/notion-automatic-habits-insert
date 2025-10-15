@@ -101,7 +101,7 @@ export class MemoryCache<T> implements ICache<T> {
  * キャッシュファクトリー
  */
 export class CacheFactory {
-  private static instances = new Map<string, ICache<any>>();
+  private static instances = new Map<string, ICache<unknown>>();
 
   static getCache<T>(name: string, ttl?: number): ICache<T> {
     if (!this.instances.has(name)) {

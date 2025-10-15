@@ -3,14 +3,14 @@
  */
 export class AppError extends Error {
   public readonly code: string;
-  public readonly context?: Record<string, any>;
+  public readonly context?: Record<string, unknown>;
   public readonly timestamp: Date;
   public readonly originalError?: Error;
 
   constructor(
     message: string,
     code: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     originalError?: Error
   ) {
     super(message);

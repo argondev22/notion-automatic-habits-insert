@@ -207,7 +207,7 @@ export class ServiceFactory {
   /**
    * 設定を更新
    */
-  static updateConfig(updates: any): void {
+  static updateConfig(updates: Record<string, unknown>): void {
     const configManager = this.getService<ConfigManager>(
       SERVICE_TOKENS.CONFIG_MANAGER
     );

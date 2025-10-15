@@ -129,15 +129,15 @@ export class InsertMapper {
 
       const pageData: {
         parent: { database_id: string };
-        properties: Record<string, any>;
-        children?: any;
+        properties: TodoProperties;
+        children?: BlockObjectResponse;
       } = {
         parent: { database_id: databaseId },
         properties: properties,
         ...(content ? { children: content } : {}),
       };
 
-      const response = await notionClient.pages.create(pageData as any);
+      const response = await notionClient.pages.create(pageData);
 
       this.logger.debug(`データベース ${databaseId} にページを作成完了`, {
         pageId: response.id,
@@ -186,7 +186,7 @@ export class InsertMapper {
       );
     }
 
-    const properties = page.properties as any;
+    const properties = page.properties as Record<string, unknown>;
 
     // 必須プロパティの存在確認
     if (!properties.NAME || !properties.EXPECTED) {
@@ -329,11 +329,15 @@ export class InsertMapper {
         );
       }
 
-      const properties = currentPage.properties as any;
+      const properties = currentPage.properties as Record<string, unknown>;
 
       // 既存のTODOリレーションを取得
-      const existingTodoRelations = properties.TODO?.relation || [];
-      const existingTodoIds = existingTodoRelations.map((rel: any) => rel.id);
+      const existingTodoRelations =
+        (properties.TODO as { relation?: Array<{ id: string }> })?.relation ||
+        [];
+      const existingTodoIds = existingTodoRelations.map(
+        (rel: { id: string }) => rel.id
+      );
 
       // 重複チェック
       if (existingTodoIds.includes(todoPageId)) {
@@ -350,7 +354,10 @@ export class InsertMapper {
       ];
 
       // ページを更新
-      const updateProperties: Record<string, any> = {
+      const updateProperties: Record<
+        string,
+        { relation: Array<{ id: string }> }
+      > = {
         TODO: {
           relation: updatedTodoRelations,
         },

@@ -3,8 +3,8 @@
  */
 export class DIContainer {
   private static instance: DIContainer;
-  private services = new Map<string, any>();
-  private factories = new Map<string, () => any>();
+  private services = new Map<string, unknown>();
+  private factories = new Map<string, () => unknown>();
 
   private constructor() {}
 

@@ -14,7 +14,7 @@ export enum LogLevel {
 export interface LogEntry {
   level: LogLevel;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   timestamp: Date;
   error?: Error;
 }
@@ -23,10 +23,14 @@ export interface LogEntry {
  * ロガーインターフェース
  */
 export interface ILogger {
-  debug(message: string, context?: Record<string, any>): void;
-  info(message: string, context?: Record<string, any>): void;
-  warn(message: string, context?: Record<string, any>): void;
-  error(message: string, error?: Error, context?: Record<string, any>): void;
+  debug(message: string, context?: Record<string, unknown>): void;
+  info(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+  error(
+    message: string,
+    error?: Error,
+    context?: Record<string, unknown>
+  ): void;
 }
 
 /**
@@ -39,19 +43,23 @@ export class ConsoleLogger implements ILogger {
     this.minLevel = minLevel;
   }
 
-  debug(message: string, context?: Record<string, any>): void {
+  debug(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, context);
   }
 
-  info(message: string, context?: Record<string, any>): void {
+  info(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, context);
   }
 
-  warn(message: string, context?: Record<string, any>): void {
+  warn(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, context);
   }
 
-  error(message: string, error?: Error, context?: Record<string, any>): void {
+  error(
+    message: string,
+    error?: Error,
+    context?: Record<string, unknown>
+  ): void {
     this.log(LogLevel.ERROR, message, {
       ...context,
       error: error?.message,
@@ -62,7 +70,7 @@ export class ConsoleLogger implements ILogger {
   private log(
     level: LogLevel,
     message: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     if (level < this.minLevel) return;
 

@@ -222,7 +222,7 @@ export function getCacheStats() {
 /**
  * 設定を更新
  */
-export function updateConfig(config: any): void {
+export function updateConfig(config: Record<string, unknown>): void {
   ServiceFactory.updateConfig(config);
   LoggerFactory.getLogger().info('設定を更新しました', { config });
 }
@@ -232,7 +232,7 @@ export function updateConfig(config: any): void {
  */
 export async function healthCheck(): Promise<{
   status: 'healthy' | 'unhealthy';
-  details: any;
+  details: Record<string, unknown>;
 }> {
   try {
     ServiceFactory.initialize();
