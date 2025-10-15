@@ -127,17 +127,13 @@ export class InsertMapper {
         content = undefined;
       }
 
-      const pageData: {
-        parent: { database_id: string };
-        properties: TodoProperties;
-        children?: BlockObjectResponse;
-      } = {
+      const pageData = {
         parent: { database_id: databaseId },
-        properties: properties,
+        properties: properties as any,
         ...(content ? { children: content } : {}),
       };
 
-      const response = await notionClient.pages.create(pageData);
+      const response = await notionClient.pages.create(pageData as any);
 
       this.logger.debug(`データベース ${databaseId} にページを作成完了`, {
         pageId: response.id,
@@ -198,10 +194,10 @@ export class InsertMapper {
     }
 
     // タイトルの抽出
-    const name = this.extractTitle(properties.NAME.title);
+    const name = this.extractTitle((properties.NAME as { title?: Array<{ text: { content: string } }> })?.title);
 
     // 日付の抽出
-    const expectedDate = properties.EXPECTED.date;
+    const expectedDate = (properties.EXPECTED as { date?: { start?: string; end?: string } })?.date;
     if (!expectedDate || !expectedDate.start || !expectedDate.end) {
       throw new AppError(
         `ページ ${page.id} の日付プロパティが無効です`,
@@ -214,8 +210,8 @@ export class InsertMapper {
     const endTime = new Date(expectedDate.end);
 
     // リレーションの抽出
-    const profiles = this.extractRelations(properties.PROFILE?.relation);
-    const tobes = this.extractRelations(properties.TOBE?.relation);
+    const profiles = this.extractRelations((properties.PROFILE as { relation?: Array<{ id: string }> })?.relation);
+    const tobes = this.extractRelations((properties.TOBE as { relation?: Array<{ id: string }> })?.relation);
 
     const todo: Todo = {
       id: page.id, // NotionページIDを追加

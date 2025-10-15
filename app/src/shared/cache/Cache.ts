@@ -107,7 +107,7 @@ export class CacheFactory {
     if (!this.instances.has(name)) {
       this.instances.set(name, new MemoryCache<T>(ttl));
     }
-    return this.instances.get(name)!;
+    return this.instances.get(name)! as ICache<T>;
   }
 
   static clearAll(): void {
