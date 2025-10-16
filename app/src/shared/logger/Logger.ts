@@ -152,12 +152,9 @@ export class LoggerFactory {
 
     switch (nodeEnv) {
       case 'production':
-        return LogLevel.WARN; // 本番環境ではWARN以上のみ
-      case 'test':
-        return LogLevel.ERROR; // テスト環境ではERRORのみ
-      case 'development':
+        return LogLevel.INFO;
       default:
-        return LogLevel.DEBUG; // 開発環境ではすべてのログ
+        return LogLevel.DEBUG;
     }
   }
 }
