@@ -16,3 +16,7 @@ services:
       - PORT=8080
       - WEBHOOK_PATH=/webhook
       - WEBHOOK_SECRET=hoge
+    volumes:
+      - .:/app/
+      - /app/node_modules
+      - /app/dist
