@@ -1,4 +1,62 @@
-.PHONY: init up down clean test lint format build logs health reset shell
+.PHONY: help init setup up down restart shell logs health test lint format type-check build clean reset
+
+# =============================================================================
+# ヘルプ・初期化
+# =============================================================================
+
+# ヘルプ表示
+help:
+	@echo "Available commands:"
+	@echo ""
+	@echo "📦 Project Setup:"
+	@echo "  init          - Initialize project"
+	@echo "  setup         - Setup development environment"
+	@echo ""
+	@echo "🚀 Development:"
+	@echo "  up            - Start development environment"
+	@echo "  down          - Stop development environment"
+	@echo "  restart       - Restart development environment"
+	@echo "  shell         - Open shell in container"
+	@echo ""
+	@echo "📊 Monitoring:"
+	@echo "  logs          - Show all logs"
+	@echo "  logs:app      - Show application logs only"
+	@echo "  health        - Check service health"
+	@echo ""
+	@echo "🧪 Testing & Quality:"
+	@echo "  test          - Run tests"
+	@echo "  lint          - Run linting"
+	@echo "  lint:fix      - Fix linting issues"
+	@echo "  format        - Format code"
+	@echo "  format:check  - Check code formatting"
+	@echo "  type-check    - Run TypeScript type checking"
+	@echo ""
+	@echo "🔨 Build & Deploy:"
+	@echo "  build         - Build Docker images"
+	@echo ""
+	@echo "🧹 Cleanup:"
+	@echo "  clean         - Clean Docker system"
+	@echo "  clean:images  - Clean Docker images"
+	@echo "  clean:all     - Clean everything"
+	@echo "  reset         - Reset development environment"
+	@echo ""
+	@echo "  help          - Show this help"
+
+# プロジェクト初期化
+init:
+	@chmod +x ./bin/init-project.sh
+	@./bin/init-project.sh
+
+# 開発環境のセットアップ（初回実行時）
+setup: init up
+	@echo "Waiting for services to be ready..."
+	@sleep 10
+	@make health
+	@echo "Development environment is ready!"
+
+# =============================================================================
+# 開発環境管理
+# =============================================================================
 
 # 開発環境の起動
 up:
@@ -11,9 +69,13 @@ down:
 # 開発環境の再起動
 restart: down up
 
-# ビルド実行
-build:
-	@cd app && docker compose build --no-cache
+# コンテナ内でシェルを実行
+shell:
+	@cd app && docker compose exec app /bin/bash
+
+# =============================================================================
+# 監視・ログ
+# =============================================================================
 
 # ログ表示
 logs:
@@ -23,12 +85,13 @@ logs:
 logs:app:
 	@cd app && docker compose logs -f app
 
-# コンテナ内でシェルを実行
-shell:
-	@cd app && docker compose exec app /bin/bash
+# ヘルスチェック
+health:
+	@curl -f http://localhost:8080/health || echo "Service is not healthy"
 
-# 開発環境の完全リセット
-reset: down clean up
+# =============================================================================
+# テスト・品質管理
+# =============================================================================
 
 # テスト実行
 test:
@@ -54,10 +117,17 @@ format:check:
 type-check:
 	@cd app && docker compose exec app npm run type-check
 
-# ヘルスチェック
-health:
-	@curl -f http://localhost:8080/health || echo "Service is not healthy"
+# =============================================================================
+# ビルド・デプロイ
+# =============================================================================
 
+# ビルド実行
+build:
+	@cd app && docker compose build --no-cache
+
+# =============================================================================
+# クリーンアップ
+# =============================================================================
 
 # Dockerのクリーンアップ
 clean:
@@ -71,42 +141,5 @@ clean:images:
 # 全体的なクリーンアップ
 clean:all: down clean clean:images
 
-# プロジェクト初期化
-init:
-	@chmod +x ./bin/init-project.sh
-	@./bin/init-project.sh
-
-# 開発環境のセットアップ（初回実行時）
-setup: init up
-	@echo "Waiting for services to be ready..."
-	@sleep 10
-	@make health
-	@echo "Development environment is ready!"
-
-# ヘルプ表示
-help:
-	@echo "Available commands:"
-	@echo "  init          - Initialize project"
-	@echo "  up            - Start development environment"
-	@echo "  down          - Stop development environment"
-	@echo "  restart       - Restart development environment"
-	@echo "  up-prod       - Start production environment"
-	@echo "  down-prod     - Stop production environment"
-	@echo "  shell         - Open shell in container"
-	@echo "  test          - Run tests"
-	@echo "  lint          - Run linting"
-	@echo "  lint:fix      - Fix linting issues"
-	@echo "  format        - Format code"
-	@echo "  format:check  - Check code formatting"
-	@echo "  type-check    - Run TypeScript type checking"
-	@echo "  build         - Build Docker images"
-	@echo "  logs          - Show all logs"
-	@echo "  logs:app      - Show application logs only"
-	@echo "  health        - Check service health"
-	@echo "  reset         - Reset development environment"
-	@echo "  clean         - Clean Docker system"
-	@echo "  clean:images  - Clean Docker images"
-	@echo "  clean:all     - Clean everything"
-	@echo "  setup         - Setup development environment"
-	@echo "  setup:prod    - Setup production environment"
-	@echo "  help          - Show this help"
+# 開発環境の完全リセット
+reset: down clean up
