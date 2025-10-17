@@ -132,7 +132,13 @@ export class ConvertRepository {
       .sort()
       .join(',');
     const habitCount = habits.length;
-    return `${habitCount}:${habitNames}`;
+    // 日付を含めてキャッシュキーを生成（来週の月曜日を基準）
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const nextWeekMonday = new Date(today);
+    nextWeekMonday.setDate(today.getDate() - dayOfWeek + 1 + 7);
+    const dateKey = nextWeekMonday.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    return `${habitCount}:${habitNames}:${dateKey}`;
   }
 
   /**
@@ -140,6 +146,12 @@ export class ConvertRepository {
    */
   private generateHabitCacheKey(habit: Habit): string {
     const days = habit.days.sort().join(',');
-    return `${habit.name}:${days}:${habit.startTime}`;
+    // 日付を含めてキャッシュキーを生成（来週の月曜日を基準）
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const nextWeekMonday = new Date(today);
+    nextWeekMonday.setDate(today.getDate() - dayOfWeek + 1 + 7);
+    const dateKey = nextWeekMonday.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    return `${habit.name}:${days}:${habit.startTime}:${dateKey}`;
   }
 }
