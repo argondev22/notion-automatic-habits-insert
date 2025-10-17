@@ -257,12 +257,24 @@ export class ConvertService {
 
     return {
       [Day.MONDAY]: new Date(nextWeekMonday),
-      [Day.TUESDAY]: new Date(nextWeekMonday.getTime() + 24 * 60 * 60 * 1000),
-      [Day.WEDNESDAY]: new Date(nextWeekMonday.getTime() + 2 * 24 * 60 * 60 * 1000),
-      [Day.THURSDAY]: new Date(nextWeekMonday.getTime() + 3 * 24 * 60 * 60 * 1000),
-      [Day.FRIDAY]: new Date(nextWeekMonday.getTime() + 4 * 24 * 60 * 60 * 1000),
-      [Day.SATURDAY]: new Date(nextWeekMonday.getTime() + 5 * 24 * 60 * 60 * 1000),
-      [Day.SUNDAY]: new Date(nextWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000),
+      [Day.TUESDAY]: new Date(
+        nextWeekMonday.getTime() + 24 * 60 * 60 * 1000
+      ),
+      [Day.WEDNESDAY]: new Date(
+        nextWeekMonday.getTime() + 2 * 24 * 60 * 60 * 1000
+      ),
+      [Day.THURSDAY]: new Date(
+        nextWeekMonday.getTime() + 3 * 24 * 60 * 60 * 1000
+      ),
+      [Day.FRIDAY]: new Date(
+        nextWeekMonday.getTime() + 4 * 24 * 60 * 60 * 1000
+      ),
+      [Day.SATURDAY]: new Date(
+        nextWeekMonday.getTime() + 5 * 24 * 60 * 60 * 1000
+      ),
+      [Day.SUNDAY]: new Date(
+        nextWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000
+      ),
     };
   }
 
