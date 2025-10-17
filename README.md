@@ -53,7 +53,8 @@ environment:
   - PORT=8080
   - WEBHOOK_PATH=/webhook
   - WEBHOOK_SECRET=your_webhook_secret
-  - NODE_ENV=production
+  - NODE_ENV=development
+  - LOG_LEVEL=DEBUG
 ```
 
 ### 3. サーバーを起動
@@ -64,6 +65,8 @@ docker compose up --build
 ```
 
 サーバーは `http://localhost:8080` で起動します。
+
+**注意**: デフォルトでは開発環境（`target: development`）で起動します。本番環境で使用する場合は、docker-compose.ymlの`target`を`production`に変更してください。
 
 ## 🔐 環境変数
 
@@ -192,7 +195,7 @@ devcontainer up --workspace-folder .
 ```bash
 cd app
 npm install
-npm run start
+npm run dev
 ```
 
 ### TypeScript型チェック
@@ -273,6 +276,14 @@ LOG_LEVEL=WARN
 
 ```yaml
 environment:
+  - NODE_ENV=development  # 開発環境
+  - LOG_LEVEL=DEBUG        # 開発環境ではDEBUG以上
+```
+
+本番環境での設定例：
+
+```yaml
+environment:
   - NODE_ENV=production
   - LOG_LEVEL=WARN  # 本番環境ではWARN以上のみ
 ```
@@ -299,8 +310,16 @@ PORT=3001 docker compose up
 コンテナを再構築：
 
 ```bash
-npm run clean
-npm run start
+cd app
+docker compose down
+docker compose up --build
+```
+
+または、ローカル開発時：
+
+```bash
+cd app
+npm run dev
 ```
 
 ## 📚 関連ドキュメント
