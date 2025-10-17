@@ -170,7 +170,7 @@ export class ServiceFactory {
         SERVICE_TOKENS.RETRY_MANAGER
       );
 
-      return new InsertService(insertMapper, logger, todosCache, retryManager);
+      return new InsertService(insertMapper, logger, retryManager);
     });
 
     this.container.registerFactory('insertRepository', () => {
