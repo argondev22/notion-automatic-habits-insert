@@ -1,27 +1,73 @@
-# Use Node.js 20 with Debian Bullseye
-FROM node:20-bullseye
+FROM node:20-bullseye AS development
 
-# Set timezone to JST
+ENV NODE_ENV=development
+
+# ログのタイムスタンプを日本時間するためタイムゾーンを指定
 ENV TZ=Asia/Tokyo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Set working directory
+# セキュリティのため非rootユーザーを作成
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 WORKDIR /app
 
-# Copy TypeScript configuration first
-COPY tsconfig.json ./
+COPY ./package*.json ./
+COPY ./tsconfig.json ./
 
-# Copy package files
-COPY package*.json ./
+RUN npm ci --include=dev && npm cache clean --force
 
-# Install dependencies including dev dependencies
-RUN npm install --include=dev
-
-# Copy source code
 COPY ./src ./src
 
-# Compile TypeScript using project config
-RUN npx tsc -p .
+RUN chown -R appuser:appuser /app
+USER appuser
 
-# Run the compiled JavaScript
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["npm", "run", "dev"]
+
+
+FROM node:20-bullseye AS builder
+
+WORKDIR /app
+
+COPY ./package*.json ./
+COPY ./tsconfig.json ./
+
+RUN npm ci --include=dev && npm cache clean --force
+
+COPY ./src ./src
+
+RUN npm run build
+
+
+FROM node:20-bullseye-slim AS production
+
+ENV NODE_ENV=production
+
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY ./package*.json ./
+
+RUN npm ci --only=production && npm cache clean --force
+
+COPY --from=builder /app/dist ./dist
+
+RUN chown -R appuser:appuser /app
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+EXPOSE 8080
+
 CMD ["node", "./dist/main.js"]

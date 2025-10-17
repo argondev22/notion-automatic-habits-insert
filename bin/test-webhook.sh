@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 
 # デフォルト設定
 HOST="${WEBHOOK_HOST:-localhost}"
-PORT="${WEBHOOK_PORT:-3000}"
+PORT="${WEBHOOK_PORT:-8080}"
 SECRET="${WEBHOOK_SECRET:-your_webhook_secret_here}"
 BASE_URL="http://${HOST}:${PORT}"
 

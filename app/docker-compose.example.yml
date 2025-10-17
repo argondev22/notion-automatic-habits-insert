@@ -2,16 +2,21 @@ services:
 
   app:
     image: notion-automatic-habits-insert
-    build: .
+    build:
+      context: .
+      target: development
     ports:
-      - "3000:3000"
+      - "8080:8080"
     environment:
       # アプリケーション設定
       - INTEGRATION_SECRET=
-      - HABITS_DATABASE_ID=
-      - TODOS_DATABASE_ID=
+      - HABITS_DATABASE_ID=28fefb2fae2080edb9f7d49dd742061f
+      - TODOS_DATABASE_ID=28fefb2fae2080ed8700f4d4110f94ff
       # サーバー設定
-      - PORT=3000
+      - PORT=8080
       - WEBHOOK_PATH=/webhook
-      - WEBHOOK_SECRET=
-      - NODE_ENV=development
+      - WEBHOOK_SECRET=hoge
+    volumes:
+      - .:/app/
+      - /app/node_modules
+      - /app/dist

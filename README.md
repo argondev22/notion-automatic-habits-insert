@@ -50,10 +50,11 @@ environment:
   - INTEGRATION_SECRET=your_notion_api_key
   - HABITS_DATABASE_ID=your_habits_database_id
   - TODOS_DATABASE_ID=your_todos_database_id
-  - PORT=3000
+  - PORT=8080
   - WEBHOOK_PATH=/webhook
   - WEBHOOK_SECRET=your_webhook_secret
-  - NODE_ENV=production
+  - NODE_ENV=development
+  - LOG_LEVEL=DEBUG
 ```
 
 ### 3. サーバーを起動
@@ -63,7 +64,9 @@ cd app
 docker compose up --build
 ```
 
-サーバーは `http://localhost:3000` で起動します。
+サーバーは `http://localhost:8080` で起動します。
+
+**注意**: デフォルトでは開発環境（`target: development`）で起動します。本番環境で使用する場合は、docker-compose.ymlの`target`を`production`に変更してください。
 
 ## 🔐 環境変数
 
@@ -72,7 +75,7 @@ docker compose up --build
 | `INTEGRATION_SECRET` | Notion APIの統合シークレット | ✓ | - |
 | `HABITS_DATABASE_ID` | HabitsデータベースのID | ✓ | - |
 | `TODOS_DATABASE_ID` | TodosデータベースのID | ✓ | - |
-| `PORT` | サーバーのポート番号 | - | `3000` |
+| `PORT` | サーバーのポート番号 | - | `8080` |
 | `WEBHOOK_PATH` | Webhookのエンドポイントパス | - | `/webhook` |
 | `WEBHOOK_SECRET` | Webhook認証用のシークレット | - | - |
 | `NODE_ENV` | 実行環境（development/production） | - | `development` |
@@ -154,12 +157,12 @@ X-Webhook-Secret: your_webhook_secret
 
 ```bash
 # Webhook を実行
-curl -X POST http://localhost:3000/webhook \
+curl -X POST http://localhost:8080/webhook \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: your_webhook_secret"
 
 # ヘルスチェック
-curl http://localhost:3000/health
+curl http://localhost:8080/health
 ```
 
 ### GitHub Actions / 外部CI
@@ -192,7 +195,7 @@ devcontainer up --workspace-folder .
 ```bash
 cd app
 npm install
-npm run start
+npm run dev
 ```
 
 ### TypeScript型チェック
@@ -273,6 +276,14 @@ LOG_LEVEL=WARN
 
 ```yaml
 environment:
+  - NODE_ENV=development  # 開発環境
+  - LOG_LEVEL=DEBUG        # 開発環境ではDEBUG以上
+```
+
+本番環境での設定例：
+
+```yaml
+environment:
   - NODE_ENV=production
   - LOG_LEVEL=WARN  # 本番環境ではWARN以上のみ
 ```
@@ -282,8 +293,8 @@ environment:
 ### ポートが使用中
 
 ```bash
-# ポート3000を使用しているプロセスを確認
-lsof -i :3000
+# ポート8080を使用しているプロセスを確認
+lsof -i :8080
 
 # または別のポートを使用
 PORT=3001 docker compose up
@@ -299,8 +310,16 @@ PORT=3001 docker compose up
 コンテナを再構築：
 
 ```bash
-npm run clean
-npm run start
+cd app
+docker compose down
+docker compose up --build
+```
+
+または、ローカル開発時：
+
+```bash
+cd app
+npm run dev
 ```
 
 ## 📚 関連ドキュメント

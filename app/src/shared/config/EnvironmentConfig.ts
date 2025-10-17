@@ -43,7 +43,7 @@ export class EnvironmentConfig {
    * サーバー設定
    */
   static getServerPort(): number {
-    return parseInt(process.env.PORT || '3000', 10);
+    return parseInt(process.env.PORT || '8080', 10);
   }
 
   static getWebhookSecret(): string | undefined {
