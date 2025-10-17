@@ -257,9 +257,7 @@ export class ConvertService {
 
     return {
       [Day.MONDAY]: new Date(nextWeekMonday),
-      [Day.TUESDAY]: new Date(
-        nextWeekMonday.getTime() + 24 * 60 * 60 * 1000
-      ),
+      [Day.TUESDAY]: new Date(nextWeekMonday.getTime() + 24 * 60 * 60 * 1000),
       [Day.WEDNESDAY]: new Date(
         nextWeekMonday.getTime() + 2 * 24 * 60 * 60 * 1000
       ),

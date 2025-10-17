@@ -165,7 +165,6 @@ export class ServiceFactory {
     this.container.registerFactory('insertService', () => {
       const insertMapper = this.container.get<InsertMapper>('insertMapper');
       const logger = this.container.get<ILogger>(SERVICE_TOKENS.LOGGER);
-      const todosCache = this.container.get<ICache<Todo[]>>('todosCache');
       const retryManager = this.container.get<RetryManager>(
         SERVICE_TOKENS.RETRY_MANAGER
       );
