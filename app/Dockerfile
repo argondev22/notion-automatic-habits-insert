@@ -32,7 +32,7 @@ RUN npm install --include=dev
 
 COPY ./src ./src
 
-RUN npx tsc -p .
+RUN npm run build
 
 
 FROM node:20-bullseye-slim AS production
