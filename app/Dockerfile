@@ -2,6 +2,7 @@ FROM node:20-bullseye AS development
 
 ENV NODE_ENV=development
 
+# ログのタイムスタンプを日本時間するためタイムゾーンを指定
 ENV TZ=Asia/Tokyo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -10,8 +11,6 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN npm install --include=dev
-
-COPY ./src ./src
 
 EXPOSE 8080
 
