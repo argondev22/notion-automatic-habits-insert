@@ -97,7 +97,7 @@ if (providedSecret !== this.webhookSecret) {
 
 ```http
 POST /webhook HTTP/1.1
-Host: localhost:3000
+Host: localhost:8080
 Content-Type: application/json
 X-Webhook-Secret: your_webhook_secret
 ```
@@ -198,10 +198,10 @@ constructor() {
 
 ```bash
 # ヘルスチェック
-curl http://localhost:3000/health
+curl http://localhost:8080/health
 
 # Webhookの実行
-curl -X POST http://localhost:3000/webhook \
+curl -X POST http://localhost:8080/webhook \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: your_webhook_secret"
 ```

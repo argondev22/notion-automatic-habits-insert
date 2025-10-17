@@ -50,7 +50,7 @@ environment:
   - INTEGRATION_SECRET=your_notion_api_key
   - HABITS_DATABASE_ID=your_habits_database_id
   - TODOS_DATABASE_ID=your_todos_database_id
-  - PORT=3000
+  - PORT=8080
   - WEBHOOK_PATH=/webhook
   - WEBHOOK_SECRET=your_webhook_secret
   - NODE_ENV=production
@@ -63,7 +63,7 @@ cd app
 docker compose up --build
 ```
 
-サーバーは `http://localhost:3000` で起動します。
+サーバーは `http://localhost:8080` で起動します。
 
 ## 🔐 環境変数
 
@@ -72,7 +72,7 @@ docker compose up --build
 | `INTEGRATION_SECRET` | Notion APIの統合シークレット | ✓ | - |
 | `HABITS_DATABASE_ID` | HabitsデータベースのID | ✓ | - |
 | `TODOS_DATABASE_ID` | TodosデータベースのID | ✓ | - |
-| `PORT` | サーバーのポート番号 | - | `3000` |
+| `PORT` | サーバーのポート番号 | - | `8080` |
 | `WEBHOOK_PATH` | Webhookのエンドポイントパス | - | `/webhook` |
 | `WEBHOOK_SECRET` | Webhook認証用のシークレット | - | - |
 | `NODE_ENV` | 実行環境（development/production） | - | `development` |
@@ -154,12 +154,12 @@ X-Webhook-Secret: your_webhook_secret
 
 ```bash
 # Webhook を実行
-curl -X POST http://localhost:3000/webhook \
+curl -X POST http://localhost:8080/webhook \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: your_webhook_secret"
 
 # ヘルスチェック
-curl http://localhost:3000/health
+curl http://localhost:8080/health
 ```
 
 ### GitHub Actions / 外部CI
@@ -282,8 +282,8 @@ environment:
 ### ポートが使用中
 
 ```bash
-# ポート3000を使用しているプロセスを確認
-lsof -i :3000
+# ポート8080を使用しているプロセスを確認
+lsof -i :8080
 
 # または別のポートを使用
 PORT=3001 docker compose up
