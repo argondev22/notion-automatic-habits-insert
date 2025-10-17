@@ -15,5 +15,3 @@ services:
       - WEBHOOK_PATH=/webhook
       - WEBHOOK_SECRET=
       - NODE_ENV=development
-      # ログ設定（開発環境ではDEBUG以上）
-      - LOG_LEVEL=DEBUG

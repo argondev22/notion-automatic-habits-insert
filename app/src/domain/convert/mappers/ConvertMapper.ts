@@ -144,26 +144,53 @@ export class ConvertMapper {
   }
 
   /**
-   * 現在の週の日付を取得する
+   * 来週の日付を取得する
    * @returns Day enumをキーとした日付マップ
    */
   private getCurrentWeekDates(): Record<Day, Date> {
     const today = new Date();
     const dayOfWeek = today.getDay();
 
-    // 月曜日を週の開始とする
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - dayOfWeek + 1);
+    const nextWeekMonday = new Date(today);
+    nextWeekMonday.setDate(today.getDate() - dayOfWeek + 1 + 7);
 
-    return {
-      [Day.MONDAY]: new Date(monday),
-      [Day.TUESDAY]: new Date(monday.getTime() + 24 * 60 * 60 * 1000),
-      [Day.WEDNESDAY]: new Date(monday.getTime() + 2 * 24 * 60 * 60 * 1000),
-      [Day.THURSDAY]: new Date(monday.getTime() + 3 * 24 * 60 * 60 * 1000),
-      [Day.FRIDAY]: new Date(monday.getTime() + 4 * 24 * 60 * 60 * 1000),
-      [Day.SATURDAY]: new Date(monday.getTime() + 5 * 24 * 60 * 60 * 1000),
-      [Day.SUNDAY]: new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000),
+    this.logger.debug('ConvertMapper: 来週の日付計算', {
+      today: today.toISOString(),
+      dayOfWeek,
+      nextWeekMonday: nextWeekMonday.toISOString(),
+    });
+
+    const weekDates = {
+      [Day.MONDAY]: new Date(nextWeekMonday),
+      [Day.TUESDAY]: new Date(nextWeekMonday.getTime() + 24 * 60 * 60 * 1000),
+      [Day.WEDNESDAY]: new Date(
+        nextWeekMonday.getTime() + 2 * 24 * 60 * 60 * 1000
+      ),
+      [Day.THURSDAY]: new Date(
+        nextWeekMonday.getTime() + 3 * 24 * 60 * 60 * 1000
+      ),
+      [Day.FRIDAY]: new Date(
+        nextWeekMonday.getTime() + 4 * 24 * 60 * 60 * 1000
+      ),
+      [Day.SATURDAY]: new Date(
+        nextWeekMonday.getTime() + 5 * 24 * 60 * 60 * 1000
+      ),
+      [Day.SUNDAY]: new Date(
+        nextWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000
+      ),
     };
+
+    this.logger.debug('ConvertMapper: 計算された週の日付', {
+      monday: weekDates[Day.MONDAY].toISOString(),
+      tuesday: weekDates[Day.TUESDAY].toISOString(),
+      wednesday: weekDates[Day.WEDNESDAY].toISOString(),
+      thursday: weekDates[Day.THURSDAY].toISOString(),
+      friday: weekDates[Day.FRIDAY].toISOString(),
+      saturday: weekDates[Day.SATURDAY].toISOString(),
+      sunday: weekDates[Day.SUNDAY].toISOString(),
+    });
+
+    return weekDates;
   }
 
   /**

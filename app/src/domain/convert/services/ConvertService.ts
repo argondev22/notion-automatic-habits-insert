@@ -201,7 +201,13 @@ export class ConvertService {
    * @returns Day enumをキーとした日付マップ
    */
   private async getCurrentWeekDates(): Promise<Record<Day, Date>> {
-    const cacheKey = 'currentWeekDates';
+    // 日付を含めてキャッシュキーを生成（来週の月曜日を基準）
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const nextWeekMonday = new Date(today);
+    nextWeekMonday.setDate(today.getDate() - dayOfWeek + 1 + 7);
+    const dateKey = nextWeekMonday.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    const cacheKey = `currentWeekDates:${dateKey}`;
 
     try {
       // キャッシュから取得を試行
@@ -231,25 +237,42 @@ export class ConvertService {
   }
 
   /**
-   * 現在の週の日付を計算する
+   * 来週の日付を計算する
+   * 曜日に関係なく常に来週の日付を返す
    * @returns Day enumをキーとした日付マップ
    */
   private calculateCurrentWeekDates(): Record<Day, Date> {
     const today = new Date();
     const dayOfWeek = today.getDay();
 
-    // 月曜日を週の開始とする
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - dayOfWeek + 1);
+    // 常に来週の月曜日を基準とする
+    const nextWeekMonday = new Date(today);
+    nextWeekMonday.setDate(today.getDate() - dayOfWeek + 1 + 7); // 来週の月曜日
+
+    this.logger.debug('ConvertService: 来週の日付計算', {
+      today: today.toISOString(),
+      dayOfWeek,
+      nextWeekMonday: nextWeekMonday.toISOString(),
+    });
 
     return {
-      [Day.MONDAY]: new Date(monday),
-      [Day.TUESDAY]: new Date(monday.getTime() + 24 * 60 * 60 * 1000),
-      [Day.WEDNESDAY]: new Date(monday.getTime() + 2 * 24 * 60 * 60 * 1000),
-      [Day.THURSDAY]: new Date(monday.getTime() + 3 * 24 * 60 * 60 * 1000),
-      [Day.FRIDAY]: new Date(monday.getTime() + 4 * 24 * 60 * 60 * 1000),
-      [Day.SATURDAY]: new Date(monday.getTime() + 5 * 24 * 60 * 60 * 1000),
-      [Day.SUNDAY]: new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000),
+      [Day.MONDAY]: new Date(nextWeekMonday),
+      [Day.TUESDAY]: new Date(nextWeekMonday.getTime() + 24 * 60 * 60 * 1000),
+      [Day.WEDNESDAY]: new Date(
+        nextWeekMonday.getTime() + 2 * 24 * 60 * 60 * 1000
+      ),
+      [Day.THURSDAY]: new Date(
+        nextWeekMonday.getTime() + 3 * 24 * 60 * 60 * 1000
+      ),
+      [Day.FRIDAY]: new Date(
+        nextWeekMonday.getTime() + 4 * 24 * 60 * 60 * 1000
+      ),
+      [Day.SATURDAY]: new Date(
+        nextWeekMonday.getTime() + 5 * 24 * 60 * 60 * 1000
+      ),
+      [Day.SUNDAY]: new Date(
+        nextWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000
+      ),
     };
   }
 

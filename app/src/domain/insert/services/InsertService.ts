@@ -1,6 +1,5 @@
 import { Todo } from '../../model';
 import { ILogger } from '../../../shared/logger/Logger';
-import { ICache } from '../../../shared/cache/Cache';
 import { RetryManager } from '../../../shared/retry/RetryManager';
 import { InsertMapper } from '../mappers/InsertMapper';
 import { AppError, ERROR_CODES } from '../../../shared/errors/AppError';
@@ -14,7 +13,6 @@ export class InsertService {
   constructor(
     private mapper: InsertMapper,
     private logger: ILogger,
-    private cache: ICache<Todo[]>,
     private retryManager: RetryManager
   ) {}
 

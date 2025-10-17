@@ -128,11 +128,11 @@ export class InsertMapper {
         content = undefined;
       }
 
-      const pageData: CreatePageParameters = {
+      const pageData = {
         parent: { database_id: databaseId },
-        properties: properties as Record<string, any>,
-        ...(content ? { children: content as any[] } : {}),
-      };
+        properties: properties,
+        ...(content ? { children: content } : {}),
+      } as unknown as CreatePageParameters;
 
       const response = await notionClient.pages.create(pageData);
 
