@@ -2,7 +2,9 @@ services:
 
   app:
     image: notion-automatic-habits-insert
-    build: .
+    build:
+      context: .
+      target: development
     ports:
       - "8080:8080"
     environment:

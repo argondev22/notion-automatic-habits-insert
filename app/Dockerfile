@@ -1,27 +1,53 @@
-# Use Node.js 20 with Debian Bullseye
-FROM node:20-bullseye
+FROM node:20-bullseye AS development
 
-# Set timezone to JST
+ENV NODE_ENV=development
+
 ENV TZ=Asia/Tokyo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Set working directory
 WORKDIR /app
 
-# Copy TypeScript configuration first
-COPY tsconfig.json ./
-
-# Copy package files
 COPY package*.json ./
 
-# Install dependencies including dev dependencies
 RUN npm install --include=dev
 
-# Copy source code
 COPY ./src ./src
 
-# Compile TypeScript using project config
+EXPOSE 8080
+
+CMD ["npm", "run", "dev"]
+
+
+FROM node:20-bullseye AS builder
+
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /app
+
+COPY tsconfig.json ./
+COPY package*.json ./
+
+RUN npm install --include=dev
+
+COPY ./src ./src
+
 RUN npx tsc -p .
 
-# Run the compiled JavaScript
+
+FROM node:20-bullseye-slim AS production
+
+ENV NODE_ENV=production
+
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --only=production && npm cache clean --force
+
+COPY --from=builder /app/dist ./dist
+
 CMD ["node", "./dist/main.js"]
