@@ -146,15 +146,15 @@ export class WebhookServer {
     }
 
     // Notionへの即座のレスポンス返信（Webhook再送を防ぐため）
-    const immediateResponseTime = Date.now() - receiveTime;
-    this.logger.info('Webhook即座レスポンス送信', {
-      responseTime: `${immediateResponseTime}ms`,
-    });
-
     res.status(200).json({
       success: true,
       message: 'Webhookを受信しました。処理を開始します。',
       timestamp: new Date().toISOString(),
+    });
+
+    const immediateResponseTime = Date.now() - receiveTime;
+    this.logger.info('Webhook即座レスポンス送信完了', {
+      responseTime: `${immediateResponseTime}ms`,
     });
 
     // レスポンス送信後にビジネスロジックを非同期で実行
