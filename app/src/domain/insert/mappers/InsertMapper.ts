@@ -15,7 +15,7 @@ import type { CreatePageParameters } from '@notionhq/client/build/src/api-endpoi
  * TodoモデルとNotionデータベース間の型安全な変換を管理
  */
 export class InsertMapper {
-  constructor(private logger: ILogger) { }
+  constructor(private logger: ILogger) {}
 
   /**
    * TodoモデルをNotionデータベース用のプロパティに変換する
