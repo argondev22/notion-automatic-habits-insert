@@ -125,7 +125,9 @@ export class WebhookServer {
       headers: {
         'content-type': req.headers['content-type'],
         'user-agent': req.headers['user-agent'],
-        'x-webhook-secret': req.headers['x-webhook-secret'] ? '***' : undefined,
+        'x-webhook-secret': req.headers['x-webhook-secret']
+          ? '[REDACTED]'
+          : undefined,
       },
       body: this.sanitizeBodyForLogging(req.body),
     });
