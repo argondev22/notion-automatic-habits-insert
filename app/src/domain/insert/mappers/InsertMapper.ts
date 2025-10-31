@@ -15,7 +15,7 @@ import type { CreatePageParameters } from '@notionhq/client/build/src/api-endpoi
  * TodoモデルとNotionデータベース間の型安全な変換を管理
  */
 export class InsertMapper {
-  constructor(private logger: ILogger) {}
+  constructor(private logger: ILogger) { }
 
   /**
    * TodoモデルをNotionデータベース用のプロパティに変換する
@@ -124,6 +124,14 @@ export class InsertMapper {
       if (content && this.hasMentionElement(content)) {
         this.logger.warn(
           `コンテンツにmention要素が含まれているため、コンテンツなしでページを作成します`
+        );
+        content = undefined;
+      }
+
+      // column_list要素を含むコンテンツの場合はスキップ
+      if (content && this.hasColumnListElement(content)) {
+        this.logger.warn(
+          `コンテンツにcolumn_list要素が含まれているため、コンテンツなしでページを作成します`
         );
         content = undefined;
       }
@@ -289,6 +297,39 @@ export class InsertMapper {
       if (
         Object.prototype.hasOwnProperty.call(content, key) &&
         this.hasMentionElement((content as Record<string, unknown>)[key])
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * column_list要素が含まれているかチェック
+   * @param content - チェック対象のコンテンツ
+   * @returns column_list要素が含まれているかどうか
+   */
+  private hasColumnListElement(content: unknown): boolean {
+    if (!content || typeof content !== 'object') {
+      return false;
+    }
+
+    // 直接column_list要素があるかチェック
+    if ('type' in content && content.type === 'column_list') {
+      return true;
+    }
+
+    // リッチテキスト配列をチェック
+    if (Array.isArray(content)) {
+      return content.some(item => this.hasColumnListElement(item));
+    }
+
+    // 各プロパティを再帰的にチェック
+    for (const key in content) {
+      if (
+        Object.prototype.hasOwnProperty.call(content, key) &&
+        this.hasColumnListElement((content as Record<string, unknown>)[key])
       ) {
         return true;
       }
