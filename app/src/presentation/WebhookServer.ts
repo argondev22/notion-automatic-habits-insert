@@ -88,6 +88,29 @@ export class WebhookServer {
   }
 
   /**
+   * リクエストボディを安全にログ出力用にサニタイズ
+   */
+  private sanitizeBodyForLogging(body: unknown): unknown {
+    if (!body || typeof body !== 'object') {
+      return body;
+    }
+
+    // メタデータのみをログに記録（機密情報を除外）
+    const sanitized: Record<string, unknown> = {};
+    const bodyObj = body as Record<string, unknown>;
+
+    // 安全にログできる情報のみを含める
+    if ('type' in bodyObj) sanitized.type = bodyObj.type;
+    if ('id' in bodyObj) sanitized.id = bodyObj.id;
+    if ('created_time' in bodyObj)
+      sanitized.created_time = bodyObj.created_time;
+    if ('last_edited_time' in bodyObj)
+      sanitized.last_edited_time = bodyObj.last_edited_time;
+
+    return sanitized;
+  }
+
+  /**
    * Webhookリクエストを処理
    */
   private async handleWebhook(req: Request, res: Response): Promise<void> {
@@ -104,7 +127,7 @@ export class WebhookServer {
         'user-agent': req.headers['user-agent'],
         'x-webhook-secret': req.headers['x-webhook-secret'] ? '***' : undefined,
       },
-      body: req.body,
+      body: this.sanitizeBodyForLogging(req.body),
     });
 
     // シークレット検証
@@ -137,8 +160,11 @@ export class WebhookServer {
     // レスポンス送信後にビジネスロジックを非同期で実行
     // これによりNotionへの応答が遅れることによるWebhook再送を防ぐ
     setImmediate(() => {
-      this.processWebhookAsync(receiveTime).catch(error => {
-        this.logger.error('非同期Webhook処理エラー', error as Error);
+      this.processWebhookAsync(receiveTime, req.path).catch(error => {
+        this.logger.error('非同期Webhook処理エラー', error as Error, {
+          path: req.path,
+          timestamp: new Date().toISOString(),
+        });
       });
     });
   }
@@ -146,8 +172,11 @@ export class WebhookServer {
   /**
    * Webhook処理を非同期で実行（レスポンス送信後）
    */
-  private async processWebhookAsync(startTime: number): Promise<void> {
-    this.logger.info('Webhook非同期処理開始');
+  private async processWebhookAsync(
+    startTime: number,
+    path: string
+  ): Promise<void> {
+    this.logger.info('Webhook非同期処理開始', { path });
 
     try {
       // オーケストレーションサービスを実行
@@ -155,6 +184,7 @@ export class WebhookServer {
 
       const totalProcessingTime = Date.now() - startTime;
       this.logger.info('Webhook非同期処理完了', {
+        path,
         success: result.success,
         totalProcessingTime: `${totalProcessingTime}ms`,
         habitCount: result.habitCount,
@@ -164,7 +194,9 @@ export class WebhookServer {
     } catch (error) {
       const totalProcessingTime = Date.now() - startTime;
       this.logger.error('Webhook非同期処理エラー', error as Error, {
+        path,
         totalProcessingTime: `${totalProcessingTime}ms`,
+        errorType: error instanceof Error ? error.name : 'Unknown',
       });
     }
   }
