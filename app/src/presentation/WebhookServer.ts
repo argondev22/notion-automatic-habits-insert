@@ -91,7 +91,21 @@ export class WebhookServer {
    * Webhookリクエストを処理
    */
   private async handleWebhook(req: Request, res: Response): Promise<void> {
-    const startTime = Date.now();
+    const receiveTime = Date.now();
+
+    // Webhookイベントのメタデータをログに出力
+    this.logger.info('Webhookイベント受信', {
+      timestamp: new Date(receiveTime).toISOString(),
+      method: req.method,
+      path: req.path,
+      ip: req.ip,
+      headers: {
+        'content-type': req.headers['content-type'],
+        'user-agent': req.headers['user-agent'],
+        'x-webhook-secret': req.headers['x-webhook-secret'] ? '***' : undefined,
+      },
+      body: req.body,
+    });
 
     // シークレット検証
     if (this.webhookSecret) {
@@ -108,34 +122,49 @@ export class WebhookServer {
       }
     }
 
-    this.logger.info('Webhook処理開始');
+    // Notionへの即座のレスポンス返信（Webhook再送を防ぐため）
+    const immediateResponseTime = Date.now() - receiveTime;
+    this.logger.info('Webhook即座レスポンス送信', {
+      responseTime: `${immediateResponseTime}ms`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Webhookを受信しました。処理を開始します。',
+      timestamp: new Date().toISOString(),
+    });
+
+    // レスポンス送信後にビジネスロジックを非同期で実行
+    // これによりNotionへの応答が遅れることによるWebhook再送を防ぐ
+    setImmediate(() => {
+      this.processWebhookAsync(receiveTime).catch(error => {
+        this.logger.error('非同期Webhook処理エラー', error as Error);
+      });
+    });
+  }
+
+  /**
+   * Webhook処理を非同期で実行（レスポンス送信後）
+   */
+  private async processWebhookAsync(startTime: number): Promise<void> {
+    this.logger.info('Webhook非同期処理開始');
 
     try {
       // オーケストレーションサービスを実行
       const result = await this.orchestrationService.executeHabitToTodoFlow();
 
-      const responseTime = Date.now() - startTime;
-      this.logger.info('Webhook処理完了', {
+      const totalProcessingTime = Date.now() - startTime;
+      this.logger.info('Webhook非同期処理完了', {
         success: result.success,
-        responseTime: `${responseTime}ms`,
-      });
-
-      res.json({
-        ...result,
-        responseTime,
-        timestamp: new Date().toISOString(),
+        totalProcessingTime: `${totalProcessingTime}ms`,
+        habitCount: result.habitCount,
+        todoCount: result.todoCount,
+        linkedCount: result.linkedCount,
       });
     } catch (error) {
-      const responseTime = Date.now() - startTime;
-      this.logger.error('Webhook処理エラー', error as Error, {
-        responseTime: `${responseTime}ms`,
-      });
-
-      res.status(500).json({
-        success: false,
-        error: `処理中にエラーが発生しました: ${error}`,
-        responseTime,
-        timestamp: new Date().toISOString(),
+      const totalProcessingTime = Date.now() - startTime;
+      this.logger.error('Webhook非同期処理エラー', error as Error, {
+        totalProcessingTime: `${totalProcessingTime}ms`,
       });
     }
   }
