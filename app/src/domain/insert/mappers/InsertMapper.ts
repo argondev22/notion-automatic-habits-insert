@@ -136,10 +136,30 @@ export class InsertMapper {
         content = undefined;
       }
 
+      // undefined要素を除外してクリーンな配列を作成
+      let cleanContent: BlockObjectResponse | undefined = content;
+      if (content && Array.isArray(content)) {
+        const filteredContent = content.filter(
+          (block): block is NonNullable<typeof block> => block != null
+        );
+
+        if (filteredContent.length !== content.length) {
+          this.logger.warn(
+            `コンテンツ配列から${content.length - filteredContent.length}個の無効な要素を除外しました`,
+            {
+              originalLength: content.length,
+              filteredLength: filteredContent.length,
+            }
+          );
+        }
+
+        cleanContent = filteredContent.length > 0 ? filteredContent : undefined;
+      }
+
       const pageData = {
         parent: { database_id: databaseId },
         properties: properties,
-        ...(content ? { children: content } : {}),
+        ...(cleanContent ? { children: cleanContent } : {}),
       } as unknown as CreatePageParameters;
 
       const response = await notionClient.pages.create(pageData);
