@@ -136,10 +136,26 @@ export class InsertMapper {
         content = undefined;
       }
 
+      // 有効なブロック要素のみをフィルタリング
+      let validChildren: unknown[] | undefined;
+      if (content) {
+        validChildren = this.filterValidBlocks(content);
+        if (validChildren.length === 0) {
+          this.logger.warn(
+            `有効なブロック要素が見つかりませんでした。コンテンツなしでページを作成します`
+          );
+          validChildren = undefined;
+        } else if (validChildren.length !== (content as unknown[]).length) {
+          this.logger.warn(
+            `不正なブロック要素をフィルタリングしました: ${(content as unknown[]).length} -> ${validChildren.length}`
+          );
+        }
+      }
+
       const pageData = {
         parent: { database_id: databaseId },
         properties: properties,
-        ...(content ? { children: content } : {}),
+        ...(validChildren ? { children: validChildren } : {}),
       } as unknown as CreatePageParameters;
 
       const response = await notionClient.pages.create(pageData);
@@ -336,6 +352,94 @@ export class InsertMapper {
     }
 
     return false;
+  }
+
+  /**
+   * 有効なブロック要素のみをフィルタリングする
+   * @param content - フィルタリング対象のコンテンツ
+   * @returns 有効なブロック要素の配列
+   */
+  private filterValidBlocks(content: BlockObjectResponse): unknown[] {
+    if (!Array.isArray(content)) {
+      this.logger.warn('コンテンツが配列ではありません');
+      return [];
+    }
+
+    const validBlocks: unknown[] = [];
+    const blockTypes = [
+      'paragraph',
+      'heading_1',
+      'heading_2',
+      'heading_3',
+      'bulleted_list_item',
+      'numbered_list_item',
+      'to_do',
+      'toggle',
+      'quote',
+      'callout',
+      'code',
+      'equation',
+      'divider',
+      'table_of_contents',
+      'embed',
+      'bookmark',
+      'image',
+      'video',
+      'pdf',
+      'file',
+      'audio',
+      'link_to_page',
+      'breadcrumb',
+      'table',
+      'table_row',
+      'column_list',
+      'column',
+      'synced_block',
+      'template',
+      'ai_block',
+    ];
+
+    for (let i = 0; i < content.length; i++) {
+      const block = content[i];
+
+      // ブロックがオブジェクトでない場合はスキップ
+      if (!block || typeof block !== 'object') {
+        this.logger.warn(`ブロック[${i}]がオブジェクトではありません`, {
+          block,
+        });
+        continue;
+      }
+
+      // typeプロパティの存在確認
+      if (!('type' in block) || typeof block.type !== 'string') {
+        this.logger.warn(`ブロック[${i}]にtypeプロパティがありません`, {
+          block,
+        });
+        continue;
+      }
+
+      // 有効なブロックタイプか確認
+      if (!blockTypes.includes(block.type)) {
+        this.logger.warn(`ブロック[${i}]が無効なタイプです: ${block.type}`, {
+          block,
+        });
+        continue;
+      }
+
+      // タイプに対応するプロパティが存在するか確認
+      if (!(block.type in block)) {
+        this.logger.warn(
+          `ブロック[${i}]にタイプ ${block.type} に対応するプロパティがありません`,
+          { block }
+        );
+        continue;
+      }
+
+      // 有効なブロックとして追加
+      validBlocks.push(block);
+    }
+
+    return validBlocks;
   }
 
   /**
