@@ -4,10 +4,10 @@ about: Create a new task
 assignees: 'argondev22'
 ---
 
-# Description
+## Description
 <!-- Brief description of the task -->
 
-# Acceptance Criteria
+## Acceptance Criteria
 <!-- What needs to be done to complete this task -->
 - [ ]
 
