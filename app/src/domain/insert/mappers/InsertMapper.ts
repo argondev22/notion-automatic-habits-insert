@@ -156,6 +156,44 @@ export class InsertMapper {
         { databaseId }
       );
 
+      // コンテンツ付きで失敗した場合、コンテンツなしで再試行
+      if (content && this.isContentValidationError(error)) {
+        this.logger.warn(
+          `コンテンツのバリデーションエラーが発生したため、コンテンツなしで再試行します`,
+          { databaseId }
+        );
+
+        try {
+          const pageDataWithoutContent = {
+            parent: { database_id: databaseId },
+            properties: properties,
+          } as unknown as CreatePageParameters;
+
+          const response = await notionClient.pages.create(
+            pageDataWithoutContent
+          );
+
+          this.logger.info(
+            `データベース ${databaseId} にコンテンツなしでページを作成完了`,
+            { pageId: response.id }
+          );
+
+          return response as PageResponse;
+        } catch (retryError) {
+          this.logger.error(
+            `データベース ${databaseId} へのコンテンツなし再試行も失敗`,
+            retryError as Error,
+            { databaseId }
+          );
+
+          throw new AppError(
+            `データベース ${databaseId} へのページ作成に失敗しました（再試行含む）: ${retryError}`,
+            ERROR_CODES.DATABASE_NOT_FOUND,
+            { databaseId, originalError: retryError }
+          );
+        }
+      }
+
       if (error instanceof AppError) {
         throw error;
       }
@@ -336,6 +374,28 @@ export class InsertMapper {
     }
 
     return false;
+  }
+
+  /**
+   * コンテンツのバリデーションエラーかどうかをチェック
+   * @param error - チェック対象のエラー
+   * @returns コンテンツのバリデーションエラーかどうか
+   */
+  private isContentValidationError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const errorMessage =
+      'message' in error && typeof error.message === 'string'
+        ? error.message
+        : '';
+
+    // Notion APIのコンテンツバリデーションエラーを検出
+    return (
+      errorMessage.includes('body failed validation') &&
+      errorMessage.includes('body.children')
+    );
   }
 
   /**

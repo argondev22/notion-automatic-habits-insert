@@ -9,6 +9,9 @@ jobs:
     name: Dependabot Auto-merge
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
