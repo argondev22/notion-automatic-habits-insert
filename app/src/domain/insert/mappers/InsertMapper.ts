@@ -169,8 +169,9 @@ export class InsertMapper {
             properties: properties,
           } as unknown as CreatePageParameters;
 
-          const response =
-            await notionClient.pages.create(pageDataWithoutContent);
+          const response = await notionClient.pages.create(
+            pageDataWithoutContent
+          );
 
           this.logger.info(
             `データベース ${databaseId} にコンテンツなしでページを作成完了`,
