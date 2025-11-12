@@ -125,7 +125,7 @@ POST /webhook
 
 **ヘッダー:**
 
-```plaintext
+```text
 Content-Type: application/json
 X-Webhook-Secret: your_webhook_secret
 ```
@@ -228,7 +228,7 @@ npm run format:check  # チェックのみ
 
 ## 📁 プロジェクト構造
 
-```plaintext
+```text
 app/
 ├── src/
 │   ├── domain/           # ドメインロジック
