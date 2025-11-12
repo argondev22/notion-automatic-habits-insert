@@ -22,9 +22,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run Prettier check
-        run: npx prettier --check "**/*.{json,yml,yaml,md}"
+        run: npm run format:check
 
   jsonlint:
     name: Lint JSON files
@@ -64,7 +68,7 @@ jobs:
           node-version: "20"
 
       - name: Run markdownlint
-        run: npx markdownlint-cli2 "**/*.md"
+        run: npx markdownlint-cli2 --config .markdownlint.jsonc "**/*.md"
 
   yamllint:
     name: Lint YAML files
