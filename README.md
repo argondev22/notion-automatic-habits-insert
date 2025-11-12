@@ -70,16 +70,16 @@ docker compose up --build
 
 ## 🔐 環境変数
 
-| 名前 | 説明 | 必須 | デフォルト |
-|---|---|---|---|
-| `INTEGRATION_SECRET` | Notion APIの統合シークレット | ✓ | - |
-| `HABITS_DATABASE_ID` | HabitsデータベースのID | ✓ | - |
-| `TODOS_DATABASE_ID` | TodosデータベースのID | ✓ | - |
-| `PORT` | サーバーのポート番号 | - | `8080` |
-| `WEBHOOK_PATH` | Webhookのエンドポイントパス | - | `/webhook` |
-| `WEBHOOK_SECRET` | Webhook認証用のシークレット | - | - |
-| `NODE_ENV` | 実行環境（development/production） | - | `development` |
-| `LOG_LEVEL` | ログレベル（DEBUG/INFO/WARN/ERROR） | - | 環境に応じて自動設定 |
+| 名前                 | 説明                                | 必須 | デフォルト           |
+| -------------------- | ----------------------------------- | ---- | -------------------- |
+| `INTEGRATION_SECRET` | Notion APIの統合シークレット        | ✓    | -                    |
+| `HABITS_DATABASE_ID` | HabitsデータベースのID              | ✓    | -                    |
+| `TODOS_DATABASE_ID`  | TodosデータベースのID               | ✓    | -                    |
+| `PORT`               | サーバーのポート番号                | -    | `8080`               |
+| `WEBHOOK_PATH`       | Webhookのエンドポイントパス         | -    | `/webhook`           |
+| `WEBHOOK_SECRET`     | Webhook認証用のシークレット         | -    | -                    |
+| `NODE_ENV`           | 実行環境（development/production）  | -    | `development`        |
+| `LOG_LEVEL`          | ログレベル（DEBUG/INFO/WARN/ERROR） | -    | 環境に応じて自動設定 |
 
 ## 📡 API エンドポイント
 
@@ -259,11 +259,11 @@ app/
 
 ### デフォルト設定
 
-| 環境 | ログレベル | 出力されるログ |
-|---|---|---|
-| `development` | `DEBUG` | すべてのログ（DEBUG, INFO, WARN, ERROR） |
-| `production` | `WARN` | WARN以上のみ（WARN, ERROR） |
-| `test` | `ERROR` | ERRORのみ |
+| 環境          | ログレベル | 出力されるログ                           |
+| ------------- | ---------- | ---------------------------------------- |
+| `development` | `DEBUG`    | すべてのログ（DEBUG, INFO, WARN, ERROR） |
+| `production`  | `WARN`     | WARN以上のみ（WARN, ERROR）              |
+| `test`        | `ERROR`    | ERRORのみ                                |
 
 ### カスタム設定
 
@@ -281,8 +281,8 @@ LOG_LEVEL=WARN
 
 ```yaml
 environment:
-  - NODE_ENV=development  # 開発環境
-  - LOG_LEVEL=DEBUG        # 開発環境ではDEBUG以上
+  - NODE_ENV=development # 開発環境
+  - LOG_LEVEL=DEBUG # 開発環境ではDEBUG以上
 ```
 
 本番環境での設定例：
@@ -290,7 +290,7 @@ environment:
 ```yaml
 environment:
   - NODE_ENV=production
-  - LOG_LEVEL=WARN  # 本番環境ではWARN以上のみ
+  - LOG_LEVEL=WARN # 本番環境ではWARN以上のみ
 ```
 
 ## 🔍 トラブルシューティング
