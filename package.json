@@ -1,9 +1,26 @@
 {
   "name": "notion-automatic-habits-insert",
   "version": "1.0.0",
+  "description": "NotionのHabitsデータベースからTodoを自動生成してTodosデータベースに挿入するWebhookサーバー",
+  "author": "argondev22",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/argondev22/notion-automatic-habits-insert.git"
+  },
+  "keywords": [
+    "notion",
+    "webhook",
+    "automation",
+    "habits"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "prepare": "husky",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
