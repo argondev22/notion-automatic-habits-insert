@@ -6,7 +6,7 @@ OrchestrationServiceは、複数のドメイン機能を統合し、エンドツ
 
 ## 🏗️ アーキテクチャ
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │       OrchestrationService                   │
 │  (複数ドメインの統合管理)                      │
@@ -230,7 +230,7 @@ catch (error) {
 
 ### 正常フロー
 
-```
+```text
 [INFO] 習慣→Todo変換フロー開始
 [INFO] 習慣データ取得完了 { habitCount: 10 }
 [INFO] 変換開始 { habitCount: 10 }
@@ -245,14 +245,14 @@ catch (error) {
 
 ### エラー時
 
-```
+```text
 [INFO] 習慣→Todo変換フロー開始
 [ERROR] 習慣データの取得に失敗しました { error: 'Database not found' }
 ```
 
 ### Todo数が0の場合
 
-```
+```text
 [INFO] 習慣→Todo変換フロー開始
 [INFO] 習慣データ取得完了 { habitCount: 5 }
 [INFO] 変換開始 { habitCount: 5 }
