@@ -90,6 +90,7 @@ GET /health
 ```
 
 **レスポンス:**
+
 ```json
 {
   "status": "ok",
@@ -104,6 +105,7 @@ GET /
 ```
 
 **レスポンス:**
+
 ```json
 {
   "message": "Notion Automatic Habits Insert Webhook Server",
@@ -122,12 +124,14 @@ POST /webhook
 ```
 
 **ヘッダー:**
-```
+
+```plaintext
 Content-Type: application/json
 X-Webhook-Secret: your_webhook_secret
 ```
 
 **レスポンス（成功時）:**
+
 ```json
 {
   "success": true,
@@ -141,6 +145,7 @@ X-Webhook-Secret: your_webhook_secret
 ```
 
 **レスポンス（エラー時）:**
+
 ```json
 {
   "success": false,
@@ -223,7 +228,7 @@ npm run format:check  # チェックのみ
 
 ## 📁 プロジェクト構造
 
-```
+```plaintext
 app/
 ├── src/
 │   ├── domain/           # ドメインロジック
