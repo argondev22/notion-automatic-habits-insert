@@ -1,4 +1,4 @@
-FROM node:20-bullseye AS development
+FROM node:25-bullseye AS development
 
 ENV NODE_ENV=development
 
@@ -29,7 +29,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["npm", "run", "dev"]
 
 
-FROM node:20-bullseye AS builder
+FROM node:25-bullseye AS builder
 
 WORKDIR /app
 
@@ -43,7 +43,7 @@ COPY ./src ./src
 RUN npm run build
 
 
-FROM node:20-bullseye-slim AS production
+FROM node:25-bullseye-slim AS production
 
 ENV NODE_ENV=production
 
