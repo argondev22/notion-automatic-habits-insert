@@ -19,7 +19,7 @@
     "cli",
     "dylib",
     "lfs",
-    "fastify",
+    "fastify"
   ],
   "ignorePaths": [
     // Paths to exclude from linting
