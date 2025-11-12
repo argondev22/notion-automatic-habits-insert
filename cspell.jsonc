@@ -18,7 +18,8 @@
     "venv",
     "cli",
     "dylib",
-    "lfs"
+    "lfs",
+    "fastify",
   ],
   "ignorePaths": [
     // Paths to exclude from linting
