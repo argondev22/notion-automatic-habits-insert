@@ -1,8 +1,10 @@
 {
   "scripts": {
     "prepare": "husky",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format": "prettier --write . && npm run format:markdown",
+    "format:check": "prettier --check .",
+    "format:markdown": "npx markdownlint-cli2 --fix --config .markdownlint.jsonc \"**/*.md\"",
+    "lint:markdown": "npx markdownlint-cli2 --config .markdownlint.jsonc \"**/*.md\""
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
