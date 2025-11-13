@@ -28,7 +28,10 @@ export default [
     },
     rules: {
       'prettier/prettier': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -37,9 +40,10 @@ export default [
       'no-undef': 'off', // TypeScriptが型チェックを行うため
       // ロギングシステムが実装されているため、console.logの使用を制限
       // console.logのみを禁止し、Loggerクラスで使用する他のconsoleメソッドは許可
-      'no-console': process.env.NODE_ENV === 'production'
-        ? ['error', { allow: ['warn', 'error', 'info', 'debug'] }]
-        : ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
+      'no-console':
+        process.env.NODE_ENV === 'production'
+          ? ['error', { allow: ['warn', 'error', 'info', 'debug'] }]
+          : ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
     },
   },
   {
