@@ -6,7 +6,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
 
 ## Tasks
 
-- [ ] 1. Set up project structure and dependencies
+- [x] 1. Set up project structure and dependencies
   - Initialize Node.js project with TypeScript configuration
   - Install required dependencies (@notionhq/client, express, fast-check, jest)
   - Create basic directory structure (src/, config/, tests/)
