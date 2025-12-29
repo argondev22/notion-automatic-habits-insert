@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Morning Exercise",
+    "templateId": "template-123",
+    "frequency": ["daily"],
+    "startTime": "07:00",
+    "endTime": "08:00",
+    "enabled": true
+  },
+  {
+    "name": "Weekday Standup",
+    "templateId": "template-456",
+    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "enabled": true
+  },
+  {
+    "name": "Weekly Review",
+    "templateId": "template-789",
+    "frequency": ["sunday"],
+    "startTime": "19:00",
+    "endTime": "20:00",
+    "enabled": true
+  }
+]
