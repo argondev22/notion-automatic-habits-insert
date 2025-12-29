@@ -151,7 +151,7 @@ class HabitManager {
 interface HabitConfig {
   name: string
   templateId: string
-  frequency: string[]  // ["monday", "tuesday", "friday"] or ["daily"] for every day
+  frequency: string[]  // ["monday", "tuesday", "friday"] - specific weekdays only
   startTime: string    // "07:00"
   endTime: string      // "08:00"
   enabled: boolean
@@ -162,7 +162,7 @@ const habitsConfig: HabitConfig[] = [
   {
     name: "Morning Exercise",
     templateId: "template-123",
-    frequency: ["daily"],  // Special keyword for every day
+    frequency: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],  // Every day
     startTime: "07:00",
     endTime: "08:00",
     enabled: true
@@ -270,11 +270,6 @@ function isDueToday(habit: HabitConfig, today: Date): boolean {
 
   const dayName = today.toLocaleDateString('en', { weekday: 'lowercase' })
 
-  // Special case for "daily"
-  if (habit.frequency.includes('daily')) {
-    return true
-  }
-
   // Check if today is in the frequency array
   return habit.frequency.includes(dayName)
 }
@@ -372,11 +367,7 @@ describe('Habit Scheduling Properties', () => {
       fc.record({
         name: fc.string(),
         templateId: fc.uuid(),
-        frequency: fc.oneof(
-          fc.constant('daily'),
-          fc.constant('weekdays'),
-          fc.array(fc.constantFrom('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'))
-        ),
+        frequency: fc.array(fc.constantFrom('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'), { minLength: 1 }),
         timeSlot: fc.constantFrom('morning', 'afternoon', 'evening'),
         enabled: fc.boolean()
       }),
@@ -399,7 +390,7 @@ describe('Habit Scheduling Properties', () => {
       fc.record({
         name: fc.string(),
         templateId: fc.uuid(),
-        frequency: fc.constant('daily'),
+        frequency: fc.array(fc.constantFrom('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'), { minLength: 1 }),
         timeSlot: fc.constantFrom('morning', 'afternoon', 'evening'),
         enabled: fc.constant(true)
       }),

@@ -34,7 +34,7 @@ A habit management system leveraging Notion template functionality. This system 
 
 1. THE Habit_Scheduler SHALL maintain a configuration of habit execution frequencies
 2. WHEN determining if a habit should be created, THE Habit_Scheduler SHALL check the current date against the habit's schedule
-3. THE Habit_Scheduler SHALL support daily, weekly, and custom frequency patterns
+3. THE Habit_Scheduler SHALL support weekly and custom frequency patterns using specific weekday arrays
 4. WHEN a habit is due for execution, THE Habit_Scheduler SHALL mark it for creation
 
 ### Requirement 3: Template-Based Entry Creation
