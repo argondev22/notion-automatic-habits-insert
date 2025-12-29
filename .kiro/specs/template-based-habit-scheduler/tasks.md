@@ -13,14 +13,14 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
   - Set up TypeScript compilation and build scripts
   - _Requirements: System setup and foundation_
 
-- [ ] 2. Implement core data models and interfaces
-  - [ ] 2.1 Create TypeScript interfaces for all data models
+- [-] 2. Implement core data models and interfaces
+  - [x] 2.1 Create TypeScript interfaces for all data models
     - Define HabitConfig, WebhookRequest, WebhookResponse interfaces
     - Define HabitCreationResult, HabitEntry, SystemConfig interfaces
     - Create type definitions for Notion API responses
     - _Requirements: 7.1, 7.3_
 
-  - [ ]* 2.2 Write property test for data model validation
+  - [ ]\* 2.2 Write property test for data model validation
     - **Property 4: Configuration Processing**
     - **Validates: Requirements 7.1, 7.3**
 
@@ -31,7 +31,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Handle file reading errors gracefully
     - _Requirements: 7.1, 7.2_
 
-  - [ ]* 3.2 Write unit tests for configuration loading
+  - [ ]\* 3.2 Write unit tests for configuration loading
     - Test valid configuration loading
     - Test invalid JSON handling
     - Test missing file scenarios
@@ -44,11 +44,11 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Ensure proper ISO string formatting for Notion API
     - _Requirements: 4.1, 4.3_
 
-  - [ ]* 4.2 Write property test for time calculations
+  - [ ]\* 4.2 Write property test for time calculations
     - **Property 3: Time Calculation Reliability**
     - **Validates: Requirements 4.1, 4.3**
 
-  - [ ]* 4.3 Write unit tests for time utilities
+  - [ ]\* 4.3 Write unit tests for time utilities
     - Test various time formats and edge cases
     - Test timezone conversion accuracy
     - Test date boundary conditions
@@ -57,16 +57,16 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
 - [ ] 5. Implement scheduling logic
   - [ ] 5.1 Create habit scheduling functions
     - Implement isDueToday() function with frequency pattern support
-    - Support "daily" keyword and specific day arrays
+    - Support specific weekday arrays only (no special keywords)
     - Handle enabled/disabled habit states
     - _Requirements: 2.2, 2.4_
 
-  - [ ]* 5.2 Write property test for scheduling accuracy
+  - [ ]\* 5.2 Write property test for scheduling accuracy
     - **Property 1: Habit Creation Accuracy**
     - **Validates: Requirements 2.2, 2.4**
 
-  - [ ]* 5.3 Write unit tests for scheduling logic
-    - Test all frequency patterns (daily, specific days)
+  - [ ]\* 5.3 Write unit tests for scheduling logic
+    - Test all frequency patterns (specific weekdays)
     - Test edge cases (weekends, holidays)
     - Test enabled/disabled states
     - _Requirements: 2.2, 2.4_
@@ -83,11 +83,11 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Handle Notion API errors and rate limiting
     - _Requirements: 3.1, 3.2, 3.3_
 
-  - [ ]* 7.2 Write property test for template application
+  - [ ]\* 7.2 Write property test for template application
     - **Property 2: Template Application Consistency**
     - **Validates: Requirements 3.1, 3.2, 3.3**
 
-  - [ ]* 7.3 Write unit tests for Notion integration
+  - [ ]\* 7.3 Write unit tests for Notion integration
     - Test successful habit creation
     - Test API error handling
     - Test template ID validation
@@ -100,7 +100,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Add comprehensive error handling and logging
     - _Requirements: 2.1, 2.2, 6.1, 6.3_
 
-  - [ ]* 8.2 Write integration tests for HabitManager
+  - [ ]\* 8.2 Write integration tests for HabitManager
     - Test end-to-end habit creation flow
     - Test error recovery scenarios
     - Test multiple habit processing
@@ -113,11 +113,11 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Add proper HTTP status codes and error responses
     - _Requirements: 5.1, 5.2, 5.3, 8.1, 8.2_
 
-  - [ ]* 9.2 Write property test for webhook responses
+  - [ ]\* 9.2 Write property test for webhook responses
     - **Property 6: Webhook Response Consistency**
     - **Validates: Requirements 5.3, 5.4, 8.4**
 
-  - [ ]* 9.3 Write unit tests for webhook security
+  - [ ]\* 9.3 Write unit tests for webhook security
     - Test valid secret authentication
     - Test invalid/missing secret rejection
     - Test proper HTTP status codes
@@ -130,7 +130,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Ensure graceful degradation on partial failures
     - _Requirements: 6.1, 6.2, 6.3_
 
-  - [ ]* 10.2 Write property test for error robustness
+  - [ ]\* 10.2 Write property test for error robustness
     - **Property 5: Error Handling Robustness**
     - **Validates: Requirements 6.1, 6.3**
 
@@ -141,7 +141,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Add graceful shutdown handling
     - _Requirements: 1.1, 1.2, 1.3_
 
-  - [ ]* 11.2 Write integration tests for full application
+  - [ ]\* 11.2 Write integration tests for full application
     - Test complete webhook-to-notion flow
     - Test application startup and shutdown
     - Test environment variable validation

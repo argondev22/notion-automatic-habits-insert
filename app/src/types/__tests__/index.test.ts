@@ -13,7 +13,7 @@ import {
   NotionTemplate,
   isHabitConfig,
   isWebhookRequest,
-  isNotionApiError
+  isNotionApiError,
 } from '../index';
 
 describe('Core Data Model Interfaces', () => {
@@ -25,7 +25,7 @@ describe('Core Data Model Interfaces', () => {
         frequency: ['monday', 'wednesday', 'friday'],
         startTime: '07:00',
         endTime: '08:00',
-        enabled: true
+        enabled: true,
       };
 
       expect(isHabitConfig(validConfig)).toBe(true);
@@ -48,7 +48,7 @@ describe('Core Data Model Interfaces', () => {
         frequency: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
         startTime: '09:00',
         endTime: '09:30',
-        enabled: true
+        enabled: true,
       };
 
       expect(isHabitConfig(weekdayConfig)).toBe(true);
@@ -62,7 +62,7 @@ describe('Core Data Model Interfaces', () => {
         frequency: ['sunday'],
         startTime: '19:00',
         endTime: '20:00',
-        enabled: true
+        enabled: true,
       };
 
       expect(isHabitConfig(sundayConfig)).toBe(true);
@@ -73,21 +73,21 @@ describe('Core Data Model Interfaces', () => {
   describe('NotionTemplate interface', () => {
     it('should support all template types', () => {
       const noneTemplate: NotionTemplate = {
-        type: "none"
+        type: 'none',
       };
 
       const defaultTemplate: NotionTemplate = {
-        type: "default"
+        type: 'default',
       };
 
       const specificTemplate: NotionTemplate = {
-        type: "template_id",
-        template_id: "a5da15f6-b853-455d-8827-f906fb52db2b"
+        type: 'template_id',
+        template_id: 'a5da15f6-b853-455d-8827-f906fb52db2b',
       };
 
-      expect(noneTemplate.type).toBe("none");
-      expect(defaultTemplate.type).toBe("default");
-      expect(specificTemplate.type).toBe("template_id");
+      expect(noneTemplate.type).toBe('none');
+      expect(defaultTemplate.type).toBe('default');
+      expect(specificTemplate.type).toBe('template_id');
       expect(specificTemplate.template_id).toBeDefined();
     });
   });
@@ -96,7 +96,7 @@ describe('Core Data Model Interfaces', () => {
     it('should accept valid webhook request', () => {
       const validRequest: WebhookRequest = {
         secret: 'test-secret-123',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       expect(isWebhookRequest(validRequest)).toBe(true);
@@ -104,7 +104,7 @@ describe('Core Data Model Interfaces', () => {
 
     it('should accept webhook request without timestamp', () => {
       const validRequest: WebhookRequest = {
-        secret: 'test-secret-123'
+        secret: 'test-secret-123',
       };
 
       expect(isWebhookRequest(validRequest)).toBe(true);
@@ -112,7 +112,7 @@ describe('Core Data Model Interfaces', () => {
 
     it('should reject webhook request without secret', () => {
       const invalidRequest = {
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       expect(isWebhookRequest(invalidRequest)).toBe(false);
@@ -126,7 +126,7 @@ describe('Core Data Model Interfaces', () => {
         created: 3,
         skipped: 1,
         errors: [],
-        executionTime: 1500
+        executionTime: 1500,
       };
 
       expect(response.success).toBe(true);
@@ -142,7 +142,7 @@ describe('Core Data Model Interfaces', () => {
         created: 0,
         skipped: 0,
         errors: ['Failed to connect to Notion API', 'Invalid template ID'],
-        executionTime: 500
+        executionTime: 500,
       };
 
       expect(errorResponse.success).toBe(false);
@@ -156,7 +156,7 @@ describe('Core Data Model Interfaces', () => {
         id: 'page-123',
         title: 'Morning Exercise',
         templateUsed: 'template-123',
-        timeRange: '07:00-08:00'
+        timeRange: '07:00-08:00',
       };
 
       const result: HabitCreationResult = {
@@ -164,7 +164,7 @@ describe('Core Data Model Interfaces', () => {
         created: [habitEntry],
         skipped: ['Disabled habit'],
         errors: [],
-        executionTime: 2000
+        executionTime: 2000,
       };
 
       expect(result.success).toBe(true);
@@ -182,7 +182,7 @@ describe('Core Data Model Interfaces', () => {
         TIMEBOX_DATABASE_ID: 'database_test_id',
         WEBHOOK_SECRET: 'webhook_secret_123',
         PORT: 8080,
-        TIMEZONE: 'Asia/Tokyo'
+        TIMEZONE: 'Asia/Tokyo',
       };
 
       expect(typeof config.NOTION_API_KEY).toBe('string');
@@ -196,21 +196,21 @@ describe('Core Data Model Interfaces', () => {
   describe('NotionTemplate interface', () => {
     it('should support all template types', () => {
       const noneTemplate: NotionTemplate = {
-        type: "none"
+        type: 'none',
       };
 
       const defaultTemplate: NotionTemplate = {
-        type: "default"
+        type: 'default',
       };
 
       const specificTemplate: NotionTemplate = {
-        type: "template_id",
-        template_id: "a5da15f6-b853-455d-8827-f906fb52db2b"
+        type: 'template_id',
+        template_id: 'a5da15f6-b853-455d-8827-f906fb52db2b',
       };
 
-      expect(noneTemplate.type).toBe("none");
-      expect(defaultTemplate.type).toBe("default");
-      expect(specificTemplate.type).toBe("template_id");
+      expect(noneTemplate.type).toBe('none');
+      expect(defaultTemplate.type).toBe('default');
+      expect(specificTemplate.type).toBe('template_id');
       expect(specificTemplate.template_id).toBeDefined();
     });
   });
@@ -221,7 +221,7 @@ describe('Core Data Model Interfaces', () => {
         object: 'error',
         status: 401,
         code: 'unauthorized',
-        message: 'API token is invalid'
+        message: 'API token is invalid',
       };
 
       expect(isNotionApiError(notionError)).toBe(true);
@@ -230,7 +230,7 @@ describe('Core Data Model Interfaces', () => {
     it('should reject non-error objects', () => {
       const notError = {
         object: 'page',
-        id: 'page-123'
+        id: 'page-123',
       };
 
       expect(isNotionApiError(notError)).toBe(false);

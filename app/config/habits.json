@@ -2,7 +2,15 @@
   {
     "name": "Morning Exercise",
     "templateId": "template-123",
-    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
     "startTime": "07:00",
     "endTime": "08:00",
     "enabled": true

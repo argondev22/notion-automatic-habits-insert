@@ -59,22 +59,22 @@ graph TB
 
 ```typescript
 interface WebhookServer {
-  start(): void
-  handleWebhook(request: Request): Promise<Response>
-  validateSecret(request: Request): boolean
+  start(): void;
+  handleWebhook(request: Request): Promise<Response>;
+  validateSecret(request: Request): boolean;
 }
 
 interface WebhookResponse {
-  success: boolean
-  created: number
-  skipped: number
-  errors: string[]
-  executionTime: number
+  success: boolean;
+  created: number;
+  skipped: number;
+  errors: string[];
+  executionTime: number;
 }
 
 interface WebhookRequest {
-  secret: string  // Required security parameter
-  timestamp?: number
+  secret: string; // Required security parameter
+  timestamp?: number;
 }
 ```
 
@@ -84,41 +84,42 @@ interface WebhookRequest {
 
 ```typescript
 interface HabitManager {
-  createScheduledHabits(): Promise<HabitCreationResult>
+  createScheduledHabits(): Promise<HabitCreationResult>;
 }
 
 interface HabitCreationResult {
-  success: boolean
-  created: HabitEntry[]
-  skipped: string[]
-  errors: string[]
-  executionTime: number
+  success: boolean;
+  created: HabitEntry[];
+  skipped: string[];
+  errors: string[];
+  executionTime: number;
 }
 
 interface HabitEntry {
-  id: string
-  title: string
-  templateUsed: string
-  timeRange: string
+  id: string;
+  title: string;
+  templateUsed: string;
+  timeRange: string;
 }
 ```
 
 **Core Logic**:
+
 ```typescript
 class HabitManager {
   async createScheduledHabits(): Promise<HabitCreationResult> {
     // 1. Load habit configuration
-    const habits = await this.loadHabitConfig()
+    const habits = await this.loadHabitConfig();
 
     // 2. Filter habits due today
-    const dueHabits = habits.filter(h => this.isDueToday(h))
+    const dueHabits = habits.filter((h) => this.isDueToday(h));
 
     // 3. Create each habit using Notion template
     const results = await Promise.all(
-      dueHabits.map(habit => this.createHabitFromTemplate(habit))
-    )
+      dueHabits.map((habit) => this.createHabitFromTemplate(habit))
+    );
 
-    return this.aggregateResults(results)
+    return this.aggregateResults(results);
   }
 
   private async createHabitFromTemplate(habit: HabitConfig): Promise<CreateResult> {
@@ -126,18 +127,18 @@ class HabitManager {
       parent: { database_id: this.timeboxDatabaseId },
       template: {
         type: "template_id",
-        template_id: habit.templateId
+        template_id: habit.templateId,
       },
       properties: {
         TAG: { select: { name: "HABIT" } },
         EXPECTED: {
           date: {
             start: this.calculateStartTime(habit),
-            end: this.calculateEndTime(habit)
-          }
-        }
-      }
-    })
+            end: this.calculateEndTime(habit),
+          },
+        },
+      },
+    });
   }
 }
 ```
@@ -149,12 +150,12 @@ class HabitManager {
 ```typescript
 // habits.json - Simple configuration file
 interface HabitConfig {
-  name: string
-  templateId: string
-  frequency: string[]  // ["monday", "tuesday", "friday"] - specific weekdays only
-  startTime: string    // "07:00"
-  endTime: string      // "08:00"
-  enabled: boolean
+  name: string;
+  templateId: string;
+  frequency: string[]; // ["monday", "tuesday", "friday"] - specific weekdays only
+  startTime: string; // "07:00"
+  endTime: string; // "08:00"
+  enabled: boolean;
 }
 
 // Example configuration
@@ -162,10 +163,10 @@ const habitsConfig: HabitConfig[] = [
   {
     name: "Morning Exercise",
     templateId: "template-123",
-    frequency: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],  // Every day
+    frequency: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"], // Every day
     startTime: "07:00",
     endTime: "08:00",
-    enabled: true
+    enabled: true,
   },
   {
     name: "Weekday Standup",
@@ -173,7 +174,7 @@ const habitsConfig: HabitConfig[] = [
     frequency: ["monday", "tuesday", "wednesday", "thursday", "friday"],
     startTime: "09:00",
     endTime: "09:30",
-    enabled: true
+    enabled: true,
   },
   {
     name: "Weekly Review",
@@ -181,20 +182,20 @@ const habitsConfig: HabitConfig[] = [
     frequency: ["sunday"],
     startTime: "19:00",
     endTime: "20:00",
-    enabled: true
-  }
-]
+    enabled: true,
+  },
+];
 ```
 
 ### Environment Configuration
 
 ```typescript
 interface SystemConfig {
-  NOTION_API_KEY: string
-  TIMEBOX_DATABASE_ID: string
-  WEBHOOK_SECRET: string      // Required for security validation
-  PORT: number
-  TIMEZONE: string
+  NOTION_API_KEY: string;
+  TIMEBOX_DATABASE_ID: string;
+  WEBHOOK_SECRET: string; // Required for security validation
+  PORT: number;
+  TIMEZONE: string;
 }
 ```
 
@@ -205,19 +206,19 @@ interface SystemConfig {
 ```typescript
 class WebhookServer {
   private validateSecret(request: Request): boolean {
-    const providedSecret = request.body?.secret || request.query?.secret
-    const expectedSecret = process.env.WEBHOOK_SECRET
+    const providedSecret = request.body?.secret || request.query?.secret;
+    const expectedSecret = process.env.WEBHOOK_SECRET;
 
     if (!expectedSecret) {
-      throw new Error('WEBHOOK_SECRET not configured')
+      throw new Error("WEBHOOK_SECRET not configured");
     }
 
     if (!providedSecret) {
-      console.warn('Webhook request missing secret parameter')
-      return false
+      console.warn("Webhook request missing secret parameter");
+      return false;
     }
 
-    return providedSecret === expectedSecret
+    return providedSecret === expectedSecret;
   }
 
   async handleWebhook(request: Request): Promise<Response> {
@@ -225,13 +226,13 @@ class WebhookServer {
     if (!this.validateSecret(request)) {
       return {
         status: 401,
-        body: { error: 'Unauthorized: Invalid or missing secret' }
-      }
+        body: { error: "Unauthorized: Invalid or missing secret" },
+      };
     }
 
     // Process habit creation
-    const result = await this.habitManager.createScheduledHabits()
-    return { status: 200, body: result }
+    const result = await this.habitManager.createScheduledHabits();
+    return { status: 200, body: result };
   }
 }
 ```
@@ -248,15 +249,15 @@ class WebhookServer {
 ### Simple Time Calculation
 
 ```typescript
-function calculateTimeRange(habit: HabitConfig): { start: string, end: string } {
-  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
-  const start = new Date(`${today}T${habit.startTime}:00`)
-  const end = new Date(`${today}T${habit.endTime}:00`)
+function calculateTimeRange(habit: HabitConfig): { start: string; end: string } {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const start = new Date(`${today}T${habit.startTime}:00`);
+  const end = new Date(`${today}T${habit.endTime}:00`);
 
   return {
     start: start.toISOString(),
-    end: end.toISOString()
-  }
+    end: end.toISOString(),
+  };
 }
 ```
 
@@ -266,44 +267,44 @@ function calculateTimeRange(habit: HabitConfig): { start: string, end: string } 
 
 ```typescript
 function isDueToday(habit: HabitConfig, today: Date): boolean {
-  if (!habit.enabled) return false
+  if (!habit.enabled) return false;
 
-  const dayName = today.toLocaleDateString('en', { weekday: 'lowercase' })
+  const dayName = today.toLocaleDateString("en", { weekday: "lowercase" });
 
   // Check if today is in the frequency array
-  return habit.frequency.includes(dayName)
+  return habit.frequency.includes(dayName);
 }
 ```
 
 ## Correctness Properties
 
-*A property is a characteristic o
-r behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic o
+r behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Core Properties (Simplified)
 
 **Property 1: Habit Creation Accuracy**
-*For any* habit configuration and date combination, the system should create a habit entry if and only if the habit is scheduled for that date according to its frequency pattern
+_For any_ habit configuration and date combination, the system should create a habit entry if and only if the habit is scheduled for that date according to its frequency pattern
 **Validates: Requirements 2.2, 2.4**
 
 **Property 2: Template Application Consistency**
-*For any* habit creation, the system should use the specified template and correctly set both TAG="HABIT" and EXPECTED properties with calculated time ranges
+_For any_ habit creation, the system should use the specified template and correctly set both TAG="HABIT" and EXPECTED properties with calculated time ranges
 **Validates: Requirements 3.1, 3.2, 3.3**
 
 **Property 3: Time Calculation Reliability**
-*For any* time slot configuration, the system should produce valid start and end times that are properly formatted for Notion
+_For any_ time slot configuration, the system should produce valid start and end times that are properly formatted for Notion
 **Validates: Requirements 4.1, 4.3**
 
 **Property 4: Configuration Processing**
-*For any* valid habit configuration file, the system should correctly parse and apply all enabled habits according to their frequency patterns
+_For any_ valid habit configuration file, the system should correctly parse and apply all enabled habits according to their frequency patterns
 **Validates: Requirements 7.1, 7.3**
 
 **Property 5: Error Handling Robustness**
-*For any* error condition (API failure, invalid config, etc.), the system should log the error and continue processing other habits without complete failure
+_For any_ error condition (API failure, invalid config, etc.), the system should log the error and continue processing other habits without complete failure
 **Validates: Requirements 6.1, 6.3**
 
 **Property 6: Webhook Response Consistency**
-*For any* webhook request, the system should return a properly formatted response with accurate metrics about created, skipped, and failed habits
+_For any_ webhook request, the system should return a properly formatted response with accurate metrics about created, skipped, and failed habits
 **Validates: Requirements 5.3, 5.4, 8.4**
 
 ## Error Handling
@@ -312,44 +313,50 @@ r behavior that should hold true across all valid executions of a system—essen
 
 ```typescript
 interface ErrorResult {
-  success: boolean
-  error?: string
-  canContinue: boolean
+  success: boolean;
+  error?: string;
+  canContinue: boolean;
 }
 
 class HabitManager {
   async createScheduledHabits(): Promise<HabitCreationResult> {
-    const results: CreateResult[] = []
-    const errors: string[] = []
+    const results: CreateResult[] = [];
+    const errors: string[] = [];
 
     try {
-      const habits = await this.loadHabitConfig()
+      const habits = await this.loadHabitConfig();
 
       for (const habit of habits) {
         try {
           if (this.isDueToday(habit)) {
-            const result = await this.createHabitFromTemplate(habit)
-            results.push(result)
+            const result = await this.createHabitFromTemplate(habit);
+            results.push(result);
           }
         } catch (error) {
           // Log error but continue with other habits
-          console.error(`Failed to create habit ${habit.name}:`, error)
-          errors.push(`${habit.name}: ${error.message}`)
+          console.error(`Failed to create habit ${habit.name}:`, error);
+          errors.push(`${habit.name}: ${error.message}`);
         }
       }
     } catch (error) {
       // Configuration loading failed
-      console.error('Failed to load habit configuration:', error)
-      return { success: false, created: [], skipped: [], errors: [error.message], executionTime: 0 }
+      console.error("Failed to load habit configuration:", error);
+      return {
+        success: false,
+        created: [],
+        skipped: [],
+        errors: [error.message],
+        executionTime: 0,
+      };
     }
 
     return {
       success: errors.length === 0,
-      created: results.filter(r => r.success),
-      skipped: results.filter(r => !r.success).map(r => r.habitName),
+      created: results.filter((r) => r.success),
+      skipped: results.filter((r) => !r.success).map((r) => r.habitName),
       errors,
-      executionTime: Date.now() - startTime
-    }
+      executionTime: Date.now() - startTime,
+    };
   }
 }
 ```
@@ -359,52 +366,80 @@ class HabitManager {
 ### Property-Based Testing with fast-check
 
 ```typescript
-import fc from 'fast-check'
+import fc from "fast-check";
 
-describe('Habit Scheduling Properties', () => {
-  it('Property 1: Habit Creation Accuracy', () => {
-    fc.assert(fc.property(
-      fc.record({
-        name: fc.string(),
-        templateId: fc.uuid(),
-        frequency: fc.array(fc.constantFrom('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'), { minLength: 1 }),
-        timeSlot: fc.constantFrom('morning', 'afternoon', 'evening'),
-        enabled: fc.boolean()
-      }),
-      fc.date(),
-      async (habitConfig, date) => {
-        const shouldCreate = isDueToday(habitConfig, date)
-        const result = await habitManager.processHabit(habitConfig, date)
+describe("Habit Scheduling Properties", () => {
+  it("Property 1: Habit Creation Accuracy", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          name: fc.string(),
+          templateId: fc.uuid(),
+          frequency: fc.array(
+            fc.constantFrom(
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
+            ),
+            { minLength: 1 }
+          ),
+          timeSlot: fc.constantFrom("morning", "afternoon", "evening"),
+          enabled: fc.boolean(),
+        }),
+        fc.date(),
+        async (habitConfig, date) => {
+          const shouldCreate = isDueToday(habitConfig, date);
+          const result = await habitManager.processHabit(habitConfig, date);
 
-        if (habitConfig.enabled && shouldCreate) {
-          expect(result.created).toBe(true)
-        } else {
-          expect(result.created).toBe(false)
+          if (habitConfig.enabled && shouldCreate) {
+            expect(result.created).toBe(true);
+          } else {
+            expect(result.created).toBe(false);
+          }
         }
-      }
-    ), { numRuns: 100 })
-  })
+      ),
+      { numRuns: 100 }
+    );
+  });
 
-  it('Property 2: Template Application Consistency', () => {
-    fc.assert(fc.property(
-      fc.record({
-        name: fc.string(),
-        templateId: fc.uuid(),
-        frequency: fc.array(fc.constantFrom('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'), { minLength: 1 }),
-        timeSlot: fc.constantFrom('morning', 'afternoon', 'evening'),
-        enabled: fc.constant(true)
-      }),
-      async (habitConfig) => {
-        const result = await habitManager.createHabitFromTemplate(habitConfig)
+  it("Property 2: Template Application Consistency", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          name: fc.string(),
+          templateId: fc.uuid(),
+          frequency: fc.array(
+            fc.constantFrom(
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
+            ),
+            { minLength: 1 }
+          ),
+          timeSlot: fc.constantFrom("morning", "afternoon", "evening"),
+          enabled: fc.constant(true),
+        }),
+        async (habitConfig) => {
+          const result = await habitManager.createHabitFromTemplate(habitConfig);
 
-        expect(result.properties.TAG.select.name).toBe('HABIT')
-        expect(result.properties.EXPECTED.date.start).toBeDefined()
-        expect(result.properties.EXPECTED.date.end).toBeDefined()
-        expect(result.templateUsed).toBe(habitConfig.templateId)
-      }
-    ), { numRuns: 100 })
-  })
-})
+          expect(result.properties.TAG.select.name).toBe("HABIT");
+          expect(result.properties.EXPECTED.date.start).toBeDefined();
+          expect(result.properties.EXPECTED.date.end).toBeDefined();
+          expect(result.templateUsed).toBe(habitConfig.templateId);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});
 ```
 
 ### Unit Testing Focus
@@ -426,7 +461,7 @@ describe('Habit Scheduling Properties', () => {
 
 ### File Structure
 
-```
+```text
 src/
 ├── main.ts                 # Application entry point
 ├── webhook-server.ts       # HTTP server

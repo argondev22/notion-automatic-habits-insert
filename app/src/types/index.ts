@@ -17,8 +17,8 @@ export interface HabitConfig {
   name: string;
   templateId: string;
   frequency: string[]; // ["monday", "tuesday", "friday"] - specific weekdays only
-  startTime: string;   // "07:00"
-  endTime: string;     // "08:00"
+  startTime: string; // "07:00"
+  endTime: string; // "08:00"
   enabled: boolean;
 }
 
@@ -28,7 +28,7 @@ export interface HabitConfig {
 export interface SystemConfig {
   NOTION_API_KEY: string;
   TIMEBOX_DATABASE_ID: string;
-  WEBHOOK_SECRET: string;      // Required for security validation
+  WEBHOOK_SECRET: string; // Required for security validation
   PORT: number;
   TIMEZONE: string;
 }
@@ -41,7 +41,7 @@ export interface SystemConfig {
  * Incoming webhook request structure
  */
 export interface WebhookRequest {
-  secret: string;        // Required security parameter
+  secret: string; // Required security parameter
   timestamp?: number;
 }
 
@@ -99,18 +99,18 @@ export interface CreateResult {
  * Time range for habit scheduling
  */
 export interface TimeRange {
-  start: string;  // ISO string format
-  end: string;    // ISO string format
+  start: string; // ISO string format
+  end: string; // ISO string format
 }
 
 /**
  * Time calculation parameters
  */
 export interface TimeCalculationParams {
-  startTime: string;  // "HH:MM" format
-  endTime: string;    // "HH:MM" format
+  startTime: string; // "HH:MM" format
+  endTime: string; // "HH:MM" format
   timezone: string;
-  date?: Date;        // Defaults to today
+  date?: Date; // Defaults to today
 }
 
 // ============================================================================
@@ -143,7 +143,7 @@ export interface NotionDatabaseResponse {
  * Notion template reference (updated for latest SDK)
  */
 export interface NotionTemplate {
-  type: "none" | "default" | "template_id";
+  type: 'none' | 'default' | 'template_id';
   template_id?: string; // Required when type is "template_id"
 }
 
