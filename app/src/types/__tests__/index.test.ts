@@ -10,6 +10,7 @@ import {
   HabitCreationResult,
   HabitEntry,
   SystemConfig,
+  NotionTemplate,
   isHabitConfig,
   isWebhookRequest,
   isNotionApiError
@@ -66,6 +67,28 @@ describe('Core Data Model Interfaces', () => {
 
       expect(isHabitConfig(sundayConfig)).toBe(true);
       expect(sundayConfig.frequency).toEqual(['sunday']);
+    });
+  });
+
+  describe('NotionTemplate interface', () => {
+    it('should support all template types', () => {
+      const noneTemplate: NotionTemplate = {
+        type: "none"
+      };
+
+      const defaultTemplate: NotionTemplate = {
+        type: "default"
+      };
+
+      const specificTemplate: NotionTemplate = {
+        type: "template_id",
+        template_id: "a5da15f6-b853-455d-8827-f906fb52db2b"
+      };
+
+      expect(noneTemplate.type).toBe("none");
+      expect(defaultTemplate.type).toBe("default");
+      expect(specificTemplate.type).toBe("template_id");
+      expect(specificTemplate.template_id).toBeDefined();
     });
   });
 
@@ -167,6 +190,28 @@ describe('Core Data Model Interfaces', () => {
       expect(typeof config.WEBHOOK_SECRET).toBe('string');
       expect(typeof config.PORT).toBe('number');
       expect(typeof config.TIMEZONE).toBe('string');
+    });
+  });
+
+  describe('NotionTemplate interface', () => {
+    it('should support all template types', () => {
+      const noneTemplate: NotionTemplate = {
+        type: "none"
+      };
+
+      const defaultTemplate: NotionTemplate = {
+        type: "default"
+      };
+
+      const specificTemplate: NotionTemplate = {
+        type: "template_id",
+        template_id: "a5da15f6-b853-455d-8827-f906fb52db2b"
+      };
+
+      expect(noneTemplate.type).toBe("none");
+      expect(defaultTemplate.type).toBe("default");
+      expect(specificTemplate.type).toBe("template_id");
+      expect(specificTemplate.template_id).toBeDefined();
     });
   });
 

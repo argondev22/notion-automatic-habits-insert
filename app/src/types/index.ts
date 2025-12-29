@@ -140,11 +140,11 @@ export interface NotionDatabaseResponse {
 }
 
 /**
- * Notion template reference
+ * Notion template reference (updated for latest SDK)
  */
 export interface NotionTemplate {
-  type: 'template_id';
-  template_id: string;
+  type: "none" | "default" | "template_id";
+  template_id?: string; // Required when type is "template_id"
 }
 
 /**
@@ -165,7 +165,7 @@ export interface NotionHabitProperties {
 }
 
 /**
- * Notion page creation request for habits
+ * Notion page creation request for habits (updated for latest SDK)
  */
 export interface NotionHabitCreateRequest {
   parent: {
@@ -173,6 +173,7 @@ export interface NotionHabitCreateRequest {
   };
   template?: NotionTemplate;
   properties: NotionHabitProperties;
+  // Note: children parameter is not allowed when using templates
 }
 
 // ============================================================================
