@@ -54,8 +54,8 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Test date boundary conditions
     - _Requirements: 4.1, 4.3_
 
-- [ ] 5. Implement scheduling logic
-  - [ ] 5.1 Create habit scheduling functions
+- [x] 5. Implement scheduling logic
+  - [x] 5.1 Create habit scheduling functions
     - Implement isDueToday() function with frequency pattern support
     - Support specific weekday arrays only (no special keywords)
     - Handle enabled/disabled habit states
