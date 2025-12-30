@@ -93,8 +93,8 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Test template ID validation
     - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 8. Implement Habit Manager (core component)
-  - [ ] 8.1 Create HabitManager class
+- [x] 8. Implement Habit Manager (core component)
+  - [x] 8.1 Create HabitManager class
     - Implement createScheduledHabits() main function
     - Integrate configuration loading, scheduling, and Notion API
     - Add comprehensive error handling and logging
