@@ -37,8 +37,8 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Test missing file scenarios
     - _Requirements: 7.1, 7.2_
 
-- [ ] 4. Implement time calculation utilities
-  - [ ] 4.1 Create time calculation functions
+- [-] 4. Implement time calculation utilities
+  - [x] 4.1 Create time calculation functions
     - Implement calculateTimeRange() function
     - Add timezone handling using TIMEZONE environment variable
     - Ensure proper ISO string formatting for Notion API
