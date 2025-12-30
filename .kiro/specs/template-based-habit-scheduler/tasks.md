@@ -71,7 +71,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Test enabled/disabled states
     - _Requirements: 2.2, 2.4_
 
-- [ ] 6. Checkpoint - Core utilities complete
+- [x] 6. Checkpoint - Core utilities complete
   - Ensure all configuration, time, and scheduling utilities pass tests
   - Verify TypeScript compilation works correctly
   - Ask the user if questions arise
