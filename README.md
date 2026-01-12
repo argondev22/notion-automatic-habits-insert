@@ -1,4 +1,4 @@
-# Template-Based Habit Scheduler
+# Notion Automatic Habit Insert
 
 NotionのTemplateを活用した習慣管理システム。Webhookトリガーで自動的にTimebox（旧Todos）データベースに習慣エントリを作成します。
 
@@ -43,8 +43,8 @@ NotionのTemplateを活用した習慣管理システム。Webhookトリガー�
 ### 1. リポジトリをクローン
 
 ```bash
-git clone <repo-url> template-based-habit-scheduler
-cd template-based-habit-scheduler
+git clone <repo-url> notion-automatic-habit-insert
+cd notion-automatic-habit-insert
 ```
 
 ### 2. 環境設定
@@ -462,17 +462,17 @@ env | grep -E "(NOTION|WEBHOOK|TIMEBOX)"
 
 ```bash
 # 本番用イメージをビルド
-docker build -t habit-scheduler:latest app/
+docker build -t notion-habit-insert:latest app/
 
 # 本番環境で実行
 docker run -d \
-  --name habit-scheduler \
+  --name notion-habit-insert \
   -p 8080:8080 \
   -e NOTION_API_KEY=your_api_key \
   -e TIMEBOX_DATABASE_ID=your_db_id \
   -e WEBHOOK_SECRET=your_secret \
   -e TIMEZONE=Asia/Tokyo \
-  habit-scheduler:latest
+  notion-habit-insert:latest
 ```
 
 ### PM2 での Node.js デプロイ
@@ -484,7 +484,7 @@ npm install -g pm2
 # アプリケーションを起動
 cd app
 npm run build
-pm2 start dist/main.js --name habit-scheduler
+pm2 start dist/main.js --name notion-habit-insert
 
 # 自動起動設定
 pm2 startup
