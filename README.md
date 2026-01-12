@@ -1,63 +1,104 @@
-# Notion Automatic Habits Insert
+# Template-Based Habit Scheduler
 
-NotionのHabitsデータベースからTodoを自動生成してTodosデータベースに挿入するWebhookサーバー。
+NotionのTemplateを活用した習慣管理システム。Webhookトリガーで自動的にTimebox（旧Todos）データベースに習慣エントリを作成します。
 
 ## 📋 概要
 
-このアプリケーションは、Notionの習慣追跡システムを自動化するWebhookサーバーです。外部からのHTTPリクエストをトリガーとして、以下の処理を実行します：
+このアプリケーションは、Notionのテンプレート機能を活用した習慣追跡システムです。従来のHabitsデータベースを廃止し、Timeboxデータベース内でタスクと習慣を統一管理します。
 
-1. **Habits データベースからデータを取得**
-2. **習慣データをTodoアイテムに変換**
-3. **Todosデータベースに自動挿入**
+### 主な特徴
+
+- **テンプレートベース**: Notionの標準テンプレート機能を活用
+- **統一データベース**: TimboxデータベースでタスクとHABITを一元管理
+- **設定ファイル駆動**: `habits.json`で習慣スケジュールを管理
+- **Webhook対応**: 外部システムからの自動実行をサポート
+- **セキュア**: Webhook認証による安全な実行
+
+### 処理フロー
+
+1. **Webhookリクエスト受信** → セキュリティ検証
+2. **習慣設定読み込み** → `config/habits.json`から設定取得
+3. **スケジュール判定** → 今日実行すべき習慣を特定
+4. **テンプレート適用** → Notionテンプレートを使用してエントリ作成
+5. **プロパティ設定** → TAG="HABIT"、EXPECTED時間を自動設定
 
 ## 🏗️ アーキテクチャ
 
-レイヤードアーキテクチャと依存性注入パターンに基づいて設計されています：
+シンプルで保守しやすい設計を採用：
 
-- **Presentation層**: `WebhookServer` - HTTPリクエストの処理
-- **Domain層**: `OrchestrationService` - ビジネスロジックの統合
-- **Repository層**: データアクセスとキャッシュ管理
-- **Service層**: 外部API（Notion）との連携
-
-詳細は [.cursorrules/architecture.md](.cursorrules/architecture.md) を参照してください。
+- **WebhookServer**: HTTPリクエスト処理とセキュリティ検証
+- **HabitManager**: 習慣作成のコアロジック
+- **NotionClientWrapper**: Notion API統合
+- **Configuration Management**: 設定ファイル管理
+- **Time Utilities**: 時間計算とタイムゾーン処理
 
 ## 🚀 クイックスタート
 
 ### 前提条件
 
-- Docker & Docker Compose
-- [Dev Container](https://containers.dev/) CLI または VSCode 拡張機能（開発時）
+- Node.js 18+ または Docker
+- Notion APIキー
+- Timeboxデータベースとテンプレートの設定
 
 ### 1. リポジトリをクローン
 
 ```bash
-git clone <repo-url> notion-automatic-habits-insert
-cd notion-automatic-habits-insert
+git clone <repo-url> template-based-habit-scheduler
+cd template-based-habit-scheduler
 ```
 
 ### 2. 環境設定
 
-`docker-compose.example.yml`をコピーして`docker-compose.yml`を作成：
+`.env.example`をコピーして`.env`を作成：
 
 ```bash
-cp app/docker-compose.example.yml app/docker-compose.yml
+cd app
+cp .env.example .env
 ```
 
 必要な環境変数を設定：
 
-```yaml
-environment:
-  - INTEGRATION_SECRET=your_notion_api_key
-  - HABITS_DATABASE_ID=your_habits_database_id
-  - TODOS_DATABASE_ID=your_todos_database_id
-  - PORT=8080
-  - WEBHOOK_PATH=/webhook
-  - WEBHOOK_SECRET=your_webhook_secret
-  - NODE_ENV=development
-  - LOG_LEVEL=DEBUG
+```bash
+# Notion API設定
+NOTION_API_KEY=secret_xxx
+TIMEBOX_DATABASE_ID=database_id_xxx
+
+# Webhook セキュリティ
+WEBHOOK_SECRET=your_secure_secret_here
+
+# サーバー設定
+PORT=8080
+TIMEZONE=Asia/Tokyo
 ```
 
-### 3. サーバーを起動
+### 3. 習慣設定
+
+`config/habits.json`で習慣スケジュールを設定：
+
+```json
+[
+  {
+    "name": "Morning Exercise",
+    "templateId": "template-123",
+    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "startTime": "07:00",
+    "endTime": "08:00",
+    "enabled": true
+  }
+]
+```
+
+### 4. サーバーを起動
+
+#### Node.js で直接実行
+
+```bash
+cd app
+npm install
+npm run dev
+```
+
+#### Docker で実行
 
 ```bash
 cd app
@@ -66,20 +107,24 @@ docker compose up --build
 
 サーバーは `http://localhost:8080` で起動します。
 
-**注意**: デフォルトでは開発環境（`target: development`）で起動します。本番環境で使用する場合は、docker-compose.ymlの`target`を`production`に変更してください。
-
 ## 🔐 環境変数
 
-| 名前                 | 説明                                | 必須 | デフォルト           |
-| -------------------- | ----------------------------------- | ---- | -------------------- |
-| `INTEGRATION_SECRET` | Notion APIの統合シークレット        | ✓    | -                    |
-| `HABITS_DATABASE_ID` | HabitsデータベースのID              | ✓    | -                    |
-| `TODOS_DATABASE_ID`  | TodosデータベースのID               | ✓    | -                    |
-| `PORT`               | サーバーのポート番号                | -    | `8080`               |
-| `WEBHOOK_PATH`       | Webhookのエンドポイントパス         | -    | `/webhook`           |
-| `WEBHOOK_SECRET`     | Webhook認証用のシークレット         | -    | -                    |
-| `NODE_ENV`           | 実行環境（development/production）  | -    | `development`        |
-| `LOG_LEVEL`          | ログレベル（DEBUG/INFO/WARN/ERROR） | -    | 環境に応じて自動設定 |
+| 名前                  | 説明                                | 必須 | デフォルト           |
+| --------------------- | ----------------------------------- | ---- | -------------------- |
+| `NOTION_API_KEY`      | Notion APIの統合トークン            | ✓    | -                    |
+| `TIMEBOX_DATABASE_ID` | TimeboxデータベースのID             | ✓    | -                    |
+| `WEBHOOK_SECRET`      | Webhook認証用のシークレット         | ✓    | -                    |
+| `PORT`                | サーバーのポート番号                | -    | `8080`               |
+| `TIMEZONE`            | タイムゾーン（IANA形式）            | -    | `UTC`                |
+| `LOG_LEVEL`           | ログレベル（debug/info/warn/error） | -    | `info`               |
+| `HABITS_CONFIG_PATH`  | 習慣設定ファイルのパス              | -    | `config/habits.json` |
+
+### Notion設定
+
+1. **Integration作成**: [Notion Integrations](https://www.notion.so/my-integrations)でIntegrationを作成
+2. **データベース共有**: TimeboxデータベースをIntegrationと共有
+3. **テンプレート作成**: Timeboxデータベース内で習慣用テンプレートを作成
+4. **テンプレートID取得**: 各テンプレートのIDを`habits.json`に設定
 
 ## 📡 API エンドポイント
 
@@ -93,41 +138,28 @@ GET /health
 
 ```json
 {
-  "status": "ok",
-  "timestamp": "2025-10-15T12:00:00.000Z"
+  "status": "healthy",
+  "timestamp": "2025-01-12T12:00:00.000Z",
+  "uptime": 3600
 }
 ```
 
-### ルート
-
-```bash
-GET /
-```
-
-**レスポンス:**
-
-```json
-{
-  "message": "Notion Automatic Habits Insert Webhook Server",
-  "version": "1.0.0",
-  "endpoints": {
-    "health": "/health",
-    "webhook": "/webhook"
-  }
-}
-```
-
-### Webhook
+### Webhook（習慣作成）
 
 ```bash
 POST /webhook
 ```
 
-**ヘッダー:**
+**認証方法:**
 
-```text
-Content-Type: application/json
-X-Webhook-Secret: your_webhook_secret
+```bash
+# リクエストボディまたはクエリパラメータでsecretを送信
+curl -X POST http://localhost:8080/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"secret": "your_webhook_secret"}'
+
+# または
+curl -X POST "http://localhost:8080/webhook?secret=your_webhook_secret"
 ```
 
 **レスポンス（成功時）:**
@@ -135,12 +167,17 @@ X-Webhook-Secret: your_webhook_secret
 ```json
 {
   "success": true,
-  "habitCount": 10,
-  "todoCount": 15,
-  "linkedCount": 15,
-  "executionTime": 2500,
-  "responseTime": 2505,
-  "timestamp": "2025-10-15T12:00:00.000Z"
+  "created": [
+    {
+      "id": "page-id-123",
+      "title": "Morning Exercise",
+      "templateUsed": "template-123",
+      "timeRange": "07:00-08:00"
+    }
+  ],
+  "skipped": ["Evening Meditation"],
+  "errors": [],
+  "executionTime": 1250
 }
 ```
 
@@ -149,22 +186,71 @@ X-Webhook-Secret: your_webhook_secret
 ```json
 {
   "success": false,
-  "error": "エラーメッセージ",
-  "executionTime": 1200,
-  "responseTime": 1205,
-  "timestamp": "2025-10-15T12:00:00.000Z"
+  "created": [],
+  "skipped": [],
+  "errors": ["Failed to create habit: Morning Exercise"],
+  "executionTime": 800
 }
 ```
+
+## ⚙️ 習慣設定（habits.json）
+
+`config/habits.json`で習慣のスケジュールを管理します：
+
+```json
+[
+  {
+    "name": "Morning Exercise",
+    "templateId": "template-123",
+    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "startTime": "07:00",
+    "endTime": "08:00",
+    "enabled": true
+  },
+  {
+    "name": "Weekly Review",
+    "templateId": "template-789",
+    "frequency": ["sunday"],
+    "startTime": "19:00",
+    "endTime": "20:00",
+    "enabled": true
+  }
+]
+```
+
+### 設定項目
+
+| フィールド   | 説明                   | 例                     |
+| ------------ | ---------------------- | ---------------------- |
+| `name`       | 習慣の名前（ログ用）   | `"Morning Exercise"`   |
+| `templateId` | NotionテンプレートのID | `"template-123"`       |
+| `frequency`  | 実行する曜日の配列     | `["monday", "friday"]` |
+| `startTime`  | 開始時刻（HH:MM形式）  | `"07:00"`              |
+| `endTime`    | 終了時刻（HH:MM形式）  | `"08:00"`              |
+| `enabled`    | 有効/無効フラグ        | `true`                 |
+
+### 曜日指定
+
+```json
+{
+  "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+}
+```
+
+- 毎日: 全曜日を指定
+- 平日のみ: `["monday", "tuesday", "wednesday", "thursday", "friday"]`
+- 週末のみ: `["saturday", "sunday"]`
+- 特定の曜日: `["monday", "wednesday", "friday"]`
 
 ## 🔧 使用例
 
 ### cURL
 
 ```bash
-# Webhook を実行
+# 習慣作成を実行
 curl -X POST http://localhost:8080/webhook \
   -H "Content-Type: application/json" \
-  -H "X-Webhook-Secret: your_webhook_secret"
+  -d '{"secret": "your_webhook_secret"}'
 
 # ヘルスチェック
 curl http://localhost:8080/health
@@ -173,34 +259,42 @@ curl http://localhost:8080/health
 ### GitHub Actions / 外部CI
 
 ```yaml
-- name: Trigger Notion Habits Update
+- name: Create Daily Habits
   run: |
     curl -X POST ${{ secrets.WEBHOOK_URL }}/webhook \
       -H "Content-Type: application/json" \
-      -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}"
+      -d '{"secret": "${{ secrets.WEBHOOK_SECRET }}"}'
 ```
 
-### Notion Automation
+### 自動化ツール
 
-Notionの自動化機能やZapier、Make.comなどのツールから、指定したURLにPOSTリクエストを送信することで、自動的にHabitsからTodosへの変換・挿入が実行されます。
+- **Zapier**: スケジュールトリガーでWebhookを実行
+- **Make.com**: 時間ベースのシナリオでAPI呼び出し
+- **GitHub Actions**: Cronジョブで定期実行
+- **cron**: サーバーのcrontabで定期実行
+
+```bash
+# 毎朝7時に実行（crontab例）
+0 7 * * * curl -X POST http://localhost:8080/webhook -d '{"secret":"your_secret"}'
+```
 
 ## 🛠️ 開発
 
-### Dev Container での開発
-
-1. `devcontainer.example.json`をコピーして`devcontainer.json`を作成
-2. VSCodeでDev Containerを起動
-
-```bash
-devcontainer up --workspace-folder .
-```
-
-### ローカルでの実行
+### ローカル開発
 
 ```bash
 cd app
 npm install
 npm run dev
+```
+
+### テスト実行
+
+```bash
+cd app
+npm test                # 全テスト実行
+npm run test:watch      # ウォッチモード
+npm run test:coverage   # カバレッジ付き
 ```
 
 ### TypeScript型チェック
@@ -226,112 +320,176 @@ npm run format        # 自動フォーマット
 npm run format:check  # チェックのみ
 ```
 
+### ビルド
+
+```bash
+cd app
+npm run build
+```
+
 ## 📁 プロジェクト構造
 
 ```text
 app/
 ├── src/
-│   ├── domain/           # ドメインロジック
-│   │   ├── fetch/        # Habits取得
-│   │   ├── convert/      # Habits→Todo変換
-│   │   ├── insert/       # Todos挿入
-│   │   └── orchestration/# 全体のフロー管理
-│   ├── presentation/     # HTTPサーバー
-│   ├── shared/           # 共通ユーティリティ
-│   │   ├── cache/        # キャッシュ管理
-│   │   ├── config/       # 設定管理
-│   │   ├── di/           # 依存性注入
-│   │   ├── errors/       # エラーハンドリング
-│   │   ├── factories/    # ファクトリーパターン
-│   │   ├── logger/       # ロガー
-│   │   ├── retry/        # リトライ機構
-│   │   └── validation/   # バリデーション
-│   └── main.ts           # エントリーポイント
+│   ├── __tests__/           # メインアプリケーションテスト
+│   ├── config/              # 設定管理
+│   │   ├── __tests__/       # 設定テスト
+│   │   ├── index.ts         # 設定エクスポート
+│   │   └── loader.ts        # 習慣設定ローダー
+│   ├── types/               # TypeScript型定義
+│   │   ├── __tests__/       # 型テスト
+│   │   ├── index.ts         # メイン型定義
+│   │   └── notion.ts        # Notion API型
+│   ├── utils/               # ユーティリティ
+│   │   ├── __tests__/       # ユーティリティテスト
+│   │   ├── index.ts         # ユーティリティエクスポート
+│   │   ├── scheduling.ts    # スケジューリングロジック
+│   │   └── time.ts          # 時間計算
+│   ├── habit-manager.ts     # 習慣管理コアロジック
+│   ├── main.ts              # アプリケーションエントリーポイント
+│   ├── notion-client.ts     # Notion APIクライアント
+│   └── webhook-server.ts    # Webhookサーバー
+├── config/
+│   └── habits.json          # 習慣設定ファイル
 ├── Dockerfile
 ├── docker-compose.yml
 ├── package.json
-└── tsconfig.json
+├── tsconfig.json
+└── jest.config.js
 ```
 
-## 📊 ログレベル設定
+## 📊 テスト
 
-アプリケーションは環境に応じて自動的にログレベルを設定します：
+### テストスイート
 
-### デフォルト設定
+- **Unit Tests**: 79テスト、5テストスイート
+- **Property-Based Tests**: fast-checkを使用した包括的テスト（オプション）
+- **Integration Tests**: エンドツーエンドフロー検証（オプション）
 
-| 環境          | ログレベル | 出力されるログ                           |
-| ------------- | ---------- | ---------------------------------------- |
-| `development` | `DEBUG`    | すべてのログ（DEBUG, INFO, WARN, ERROR） |
-| `production`  | `WARN`     | WARN以上のみ（WARN, ERROR）              |
-| `test`        | `ERROR`    | ERRORのみ                                |
+### テストカバレッジ
 
-### カスタム設定
+- **Core Utilities**: 90%以上のカバレッジ
+- **Configuration**: 完全なバリデーションテスト
+- **Time Calculations**: 全時間パターンのテスト
+- **Scheduling Logic**: 全頻度パターンのテスト
 
-環境変数 `LOG_LEVEL` でログレベルを上書きできます：
+### テスト実行
 
 ```bash
-# 本番環境でもDEBUGログを出力したい場合
-LOG_LEVEL=DEBUG
+# 全テスト実行
+npm test
 
-# 開発環境でもWARN以上のみにしたい場合
-LOG_LEVEL=WARN
-```
+# ウォッチモード
+npm run test:watch
 
-### Docker Compose での設定例
-
-```yaml
-environment:
-  - NODE_ENV=development # 開発環境
-  - LOG_LEVEL=DEBUG # 開発環境ではDEBUG以上
-```
-
-本番環境での設定例：
-
-```yaml
-environment:
-  - NODE_ENV=production
-  - LOG_LEVEL=WARN # 本番環境ではWARN以上のみ
+# カバレッジレポート
+npm run test:coverage
 ```
 
 ## 🔍 トラブルシューティング
 
-### ポートが使用中
+### よくある問題
+
+#### 1. Notion API エラー
+
+```bash
+# エラー: Unauthorized
+# 解決: NOTION_API_KEYが正しく設定されているか確認
+echo $NOTION_API_KEY
+
+# エラー: Database not found
+# 解決: TIMEBOX_DATABASE_IDが正しく、Integrationがアクセス権限を持っているか確認
+```
+
+#### 2. テンプレートが見つからない
+
+```bash
+# エラー: Template not found
+# 解決: habits.jsonのtemplateIdが正しいか確認
+# Notionでテンプレートを作成し、IDを取得
+```
+
+#### 3. Webhook認証エラー
+
+```bash
+# エラー: Unauthorized webhook request
+# 解決: リクエストにsecretパラメータが含まれているか確認
+curl -X POST http://localhost:8080/webhook -d '{"secret": "your_secret"}'
+```
+
+#### 4. ポートが使用中
 
 ```bash
 # ポート8080を使用しているプロセスを確認
 lsof -i :8080
 
 # または別のポートを使用
-PORT=3001 docker compose up
+PORT=3001 npm run dev
 ```
 
-### Notion API エラー
-
-- `INTEGRATION_SECRET`が正しく設定されているか確認
-- NotionのIntegrationがHabitsとTodosデータベースにアクセス権限を持っているか確認
-
-### キャッシュのクリア
-
-コンテナを再構築：
+### ログの確認
 
 ```bash
-cd app
-docker compose down
-docker compose up --build
+# 開発環境でデバッグログを有効化
+LOG_LEVEL=debug npm run dev
+
+# 本番環境でエラーログのみ
+LOG_LEVEL=error npm start
 ```
 
-または、ローカル開発時：
+### 設定の検証
 
 ```bash
-cd app
-npm run dev
+# 習慣設定ファイルの構文チェック
+cat config/habits.json | jq .
+
+# 環境変数の確認
+env | grep -E "(NOTION|WEBHOOK|TIMEBOX)"
 ```
 
 ## 📚 関連ドキュメント
 
-- [アーキテクチャガイド](.cursorrules/architecture.md)
-- [コーディングパターン](.cursorrules/coding-patterns.md)
-- [Notion API ドキュメント](https://developers.notion.com/)
+- [Spec Requirements](.kiro/specs/template-based-habit-scheduler/requirements.md) - システム要件
+- [Design Document](.kiro/specs/template-based-habit-scheduler/design.md) - 設計仕様
+- [Implementation Tasks](.kiro/specs/template-based-habit-scheduler/tasks.md) - 実装タスク
+- [Notion API Documentation](https://developers.notion.com/) - Notion API公式ドキュメント
+- [Notion Templates Guide](https://www.notion.so/help/database-templates) - テンプレート作成ガイド
+
+## 🚀 デプロイ
+
+### Docker での本番デプロイ
+
+```bash
+# 本番用イメージをビルド
+docker build -t habit-scheduler:latest app/
+
+# 本番環境で実行
+docker run -d \
+  --name habit-scheduler \
+  -p 8080:8080 \
+  -e NOTION_API_KEY=your_api_key \
+  -e TIMEBOX_DATABASE_ID=your_db_id \
+  -e WEBHOOK_SECRET=your_secret \
+  -e TIMEZONE=Asia/Tokyo \
+  habit-scheduler:latest
+```
+
+### PM2 での Node.js デプロイ
+
+```bash
+# PM2をインストール
+npm install -g pm2
+
+# アプリケーションを起動
+cd app
+npm run build
+pm2 start dist/main.js --name habit-scheduler
+
+# 自動起動設定
+pm2 startup
+pm2 save
+```
 
 ## 📝 ライセンス
 
