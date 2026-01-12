@@ -6,12 +6,14 @@ A habit management system leveraging Notion template functionality. This system 
 
 ## Glossary
 
+- **System**: The complete Template-Based Habit Scheduler application
 - **Timebox_Database**: Notion database that manages both habits and tasks in a unified manner (formerly Todos database)
 - **Template**: Notion database template functionality
 - **Habit_Template**: Notion template created specifically for habits
 - **Webhook_Server**: Server that receives HTTP requests and executes processing
 - **Habit_Scheduler**: Component that manages habit execution frequency and scheduling
 - **Template_Service**: Service that creates entries using Notion templates
+- **Time_Calculator**: Component that calculates time periods for habit entries
 
 ## Requirements
 
@@ -21,7 +23,7 @@ A habit management system leveraging Notion template functionality. This system 
 
 #### Acceptance Criteria
 
-1. WHEN the system starts up, THE Template_Service SHALL retrieve all available templates from the Timebox_Database
+1. WHEN the System starts up, THE Template_Service SHALL retrieve all available templates from the Timebox_Database
 2. WHEN template retrieval fails, THE Template_Service SHALL log the error and continue with cached templates if available
 3. THE Template_Service SHALL filter templates to identify habit-related templates
 4. WHEN no habit templates are found, THE Template_Service SHALL log a warning message
@@ -78,11 +80,11 @@ A habit management system leveraging Notion template functionality. This system 
 
 #### Acceptance Criteria
 
-1. WHEN any error occurs, THE System SHALL log detailed error information including context
-2. WHEN Notion API calls fail, THE System SHALL implement retry logic with exponential backoff
-3. WHEN critical errors occur, THE System SHALL continue operating with degraded functionality where possible
-4. THE System SHALL provide structured logging with appropriate log levels
-5. WHEN webhook processing completes, THE System SHALL log execution metrics and timing
+1. WHEN Notion API calls fail, THE System SHALL implement retry logic with exponential backoff up to 3 attempts
+2. WHEN critical errors occur, THE System SHALL continue operating with degraded functionality where possible
+3. THE System SHALL provide structured logging with appropriate log levels (ERROR, WARN, INFO, DEBUG)
+4. WHEN webhook processing completes, THE System SHALL log execution metrics and timing
+5. WHEN any error occurs, THE System SHALL log detailed error information including context
 
 ### Requirement 7: Configuration Management
 
@@ -91,9 +93,9 @@ A habit management system leveraging Notion template functionality. This system 
 #### Acceptance Criteria
 
 1. THE System SHALL read configuration from environment variables
-2. THE System SHALL support configuration of Timebox database ID
+2. THE System SHALL support configuration of Timebox_Database ID
 3. THE System SHALL support configuration of habit scheduling rules
-4. WHEN configuration is invalid, THE System SHALL log errors and use default values
+4. WHEN configuration is invalid, THE System SHALL log errors and use default values where available
 5. THE System SHALL validate all configuration values at startup
 
 ### Requirement 8: Performance Monitoring
@@ -104,5 +106,5 @@ A habit management system leveraging Notion template functionality. This system 
 
 1. THE System SHALL measure and log execution time for each major operation
 2. THE System SHALL track the number of templates processed and entries created
-3. WHEN operations exceed expected time thresholds, THE System SHALL log performance warnings
+3. WHEN operations exceed 30 seconds execution time, THE System SHALL log performance warnings
 4. THE System SHALL provide metrics in webhook responses for monitoring integration
