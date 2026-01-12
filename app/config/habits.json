@@ -30,5 +30,29 @@
     "startTime": "19:00",
     "endTime": "20:00",
     "enabled": true
+  },
+  {
+    "name": "Gym Workout",
+    "templateId": "template-abc",
+    "frequency": ["monday", "wednesday", "friday"],
+    "startTime": "18:00",
+    "endTime": "19:30",
+    "enabled": true
+  },
+  {
+    "name": "Weekend Reading",
+    "templateId": "template-def",
+    "frequency": ["saturday", "sunday"],
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "enabled": true
+  },
+  {
+    "name": "Evening Meditation",
+    "templateId": "template-ghi",
+    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "startTime": "21:00",
+    "endTime": "21:30",
+    "enabled": false
   }
 ]

@@ -136,13 +136,13 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Test environment variable validation
     - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 12. Create example configuration and documentation
-  - [ ] 12.1 Create .env.example file
+- [x] 12. Create example configuration and documentation
+  - [x] 12.1 Create .env.example file
     - Document all required environment variables
     - Provide example values for development
     - _Requirements: 7.1, 7.3_
 
-  - [ ] 12.2 Update habits.json with comprehensive examples
+  - [x] 12.2 Update habits.json with comprehensive examples
     - Ensure example configuration covers all use cases
     - Add comments explaining configuration options
     - _Requirements: 7.1, 7.2_
