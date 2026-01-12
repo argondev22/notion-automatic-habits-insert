@@ -8,8 +8,6 @@ import {
   HabitConfig,
   HabitEntry,
   CreateResult,
-  TimeRange,
-  NotionApiError,
   isNotionApiError,
 } from './types';
 import { calculateTimeRange } from './utils/time';

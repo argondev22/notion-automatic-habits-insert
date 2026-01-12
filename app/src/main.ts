@@ -71,7 +71,7 @@ function loadConfiguration(): AppConfig {
   if (process.env.TIMEZONE) {
     try {
       new Date().toLocaleString('en-US', { timeZone: timezone });
-    } catch (error) {
+    } catch {
       console.error(`❌ Invalid TIMEZONE environment variable: ${timezone}`);
       console.error(
         'Please provide a valid timezone (e.g., "America/New_York", "Asia/Tokyo")'

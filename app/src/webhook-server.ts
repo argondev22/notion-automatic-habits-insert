@@ -5,7 +5,7 @@
 
 import express, { Request, Response, Application } from 'express';
 import { HabitManager } from './habit-manager';
-import { WebhookRequest, WebhookResponse, isWebhookRequest } from './types';
+import { WebhookResponse, isWebhookRequest } from './types';
 
 /**
  * WebhookServer class that handles HTTP requests with security validation
@@ -261,7 +261,7 @@ export class WebhookServer {
     error: Error,
     req: Request,
     res: Response,
-    next: Function
+    _next: Function
   ): void {
     console.error('Express error handler caught error:', error);
 

@@ -5,12 +5,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import {
-  HabitConfig,
-  HabitConfigValidation,
-  ValidationResult,
-  isHabitConfig,
-} from '../types';
+import { HabitConfig, HabitConfigValidation, ValidationResult } from '../types';
 
 /**
  * Default configuration file path
@@ -161,7 +156,7 @@ export function validateHabitConfiguration(
  */
 export function validateSingleHabit(
   habit: any,
-  index: number
+  _index: number
 ): ValidationResult {
   const result: ValidationResult = {
     valid: false,

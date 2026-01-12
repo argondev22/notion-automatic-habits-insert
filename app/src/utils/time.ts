@@ -183,7 +183,7 @@ export function isValidTimezone(timezone: string): boolean {
     // Try to create a date with the timezone
     new Date().toLocaleString('en-US', { timeZone: timezone });
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

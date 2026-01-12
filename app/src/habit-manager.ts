@@ -329,7 +329,7 @@ export class HabitManager {
     if (timezone) {
       try {
         new Date().toLocaleString('en-US', { timeZone: timezone });
-      } catch (error) {
+      } catch {
         errors.push(`Invalid TIMEZONE environment variable: ${timezone}`);
       }
     }
