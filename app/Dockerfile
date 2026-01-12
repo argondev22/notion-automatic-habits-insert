@@ -13,10 +13,12 @@ WORKDIR /app
 
 COPY ./package*.json ./
 COPY ./tsconfig.json ./
+COPY ./jest.config.js ./
 
 RUN npm ci --include=dev && npm cache clean --force
 
 COPY ./src ./src
+COPY ./config ./config
 
 RUN chown -R appuser:appuser /app
 USER appuser
@@ -61,6 +63,7 @@ COPY ./package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
+COPY ./config ./config
 
 RUN chown -R appuser:appuser /app
 USER appuser
