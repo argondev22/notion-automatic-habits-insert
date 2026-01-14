@@ -5,18 +5,18 @@ services:
       context: .
       target: development
     ports:
-      - '8080:8080'
+      - '${PORT:-8080}:8080'
     environment:
       # Notion API設定
-      - NOTION_API_KEY=secret_xxx
-      - TIMEBOX_DATABASE_ID=database_id_xxx
+      - NOTION_API_KEY=${NOTION_API_KEY}
+      - TIMEBOX_DATABASE_ID=${TIMEBOX_DATABASE_ID}
       # Webhook設定
-      - WEBHOOK_SECRET=your_secure_secret_here
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       # サーバー設定
       - PORT=8080
-      - TIMEZONE=Asia/Tokyo
+      - TIMEZONE=${TIMEZONE:-Asia/Tokyo}
       # ログレベル（オプション）
-      - LOG_LEVEL=info
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       - .:/app/
       - /app/node_modules
