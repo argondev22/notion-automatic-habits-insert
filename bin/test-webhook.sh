@@ -1,129 +1,141 @@
 #!/bin/bash
 
-# Webhookサーバーテストスクリプト
+# Webhook Test Script for Template-Based Habit Scheduler
+# このスクリプトは実際のAPIエンドポイントをテストします
 
-# 色設定
-GREEN='\033[0;32m'
+set -e
+
+# カラー出力用
 RED='\033[0;31m'
+GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # デフォルト設定
-HOST="${WEBHOOK_HOST:-localhost}"
-PORT="${WEBHOOK_PORT:-8080}"
-SECRET="${WEBHOOK_SECRET:-your_webhook_secret_here}"
+HOST="${HOST:-localhost}"
+PORT="${PORT:-8080}"
 BASE_URL="http://${HOST}:${PORT}"
 
-echo "=========================================="
-echo "  Webhook Server Test"
-echo "=========================================="
-echo ""
-echo "Target: ${BASE_URL}"
-echo ""
-
-# 1. ヘルスチェック
-echo "1. Health Check..."
-HEALTH_RESPONSE=$(curl -s "${BASE_URL}/health")
-HEALTH_STATUS=$(echo $HEALTH_RESPONSE | jq -r '.status' 2>/dev/null)
-
-if [ "$HEALTH_STATUS" == "ok" ]; then
-  echo -e "${GREEN}✓ Health check passed${NC}"
-  echo "   Response: $HEALTH_RESPONSE"
-else
-  echo -e "${RED}✗ Health check failed${NC}"
-  echo "   Response: $HEALTH_RESPONSE"
-  exit 1
+# .envファイルからWEBHOOK_SECRETを読み込む
+if [ -f "app/.env" ]; then
+    export $(grep -v '^#' app/.env | grep WEBHOOK_SECRET | xargs)
 fi
 
-echo ""
-
-# 2. ルートエンドポイント
-echo "2. Root Endpoint..."
-ROOT_RESPONSE=$(curl -s "${BASE_URL}/")
-ROOT_MESSAGE=$(echo $ROOT_RESPONSE | jq -r '.message' 2>/dev/null)
-
-if [ "$ROOT_MESSAGE" != "null" ]; then
-  echo -e "${GREEN}✓ Root endpoint accessible${NC}"
-  echo "   Message: $ROOT_MESSAGE"
-else
-  echo -e "${RED}✗ Root endpoint failed${NC}"
-  echo "   Response: $ROOT_RESPONSE"
+if [ -z "$WEBHOOK_SECRET" ]; then
+    echo -e "${RED}❌ WEBHOOK_SECRET が設定されていません${NC}"
+    echo "app/.env ファイルに WEBHOOK_SECRET を設定してください"
+    exit 1
 fi
 
+echo -e "${BLUE}🧪 Webhook API テスト開始${NC}"
+echo "=================================="
+echo "Base URL: ${BASE_URL}"
 echo ""
 
-# 3. Webhook（認証なし）
-echo "3. Webhook without authentication..."
-WEBHOOK_NO_AUTH=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/webhook" \
-  -H "Content-Type: application/json")
+# テスト1: ヘルスチェック
+echo -e "${YELLOW}[テスト 1] ヘルスチェック${NC}"
+echo "GET ${BASE_URL}/health"
+echo ""
 
-HTTP_CODE=$(echo "$WEBHOOK_NO_AUTH" | tail -n 1)
-RESPONSE_BODY=$(echo "$WEBHOOK_NO_AUTH" | sed '$d')
+HEALTH_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "${BASE_URL}/health")
+HTTP_STATUS=$(echo "$HEALTH_RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+RESPONSE_BODY=$(echo "$HEALTH_RESPONSE" | sed '/HTTP_STATUS/d')
 
-if [ "$HTTP_CODE" == "401" ]; then
-  echo -e "${GREEN}✓ Authentication required (401)${NC}"
-  echo "   Response: $RESPONSE_BODY"
+echo "Response:"
+echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
+echo ""
+
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo -e "${GREEN}✓ ヘルスチェック成功 (HTTP $HTTP_STATUS)${NC}"
 else
-  echo -e "${YELLOW}⚠ Expected 401, got ${HTTP_CODE}${NC}"
-  echo "   Response: $RESPONSE_BODY"
+    echo -e "${RED}✗ ヘルスチェック失敗 (HTTP $HTTP_STATUS)${NC}"
 fi
-
 echo ""
 
-# 4. Webhook（認証あり）
-echo "4. Webhook with authentication..."
-echo "   (This will trigger the actual Habit→Todo conversion)"
-echo ""
-read -p "   Continue? (y/n): " -n 1 -r
+# テスト2: 認証なしでWebhookを呼び出し（失敗するはず）
+echo -e "${YELLOW}[テスト 2] 認証なしでWebhook呼び出し（401エラーを期待）${NC}"
+echo "POST ${BASE_URL}/webhook"
 echo ""
 
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  WEBHOOK_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/webhook" \
+WEBHOOK_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+    -X POST \
     -H "Content-Type: application/json" \
-    -H "X-Webhook-Secret: ${SECRET}")
+    -d '{}' \
+    "${BASE_URL}/webhook")
 
-  HTTP_CODE=$(echo "$WEBHOOK_RESPONSE" | tail -n 1)
-  RESPONSE_BODY=$(echo "$WEBHOOK_RESPONSE" | sed '$d')
+HTTP_STATUS=$(echo "$WEBHOOK_RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+RESPONSE_BODY=$(echo "$WEBHOOK_RESPONSE" | sed '/HTTP_STATUS/d')
 
-  if [ "$HTTP_CODE" == "200" ]; then
-    SUCCESS=$(echo $RESPONSE_BODY | jq -r '.success' 2>/dev/null)
-
-    if [ "$SUCCESS" == "true" ]; then
-      echo -e "${GREEN}✓ Webhook execution successful${NC}"
-      echo ""
-      echo "   Results:"
-      echo "   --------"
-      echo $RESPONSE_BODY | jq '.'
-    else
-      echo -e "${RED}✗ Webhook execution failed${NC}"
-      echo "   Error: $(echo $RESPONSE_BODY | jq -r '.error' 2>/dev/null)"
-      echo ""
-      echo "   Full response:"
-      echo $RESPONSE_BODY | jq '.'
-    fi
-  else
-    echo -e "${RED}✗ Unexpected HTTP status: ${HTTP_CODE}${NC}"
-    echo "   Response: $RESPONSE_BODY"
-  fi
-else
-  echo "   Skipped webhook execution"
-fi
-
+echo "Response:"
+echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
 echo ""
 
-# 5. 存在しないエンドポイント
-echo "5. Non-existent endpoint (404 test)..."
-NOT_FOUND=$(curl -s -w "\n%{http_code}" "${BASE_URL}/nonexistent")
-HTTP_CODE=$(echo "$NOT_FOUND" | tail -n 1)
-
-if [ "$HTTP_CODE" == "404" ]; then
-  echo -e "${GREEN}✓ 404 handling works correctly${NC}"
+if [ "$HTTP_STATUS" -eq 401 ]; then
+    echo -e "${GREEN}✓ 認証エラーが正しく返されました (HTTP $HTTP_STATUS)${NC}"
 else
-  echo -e "${YELLOW}⚠ Expected 404, got ${HTTP_CODE}${NC}"
+    echo -e "${RED}✗ 予期しないステータスコード (HTTP $HTTP_STATUS)${NC}"
 fi
-
 echo ""
-echo "=========================================="
-echo "  Test Complete"
-echo "=========================================="
 
+# テスト3: 正しい認証でWebhookを呼び出し
+echo -e "${YELLOW}[テスト 3] 正しい認証でWebhook呼び出し${NC}"
+echo "POST ${BASE_URL}/webhook"
+echo "Secret: ${WEBHOOK_SECRET:0:10}..."
+echo ""
+
+WEBHOOK_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -d "{\"secret\": \"${WEBHOOK_SECRET}\"}" \
+    "${BASE_URL}/webhook")
+
+HTTP_STATUS=$(echo "$WEBHOOK_RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+RESPONSE_BODY=$(echo "$WEBHOOK_RESPONSE" | sed '/HTTP_STATUS/d')
+
+echo "Response:"
+echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
+echo ""
+
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo -e "${GREEN}✓ Webhook呼び出し成功 (HTTP $HTTP_STATUS)${NC}"
+
+    # レスポンスの詳細を表示
+    CREATED=$(echo "$RESPONSE_BODY" | jq -r '.created // 0')
+    SKIPPED=$(echo "$RESPONSE_BODY" | jq -r '.skipped // 0')
+    ERRORS=$(echo "$RESPONSE_BODY" | jq -r '.errors | length // 0')
+    EXEC_TIME=$(echo "$RESPONSE_BODY" | jq -r '.executionTime // 0')
+
+    echo ""
+    echo "📊 実行結果:"
+    echo "  - 作成されたハビット: ${CREATED}"
+    echo "  - スキップされたハビット: ${SKIPPED}"
+    echo "  - エラー数: ${ERRORS}"
+    echo "  - 実行時間: ${EXEC_TIME}ms"
+else
+    echo -e "${RED}✗ Webhook呼び出し失敗 (HTTP $HTTP_STATUS)${NC}"
+fi
+echo ""
+
+# テスト4: 存在しないエンドポイント（404エラーを期待）
+echo -e "${YELLOW}[テスト 4] 存在しないエンドポイント（404エラーを期待）${NC}"
+echo "GET ${BASE_URL}/nonexistent"
+echo ""
+
+NOT_FOUND_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "${BASE_URL}/nonexistent")
+HTTP_STATUS=$(echo "$NOT_FOUND_RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+RESPONSE_BODY=$(echo "$NOT_FOUND_RESPONSE" | sed '/HTTP_STATUS/d')
+
+echo "Response:"
+echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
+echo ""
+
+if [ "$HTTP_STATUS" -eq 404 ]; then
+    echo -e "${GREEN}✓ 404エラーが正しく返されました (HTTP $HTTP_STATUS)${NC}"
+else
+    echo -e "${RED}✗ 予期しないステータスコード (HTTP $HTTP_STATUS)${NC}"
+fi
+echo ""
+
+echo -e "${BLUE}=================================="
+echo "🎉 テスト完了${NC}"
