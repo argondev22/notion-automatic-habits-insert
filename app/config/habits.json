@@ -1,7 +1,7 @@
 [
   {
-    "name": "Morning Exercise",
-    "templateId": "template-123",
+    "name": "ランニング",
+    "templateId": "2cdd94010e5880609df7def176a64940",
     "frequency": [
       "monday",
       "tuesday",
@@ -11,48 +11,8 @@
       "saturday",
       "sunday"
     ],
-    "startTime": "07:00",
-    "endTime": "08:00",
+    "startTime": "06:15",
+    "endTime": "06:30",
     "enabled": true
-  },
-  {
-    "name": "Weekday Standup",
-    "templateId": "template-456",
-    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
-    "startTime": "09:00",
-    "endTime": "09:30",
-    "enabled": true
-  },
-  {
-    "name": "Weekly Review",
-    "templateId": "template-789",
-    "frequency": ["sunday"],
-    "startTime": "19:00",
-    "endTime": "20:00",
-    "enabled": true
-  },
-  {
-    "name": "Gym Workout",
-    "templateId": "template-abc",
-    "frequency": ["monday", "wednesday", "friday"],
-    "startTime": "18:00",
-    "endTime": "19:30",
-    "enabled": true
-  },
-  {
-    "name": "Weekend Reading",
-    "templateId": "template-def",
-    "frequency": ["saturday", "sunday"],
-    "startTime": "10:00",
-    "endTime": "11:00",
-    "enabled": true
-  },
-  {
-    "name": "Evening Meditation",
-    "templateId": "template-ghi",
-    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
-    "startTime": "21:00",
-    "endTime": "21:30",
-    "enabled": false
   }
 ]
