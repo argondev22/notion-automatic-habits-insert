@@ -162,7 +162,7 @@ function createDateTimeInTimezone(
     hour12: false,
   });
 
-  const [midnightTzDate, midnightTzTime] = midnightInTz.split(' ');
+  const [, midnightTzTime] = midnightInTz.split(' ');
   const [tzHour, tzMin] = midnightTzTime.split(':').map(Number);
 
   // Calculate the offset in milliseconds
