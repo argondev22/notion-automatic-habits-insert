@@ -56,9 +56,11 @@ export class NotionClientWrapper {
         },
         properties: {
           TAG: {
-            select: {
-              name: 'HABIT',
-            },
+            multi_select: [
+              {
+                name: 'HABIT',
+              },
+            ],
           },
           EXPECTED: {
             date: {

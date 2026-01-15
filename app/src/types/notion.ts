@@ -62,6 +62,9 @@ export interface NotionPropertyValues {
   select: {
     select: NotionSelectProperty | null;
   };
+  multi_select: {
+    multi_select: NotionSelectProperty[];
+  };
   date: {
     date: NotionDateProperty | null;
   };
@@ -76,6 +79,6 @@ export interface NotionPropertyValues {
  */
 export interface TimeboxProperties {
   Name: NotionPropertyValues['title'];
-  TAG: NotionPropertyValues['select'];
+  TAG: NotionPropertyValues['multi_select'];
   EXPECTED: NotionPropertyValues['date'];
 }

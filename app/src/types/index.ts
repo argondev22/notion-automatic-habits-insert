@@ -152,9 +152,9 @@ export interface NotionTemplate {
  */
 export interface NotionHabitProperties {
   TAG: {
-    select: {
+    multi_select: Array<{
       name: string;
-    };
+    }>;
   };
   EXPECTED: {
     date: {
