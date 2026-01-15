@@ -24,12 +24,13 @@ describe('Time Calculation Utilities', () => {
   };
 
   describe('calculateTimeRange', () => {
-    it('should calculate correct time range for a habit', () => {
+    it('should calculate correct time range for a habit (for tomorrow)', () => {
       const testDate = new Date('2024-01-15T12:00:00Z'); // Monday
       const result = calculateTimeRange(mockHabit, 'UTC', testDate);
 
-      expect(result.start).toBe('2024-01-15T07:00:00.000Z');
-      expect(result.end).toBe('2024-01-15T08:00:00.000Z');
+      // Should calculate for tomorrow (Tuesday, 2024-01-16)
+      expect(result.start).toBe('2024-01-16T07:00:00.000Z');
+      expect(result.end).toBe('2024-01-16T08:00:00.000Z');
     });
 
     it('should handle timezone conversion correctly', () => {
@@ -50,18 +51,19 @@ describe('Time Calculation Utilities', () => {
       );
     });
 
-    it('should handle midnight crossing', () => {
+    it('should handle midnight crossing (for tomorrow)', () => {
       const nightHabit: HabitConfig = {
         ...mockHabit,
         startTime: '23:30',
         endTime: '01:00',
       };
 
-      const testDate = new Date('2024-01-15T12:00:00Z');
+      const testDate = new Date('2024-01-15T12:00:00Z'); // Monday
       const result = calculateTimeRange(nightHabit, 'UTC', testDate);
 
-      expect(result.start).toBe('2024-01-15T23:30:00.000Z');
-      expect(result.end).toBe('2024-01-16T01:00:00.000Z'); // Next day
+      // Should calculate for tomorrow (Tuesday, 2024-01-16)
+      expect(result.start).toBe('2024-01-16T23:30:00.000Z');
+      expect(result.end).toBe('2024-01-17T01:00:00.000Z'); // Crosses to Wednesday
     });
 
     it('should use current date when no date provided', () => {
@@ -78,7 +80,7 @@ describe('Time Calculation Utilities', () => {
   });
 
   describe('calculateTimeRangeFromParams', () => {
-    it('should calculate time range from explicit parameters', () => {
+    it('should calculate time range from explicit parameters (for tomorrow)', () => {
       const params = {
         startTime: '09:30',
         endTime: '10:45',
@@ -88,8 +90,9 @@ describe('Time Calculation Utilities', () => {
 
       const result = calculateTimeRangeFromParams(params);
 
-      expect(result.start).toBe('2024-01-15T09:30:00.000Z');
-      expect(result.end).toBe('2024-01-15T10:45:00.000Z');
+      // Should calculate for tomorrow (Tuesday, 2024-01-16)
+      expect(result.start).toBe('2024-01-16T09:30:00.000Z');
+      expect(result.end).toBe('2024-01-16T10:45:00.000Z');
     });
   });
 

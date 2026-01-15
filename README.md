@@ -18,9 +18,11 @@ NotionのTemplateを活用した習慣管理システム。Webhookトリガー�
 
 1. **Webhookリクエスト受信** → セキュリティ検証
 2. **習慣設定読み込み** → `config/habits.json`から設定取得
-3. **スケジュール判定** → 今日実行すべき習慣を特定
+3. **スケジュール判定** → 明日実行すべき習慣を特定
 4. **テンプレート適用** → Notionテンプレートを使用してエントリ作成
-5. **プロパティ設定** → TAG="HABIT"、EXPECTED時間を自動設定
+5. **プロパティ設定** → TAG="HABIT"、EXPECTED時間を自動設定（明日の日付で）
+
+**重要**: このシステムは、Webhookが発火した時点で**明日の日付**で習慣を作成します。例えば、月曜日にWebhookが実行されると、火曜日の習慣が作成されます。これにより、前日に翌日の習慣を準備することができます。
 
 ## 🏗️ アーキテクチャ
 
@@ -242,6 +244,25 @@ curl -X POST "http://localhost:8080/webhook?secret=your_webhook_secret"
 - 週末のみ: `["saturday", "sunday"]`
 - 特定の曜日: `["monday", "wednesday", "friday"]`
 
+**注意**: `frequency`で指定した曜日は、習慣が作成される**翌日**の曜日です。例えば、`["monday"]`と指定した場合、日曜日にWebhookを実行すると月曜日の習慣が作成されます。
+
+### 日付を跨ぐ時間帯
+
+開始時刻が終了時刻より遅い場合、自動的に日付を跨ぐ習慣として処理されます：
+
+```json
+{
+  "name": "Night Sleep Routine",
+  "templateId": "template-101",
+  "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+  "startTime": "23:00",
+  "endTime": "06:00",
+  "enabled": true
+}
+```
+
+この例では、23:00から翌日の06:00までの習慣として作成されます。
+
 ## 🔧 使用例
 
 ### cURL
@@ -275,7 +296,12 @@ curl http://localhost:8080/health
 
 ```bash
 # 毎朝7時に実行（crontab例）
+# 注意: 7時に実行すると、その日（今日）の習慣が作成されます
 0 7 * * * curl -X POST http://localhost:8080/webhook -d '{"secret":"your_secret"}'
+
+# 前日の夜に実行する場合（推奨）
+# 23時に実行すると、翌日の習慣が作成されます
+0 23 * * * curl -X POST http://localhost:8080/webhook -d '{"secret":"your_secret"}'
 ```
 
 ## 🛠️ 開発

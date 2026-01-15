@@ -8,10 +8,13 @@ import { TimeRange, TimeCalculationParams, HabitConfig } from '../types';
 /**
  * Calculate time range for a habit based on its configuration
  *
+ * This function calculates the time range for tomorrow's date.
+ * For example, if called on Monday, it will create times for Tuesday.
+ *
  * @param habit - Habit configuration containing startTime and endTime
  * @param timezone - Timezone string (e.g., "Asia/Tokyo", "America/New_York")
- * @param date - Optional date to calculate for (defaults to today)
- * @returns TimeRange with ISO formatted start and end times
+ * @param date - Optional date to calculate for (defaults to today, but calculates for next day)
+ * @returns TimeRange with ISO formatted start and end times for tomorrow
  */
 export function calculateTimeRange(
   habit: HabitConfig,
@@ -20,17 +23,17 @@ export function calculateTimeRange(
 ): TimeRange {
   const targetDate = date || new Date();
 
+  // Calculate tomorrow's date
+  const tomorrow = new Date(targetDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   // Parse start and end times
   const startTime = parseTimeString(habit.startTime);
   const endTime = parseTimeString(habit.endTime);
 
-  // Create Date objects for start and end times
-  const startDateTime = createDateTimeInTimezone(
-    targetDate,
-    startTime,
-    timezone
-  );
-  const endDateTime = createDateTimeInTimezone(targetDate, endTime, timezone);
+  // Create Date objects for start and end times (for tomorrow)
+  const startDateTime = createDateTimeInTimezone(tomorrow, startTime, timezone);
+  const endDateTime = createDateTimeInTimezone(tomorrow, endTime, timezone);
 
   // Handle case where end time is before start time (crosses midnight)
   if (endDateTime <= startDateTime) {
@@ -47,26 +50,32 @@ export function calculateTimeRange(
 /**
  * Calculate time range using explicit parameters
  *
+ * This function calculates the time range for tomorrow's date.
+ *
  * @param params - Time calculation parameters
- * @returns TimeRange with ISO formatted start and end times
+ * @returns TimeRange with ISO formatted start and end times for tomorrow
  */
 export function calculateTimeRangeFromParams(
   params: TimeCalculationParams
 ): TimeRange {
   const targetDate = params.date || new Date();
 
+  // Calculate tomorrow's date
+  const tomorrow = new Date(targetDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   // Parse start and end times
   const startTime = parseTimeString(params.startTime);
   const endTime = parseTimeString(params.endTime);
 
-  // Create Date objects for start and end times
+  // Create Date objects for start and end times (for tomorrow)
   const startDateTime = createDateTimeInTimezone(
-    targetDate,
+    tomorrow,
     startTime,
     params.timezone
   );
   const endDateTime = createDateTimeInTimezone(
-    targetDate,
+    tomorrow,
     endTime,
     params.timezone
   );

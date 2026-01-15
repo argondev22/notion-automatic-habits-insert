@@ -21,11 +21,14 @@ export const VALID_WEEKDAYS = [
 export type ValidWeekday = (typeof VALID_WEEKDAYS)[number];
 
 /**
- * Check if a habit is due to be created today
+ * Check if a habit is due to be created today (for tomorrow)
+ *
+ * This function checks if a habit should be created today for tomorrow's schedule.
+ * For example, if today is Monday, it checks if the habit is scheduled for Tuesday.
  *
  * @param habit - Habit configuration to check
  * @param date - Date to check against (defaults to today)
- * @returns True if the habit should be created on the given date
+ * @returns True if the habit should be created on the given date (for the next day)
  */
 export function isDueToday(habit: HabitConfig, date?: Date): boolean {
   // If habit is disabled, it's never due
@@ -34,10 +37,15 @@ export function isDueToday(habit: HabitConfig, date?: Date): boolean {
   }
 
   const targetDate = date || new Date();
-  const dayName = getDayName(targetDate);
 
-  // Check if today is in the frequency array
-  return habit.frequency.includes(dayName);
+  // Calculate tomorrow's date
+  const tomorrow = new Date(targetDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const tomorrowDayName = getDayName(tomorrow);
+
+  // Check if tomorrow is in the frequency array
+  return habit.frequency.includes(tomorrowDayName);
 }
 
 /**
