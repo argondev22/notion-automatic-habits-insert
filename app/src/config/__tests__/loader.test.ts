@@ -248,14 +248,22 @@ describe('Configuration Loader', () => {
       );
     });
 
-    it('should reject habit where start time is after end time', () => {
-      const habit = { ...validHabit, startTime: '15:00', endTime: '14:00' };
+    it('should allow cross-midnight time ranges (e.g., 23:00-06:00)', () => {
+      const habit = { ...validHabit, startTime: '23:00', endTime: '06:00' };
+      const result = validateSingleHabit(habit, 0);
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should reject habit where start time equals end time', () => {
+      const habit = { ...validHabit, startTime: '15:00', endTime: '15:00' };
       const result = validateSingleHabit(habit, 0);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some(err => err.includes('must be before'))).toBe(
-        true
-      );
+      expect(
+        result.errors.some(err => err.includes('cannot be the same'))
+      ).toBe(true);
     });
 
     it('should warn about duplicate weekdays', () => {

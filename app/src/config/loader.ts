@@ -287,7 +287,8 @@ function validateTimeFormat(
 }
 
 /**
- * Validates that start time is before end time
+ * Validates that start time and end time are valid
+ * Note: Allows cross-midnight times (e.g., 23:00-06:00)
  * @param startTime Start time string
  * @param endTime End time string
  * @param result ValidationResult to add errors to
@@ -308,9 +309,14 @@ function validateTimeRange(
   const startMinutes = startHour * 60 + startMin;
   const endMinutes = endHour * 60 + endMin;
 
-  if (startMinutes >= endMinutes) {
+  // Allow cross-midnight times (e.g., 23:00-06:00)
+  // If end time is before start time, it's interpreted as crossing midnight
+  // This is valid and handled by the time calculation logic
+
+  // Only check if start and end are exactly the same (which doesn't make sense)
+  if (startMinutes === endMinutes) {
     result.errors.push(
-      `startTime (${startTime}) must be before endTime (${endTime})`
+      `startTime (${startTime}) and endTime (${endTime}) cannot be the same`
     );
   }
 }
