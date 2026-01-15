@@ -214,7 +214,7 @@ describe('Configuration Loader', () => {
     };
 
     it('should validate a correct habit', () => {
-      const result = validateSingleHabit(validHabit, 0);
+      const result = validateSingleHabit(validHabit);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -222,7 +222,7 @@ describe('Configuration Loader', () => {
 
     it('should reject habit with empty name', () => {
       const habit = { ...validHabit, name: '' };
-      const result = validateSingleHabit(habit, 0);
+      const result = validateSingleHabit(habit);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('name cannot be empty');
@@ -230,7 +230,7 @@ describe('Configuration Loader', () => {
 
     it('should reject habit with invalid frequency', () => {
       const habit = { ...validHabit, frequency: ['invalid-day'] };
-      const result = validateSingleHabit(habit, 0);
+      const result = validateSingleHabit(habit);
 
       expect(result.valid).toBe(false);
       expect(result.errors.some(err => err.includes('Invalid weekdays'))).toBe(
@@ -240,7 +240,7 @@ describe('Configuration Loader', () => {
 
     it('should reject habit with invalid time format', () => {
       const habit = { ...validHabit, startTime: '25:00' };
-      const result = validateSingleHabit(habit, 0);
+      const result = validateSingleHabit(habit);
 
       expect(result.valid).toBe(false);
       expect(result.errors.some(err => err.includes('HH:MM format'))).toBe(
@@ -250,7 +250,7 @@ describe('Configuration Loader', () => {
 
     it('should allow cross-midnight time ranges (e.g., 23:00-06:00)', () => {
       const habit = { ...validHabit, startTime: '23:00', endTime: '06:00' };
-      const result = validateSingleHabit(habit, 0);
+      const result = validateSingleHabit(habit);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -258,7 +258,7 @@ describe('Configuration Loader', () => {
 
     it('should reject habit where start time equals end time', () => {
       const habit = { ...validHabit, startTime: '15:00', endTime: '15:00' };
-      const result = validateSingleHabit(habit, 0);
+      const result = validateSingleHabit(habit);
 
       expect(result.valid).toBe(false);
       expect(
@@ -271,7 +271,7 @@ describe('Configuration Loader', () => {
         ...validHabit,
         frequency: ['monday', 'monday', 'tuesday'],
       };
-      const result = validateSingleHabit(habit, 0);
+      const result = validateSingleHabit(habit);
 
       expect(result.valid).toBe(true); // Still valid, just a warning
       expect(
@@ -280,7 +280,7 @@ describe('Configuration Loader', () => {
     });
 
     it('should reject non-object input', () => {
-      const result = validateSingleHabit('not an object', 0);
+      const result = validateSingleHabit('not an object');
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Must be an object');
@@ -288,7 +288,7 @@ describe('Configuration Loader', () => {
 
     it('should reject habit with missing required fields', () => {
       const incompleteHabit = { name: 'Test' }; // missing other required fields
-      const result = validateSingleHabit(incompleteHabit, 0);
+      const result = validateSingleHabit(incompleteHabit);
 
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(1);

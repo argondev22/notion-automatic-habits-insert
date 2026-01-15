@@ -101,7 +101,6 @@ export class NotionClientWrapper {
    */
   private handleNotionError(error: unknown, habitName: string): CreateResult {
     let errorMessage = 'Unknown error occurred';
-    let canRetry = false;
 
     if (isNotionApiError(error)) {
       errorMessage = `Notion API Error (${error.status}): ${error.message}`;
@@ -109,14 +108,12 @@ export class NotionClientWrapper {
       // Determine if error is retryable
       switch (error.status) {
         case 429: // Rate limited
-          canRetry = true;
           errorMessage = `Rate limited by Notion API: ${error.message}`;
           break;
         case 500:
         case 502:
         case 503:
         case 504: // Server errors
-          canRetry = true;
           errorMessage = `Notion server error (${error.status}): ${error.message}`;
           break;
         case 400: // Bad request
@@ -136,20 +133,11 @@ export class NotionClientWrapper {
       }
     } else if (error instanceof Error) {
       errorMessage = error.message;
-      // Network errors might be retryable
-      if (
-        error.message.includes('ECONNRESET') ||
-        error.message.includes('ETIMEDOUT') ||
-        error.message.includes('ENOTFOUND')
-      ) {
-        canRetry = true;
-      }
     }
 
     // Log the error with context
     console.error(`Failed to create habit "${habitName}":`, {
       error: errorMessage,
-      canRetry,
       timestamp: new Date().toISOString(),
     });
 

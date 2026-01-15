@@ -103,7 +103,7 @@ export async function loadHabitConfig(
  * @returns HabitConfigValidation Validation results with valid/invalid habits
  */
 export function validateHabitConfiguration(
-  rawConfig: any
+  rawConfig: unknown
 ): HabitConfigValidation {
   const result: HabitConfigValidation = {
     valid: false,
@@ -127,7 +127,7 @@ export function validateHabitConfiguration(
   // Validate each habit configuration
   for (let i = 0; i < rawConfig.length; i++) {
     const habitConfig = rawConfig[i];
-    const habitValidation = validateSingleHabit(habitConfig, i);
+    const habitValidation = validateSingleHabit(habitConfig);
 
     if (habitValidation.valid) {
       result.validHabits.push(habitConfig as HabitConfig);
@@ -151,13 +151,9 @@ export function validateHabitConfiguration(
 /**
  * Validates a single habit configuration object
  * @param habit Raw habit configuration object
- * @param index Index in the configuration array (for error reporting)
  * @returns ValidationResult Validation result for this habit
  */
-export function validateSingleHabit(
-  habit: any,
-  _index: number
-): ValidationResult {
+export function validateSingleHabit(habit: unknown): ValidationResult {
   const result: ValidationResult = {
     valid: false,
     errors: [],
@@ -170,38 +166,41 @@ export function validateSingleHabit(
     return result;
   }
 
+  // Type guard to safely access properties
+  const habitObj = habit as Record<string, any>;
+
   // Check required fields and their types
-  if (typeof habit.name !== 'string') {
+  if (typeof habitObj.name !== 'string') {
     result.errors.push('name must be a string');
-  } else if (habit.name.trim().length === 0) {
+  } else if (habitObj.name.trim().length === 0) {
     result.errors.push('name cannot be empty');
   }
 
-  if (typeof habit.templateId !== 'string') {
+  if (typeof habitObj.templateId !== 'string') {
     result.errors.push('templateId must be a string');
-  } else if (habit.templateId.trim().length === 0) {
+  } else if (habitObj.templateId.trim().length === 0) {
     result.errors.push('templateId cannot be empty');
   }
 
-  if (!Array.isArray(habit.frequency)) {
+  if (!Array.isArray(habitObj.frequency)) {
     result.errors.push('frequency must be an array');
   } else {
-    validateFrequency(habit.frequency, result);
+    validateFrequency(habitObj.frequency, result);
   }
 
-  if (typeof habit.startTime !== 'string') {
+  if (typeof habitObj.startTime !== 'string') {
     result.errors.push('startTime must be a string');
   } else {
-    validateTimeFormat(habit.startTime, 'startTime', result);
+    validateTimeFormat(habitObj.startTime, 'startTime', result);
   }
 
-  if (typeof habit.endTime !== 'string') {
+  if (typeof habitObj.endTime !== 'string') {
     result.errors.push('endTime must be a string');
   } else {
-    validateTimeFormat(habit.endTime, 'endTime', result);
+    validateTimeFormat(habitObj.endTime, 'endTime', result);
   }
 
-  if (typeof habit.enabled !== 'boolean') {
+  if (typeof habitObj.enabled !== 'boolean') {
     result.errors.push('enabled must be a boolean');
   }
 
@@ -211,7 +210,7 @@ export function validateSingleHabit(
   }
 
   // Additional business logic validation (only if basic validation passed)
-  validateTimeRange(habit.startTime, habit.endTime, result);
+  validateTimeRange(habitObj.startTime, habitObj.endTime, result);
 
   // Validation passes if no errors
   result.valid = result.errors.length === 0;

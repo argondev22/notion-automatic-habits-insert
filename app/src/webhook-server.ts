@@ -3,7 +3,8 @@
  * Requirements: 5.1, 5.2, 5.3, 8.1, 8.2
  */
 
-import express, { Request, Response, Application } from 'express';
+import express, { Request, Response, Application, NextFunction } from 'express';
+import { Server } from 'http';
 import { HabitManager } from './habit-manager';
 import { WebhookResponse, isWebhookRequest } from './types';
 
@@ -16,7 +17,7 @@ export class WebhookServer {
   private habitManager: HabitManager;
   private webhookSecret: string;
   private port: number;
-  private server?: any;
+  private server?: Server;
 
   constructor(habitManager: HabitManager, port: number = 8080) {
     this.habitManager = habitManager;
@@ -261,7 +262,7 @@ export class WebhookServer {
     error: Error,
     req: Request,
     res: Response,
-    _next: Function
+    _next: NextFunction
   ): void {
     console.error('Express error handler caught error:', error);
 

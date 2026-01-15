@@ -4,8 +4,8 @@
  */
 
 import { createNotionClient } from './notion-client';
-import { createHabitManager } from './habit-manager';
-import { createWebhookServer } from './webhook-server';
+import { createHabitManager, HabitManager } from './habit-manager';
+import { createWebhookServer, WebhookServer } from './webhook-server';
 
 /**
  * Application configuration loaded from environment variables
@@ -21,8 +21,8 @@ interface AppConfig {
  * Application state for managing lifecycle
  */
 interface AppState {
-  habitManager?: any;
-  webhookServer?: any;
+  habitManager?: HabitManager;
+  webhookServer?: WebhookServer;
   isShuttingDown: boolean;
 }
 
