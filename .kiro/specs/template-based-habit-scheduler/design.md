@@ -263,6 +263,24 @@ function calculateTimeRange(habit: HabitConfig): { start: string; end: string } 
 
 ## Scheduling Logic
 
+### Daily Execution Model
+
+The system is designed to be invoked daily via webhook. Each invocation processes only the habits scheduled for that specific day.
+
+**Execution Flow:**
+
+1. External automation tool (e.g., cron, GitHub Actions) triggers webhook daily
+2. System receives webhook request with current date context
+3. System filters habits based on current weekday
+4. System creates only the habits scheduled for today
+5. System returns metrics for the current day's execution
+
+**Example:**
+
+- Monday webhook → Creates habits with `frequency: ["monday"]`
+- Tuesday webhook → Creates habits with `frequency: ["tuesday"]`
+- A habit with `frequency: ["monday", "wednesday", "friday"]` will be created on those three days only
+
 ### Frequency Patterns
 
 ```typescript
@@ -275,6 +293,13 @@ function isDueToday(habit: HabitConfig, today: Date): boolean {
   return habit.frequency.includes(dayName);
 }
 ```
+
+**Supported Patterns:**
+
+- Daily: `["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]`
+- Weekdays: `["monday", "tuesday", "wednesday", "thursday", "friday"]`
+- Weekends: `["saturday", "sunday"]`
+- Custom: Any combination of weekdays (e.g., `["monday", "wednesday", "friday"]`)
 
 ## Correctness Properties
 

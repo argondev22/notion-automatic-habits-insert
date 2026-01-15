@@ -35,9 +35,10 @@ A habit management system leveraging Notion template functionality. This system 
 #### Acceptance Criteria
 
 1. THE Habit_Scheduler SHALL maintain a configuration of habit execution frequencies
-2. WHEN determining if a habit should be created, THE Habit_Scheduler SHALL check the current date against the habit's schedule
-3. THE Habit_Scheduler SHALL support weekly and custom frequency patterns using specific weekday arrays
-4. WHEN a habit is due for execution, THE Habit_Scheduler SHALL mark it for creation
+2. WHEN determining if a habit should be created, THE Habit_Scheduler SHALL check the current date's weekday against the habit's frequency array
+3. THE Habit_Scheduler SHALL support weekly and custom frequency patterns using specific weekday arrays (e.g., ["monday", "wednesday", "friday"])
+4. WHEN a habit's frequency array includes the current weekday, THE Habit_Scheduler SHALL mark it for creation
+5. WHEN a habit's frequency array does not include the current weekday, THE Habit_Scheduler SHALL skip that habit for the current execution
 
 ### Requirement 3: Template-Based Entry Creation
 
@@ -69,10 +70,12 @@ A habit management system leveraging Notion template functionality. This system 
 #### Acceptance Criteria
 
 1. WHEN a webhook request is received, THE Webhook_Server SHALL authenticate the request using the webhook secret
-2. WHEN authentication succeeds, THE Webhook_Server SHALL trigger the habit creation process
-3. WHEN the process completes successfully, THE Webhook_Server SHALL return success status with creation metrics
-4. WHEN the process fails, THE Webhook_Server SHALL return error status with failure details
-5. THE Webhook_Server SHALL log all webhook requests and their outcomes
+2. WHEN authentication succeeds, THE Webhook_Server SHALL trigger the habit creation process for the current date
+3. WHEN the habit creation process executes, THE System SHALL filter habits to include only those scheduled for the current day's weekday
+4. WHEN the process completes successfully, THE Webhook_Server SHALL return success status with creation metrics
+5. WHEN the process fails, THE Webhook_Server SHALL return error status with failure details
+6. THE Webhook_Server SHALL log all webhook requests and their outcomes
+7. THE System SHALL be designed to receive webhook requests daily, with each invocation creating only the habits scheduled for that specific day
 
 ### Requirement 6: Error Handling and Logging
 
