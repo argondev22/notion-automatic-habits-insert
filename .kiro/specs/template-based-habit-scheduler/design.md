@@ -97,7 +97,7 @@ interface HabitCreationResult {
 
 interface HabitEntry {
   id: string;
-  title: string;
+  title: string; // Internal identifier from habit.name (for logging/tracking, not the Notion page title)
   templateUsed: string;
   timeRange: string;
 }
@@ -123,6 +123,9 @@ class HabitManager {
   }
 
   private async createHabitFromTemplate(habit: HabitConfig): Promise<CreateResult> {
+    // Creates a Notion page using the specified template
+    // The page title will be inherited from the template itself
+    // Only TAG and EXPECTED properties are set by the system
     return await this.notionClient.pages.create({
       parent: { database_id: this.timeboxDatabaseId },
       template: {
@@ -150,7 +153,7 @@ class HabitManager {
 ```typescript
 // habits.json - Simple configuration file
 interface HabitConfig {
-  name: string;
+  name: string; // Internal identifier for logging and configuration readability (not used as Notion page title)
   templateId: string;
   frequency: string[]; // ["monday", "tuesday", "friday"] - specific weekdays only
   startTime: string; // "07:00"
@@ -161,7 +164,7 @@ interface HabitConfig {
 // Example configuration
 const habitsConfig: HabitConfig[] = [
   {
-    name: "Morning Exercise",
+    name: "Morning Exercise", // For logging/config readability only
     templateId: "template-123",
     frequency: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"], // Every day
     startTime: "07:00",
@@ -169,7 +172,7 @@ const habitsConfig: HabitConfig[] = [
     enabled: true,
   },
   {
-    name: "Weekday Standup",
+    name: "Weekday Standup", // For logging/config readability only
     templateId: "template-456",
     frequency: ["monday", "tuesday", "wednesday", "thursday", "friday"],
     startTime: "09:00",
@@ -177,7 +180,7 @@ const habitsConfig: HabitConfig[] = [
     enabled: true,
   },
   {
-    name: "Weekly Review",
+    name: "Weekly Review", // For logging/config readability only
     templateId: "template-789",
     frequency: ["sunday"],
     startTime: "19:00",
@@ -185,7 +188,7 @@ const habitsConfig: HabitConfig[] = [
     enabled: true,
   },
   {
-    name: "Night Sleep Routine",
+    name: "Night Sleep Routine", // For logging/config readability only
     templateId: "template-101",
     frequency: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
     startTime: "23:00",
