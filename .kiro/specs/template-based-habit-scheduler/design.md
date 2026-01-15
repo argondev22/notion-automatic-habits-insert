@@ -111,8 +111,8 @@ class HabitManager {
     // 1. Load habit configuration
     const habits = await this.loadHabitConfig();
 
-    // 2. Filter habits due today
-    const dueHabits = habits.filter((h) => this.isDueToday(h));
+    // 2. Filter habits due tomorrow
+    const dueHabits = habits.filter((h) => this.isDueTomorrow(h));
 
     // 3. Create each habit using Notion template
     const results = await Promise.all(
@@ -184,6 +184,14 @@ const habitsConfig: HabitConfig[] = [
     endTime: "20:00",
     enabled: true,
   },
+  {
+    name: "Night Sleep Routine",
+    templateId: "template-101",
+    frequency: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+    startTime: "23:00",
+    endTime: "06:00", // Crosses midnight - ends the next morning
+    enabled: true,
+  },
 ];
 ```
 
@@ -250,9 +258,11 @@ class WebhookServer {
 
 ```typescript
 function calculateTimeRange(habit: HabitConfig): { start: string; end: string } {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-  const start = new Date(`${today}T${habit.startTime}:00`);
-  const end = new Date(`${today}T${habit.endTime}:00`);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowDate = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
+  const start = new Date(`${tomorrowDate}T${habit.startTime}:00`);
+  const end = new Date(`${tomorrowDate}T${habit.endTime}:00`);
 
   return {
     start: start.toISOString(),
@@ -261,25 +271,58 @@ function calculateTimeRange(habit: HabitConfig): { start: string; end: string } 
 }
 ```
 
+### Cross-Day Time Handling
+
+The system supports habits that span across midnight (e.g., 23:00-06:00). When `endTime` is earlier than `startTime`, the system automatically interprets this as crossing into the next day.
+
+```typescript
+function calculateTimeRange(habit: HabitConfig): { start: string; end: string } {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowDate = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
+
+  const start = new Date(`${tomorrowDate}T${habit.startTime}:00`);
+  let end = new Date(`${tomorrowDate}T${habit.endTime}:00`);
+
+  // If end time is before start time, it means the habit crosses midnight
+  // Add one day to the end time
+  if (end <= start) {
+    end = new Date(end);
+    end.setDate(end.getDate() + 1);
+  }
+
+  return {
+    start: start.toISOString(),
+    end: end.toISOString(),
+  };
+}
+```
+
+**Examples:**
+
+- `startTime: "07:00", endTime: "08:00"` → Same day (2024-01-15 07:00 to 2024-01-15 08:00)
+- `startTime: "23:00", endTime: "06:00"` → Cross-day (2024-01-15 23:00 to 2024-01-16 06:00)
+- `startTime: "22:30", endTime: "01:30"` → Cross-day (2024-01-15 22:30 to 2024-01-16 01:30)
+
 ## Scheduling Logic
 
 ### Daily Execution Model
 
-The system is designed to be invoked daily via webhook. Each invocation processes only the habits scheduled for that specific day.
+The system is designed to be invoked daily via webhook. Each invocation processes only the habits scheduled for the next day.
 
 **Execution Flow:**
 
 1. External automation tool (e.g., cron, GitHub Actions) triggers webhook daily
-2. System receives webhook request with current date context
-3. System filters habits based on current weekday
-4. System creates only the habits scheduled for today
-5. System returns metrics for the current day's execution
+2. System receives webhook request and calculates the next day's date
+3. System filters habits based on the next day's weekday
+4. System creates only the habits scheduled for the next day
+5. System returns metrics for the execution
 
 **Example:**
 
-- Monday webhook → Creates habits with `frequency: ["monday"]`
-- Tuesday webhook → Creates habits with `frequency: ["tuesday"]`
-- A habit with `frequency: ["monday", "wednesday", "friday"]` will be created on those three days only
+- Monday webhook → Creates habits with `frequency: ["tuesday"]` (for Tuesday)
+- Tuesday webhook → Creates habits with `frequency: ["wednesday"]` (for Wednesday)
+- A habit with `frequency: ["monday", "wednesday", "friday"]` will be created on Sunday, Tuesday, and Thursday (one day before each scheduled day)
 
 ### Frequency Patterns
 
@@ -287,9 +330,11 @@ The system is designed to be invoked daily via webhook. Each invocation processe
 function isDueToday(habit: HabitConfig, today: Date): boolean {
   if (!habit.enabled) return false;
 
-  const dayName = today.toLocaleDateString("en", { weekday: "lowercase" });
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayName = tomorrow.toLocaleDateString("en", { weekday: "lowercase" });
 
-  // Check if today is in the frequency array
+  // Check if tomorrow is in the frequency array
   return habit.frequency.includes(dayName);
 }
 ```
@@ -300,6 +345,8 @@ function isDueToday(habit: HabitConfig, today: Date): boolean {
 - Weekdays: `["monday", "tuesday", "wednesday", "thursday", "friday"]`
 - Weekends: `["saturday", "sunday"]`
 - Custom: Any combination of weekdays (e.g., `["monday", "wednesday", "friday"]`)
+
+Note: The system creates habits for the next day, so a webhook triggered on Sunday will create habits scheduled for Monday.
 
 ## Correctness Properties
 
@@ -317,8 +364,8 @@ _For any_ habit creation, the system should use the specified template and corre
 **Validates: Requirements 3.1, 3.2, 3.3**
 
 **Property 3: Time Calculation Reliability**
-_For any_ time slot configuration, the system should produce valid start and end times that are properly formatted for Notion
-**Validates: Requirements 4.1, 4.3**
+_For any_ time slot configuration (including cross-midnight times like 23:00-06:00), the system should produce valid start and end times where end is always after start, properly formatted for Notion
+**Validates: Requirements 4.1, 4.3, 4.4**
 
 **Property 4: Configuration Processing**
 _For any_ valid habit configuration file, the system should correctly parse and apply all enabled habits according to their frequency patterns

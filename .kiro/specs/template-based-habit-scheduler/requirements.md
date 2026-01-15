@@ -61,7 +61,8 @@ A habit management system leveraging Notion template functionality. This system 
 1. THE Time_Calculator SHALL calculate time periods based on habit type and current time
 2. WHEN calculating time periods, THE Time_Calculator SHALL consider the habit's typical duration
 3. THE Time_Calculator SHALL format time periods in a consistent format compatible with Notion
-4. WHEN time calculation fails, THE Time_Calculator SHALL use default time periods
+4. WHEN the end time is earlier than the start time, THE Time_Calculator SHALL interpret this as crossing midnight and add one day to the end time
+5. WHEN time calculation fails, THE Time_Calculator SHALL use default time periods
 
 ### Requirement 5: Webhook Processing
 
@@ -70,12 +71,12 @@ A habit management system leveraging Notion template functionality. This system 
 #### Acceptance Criteria
 
 1. WHEN a webhook request is received, THE Webhook_Server SHALL authenticate the request using the webhook secret
-2. WHEN authentication succeeds, THE Webhook_Server SHALL trigger the habit creation process for the current date
-3. WHEN the habit creation process executes, THE System SHALL filter habits to include only those scheduled for the current day's weekday
+2. WHEN authentication succeeds, THE Webhook_Server SHALL trigger the habit creation process for the next day
+3. WHEN the habit creation process executes, THE System SHALL filter habits to include only those scheduled for the next day's weekday
 4. WHEN the process completes successfully, THE Webhook_Server SHALL return success status with creation metrics
 5. WHEN the process fails, THE Webhook_Server SHALL return error status with failure details
 6. THE Webhook_Server SHALL log all webhook requests and their outcomes
-7. THE System SHALL be designed to receive webhook requests daily, with each invocation creating only the habits scheduled for that specific day
+7. THE System SHALL be designed to receive webhook requests daily, with each invocation creating only the habits scheduled for the next day
 
 ### Requirement 6: Error Handling and Logging
 
