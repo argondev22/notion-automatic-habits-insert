@@ -1,0 +1,23 @@
+services:
+  app:
+    image: notion-automatic-habits-insert
+    build:
+      context: .
+      target: development
+    ports:
+      - '${PORT:-8080}:8080'
+    environment:
+      # Notion API設定
+      - NOTION_API_KEY=${NOTION_API_KEY}
+      - TIMEBOX_DATABASE_ID=${TIMEBOX_DATABASE_ID}
+      # Webhook設定
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      # サーバー設定
+      - PORT=8080
+      - TIMEZONE=${TIMEZONE:-Asia/Tokyo}
+      # ログレベル（オプション）
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - .:/app/
+      - /app/node_modules
+      - /app/dist

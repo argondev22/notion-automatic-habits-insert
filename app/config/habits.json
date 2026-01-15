@@ -1,0 +1,138 @@
+[
+  {
+    "name": "ランニング",
+    "templateId": "2cdd94010e5880609df7def176a64940",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "06:15",
+    "endTime": "06:30",
+    "enabled": true
+  },
+  {
+    "name": "朝ケア",
+    "templateId": "2c8d94010e5880b0a8e7d0c39cda31b4",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "6:45",
+    "endTime": "07:00",
+    "enabled": true
+  },
+  {
+    "name": "朝食",
+    "templateId": "2c8d94010e588049a023de7339341067",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "7:15",
+    "endTime": "08:00",
+    "enabled": true
+  },
+  {
+    "name": "仕事",
+    "templateId": "2d1d94010e5880e9afe9c28ed70ca836",
+    "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "startTime": "9:30",
+    "endTime": "18:00",
+    "enabled": true
+  },
+  {
+    "name": "昼食",
+    "templateId": "2d2d94010e5880e88acdd374dd5f1ae6",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "12:30",
+    "endTime": "13:30",
+    "enabled": true
+  },
+  {
+    "name": "夕食",
+    "templateId": "2d1d94010e58804e985dc3d0cf8875e8",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "18:15",
+    "endTime": "19:15",
+    "enabled": true
+  },
+  {
+    "name": "振り返り",
+    "templateId": "2d1d94010e5880569e96f1d645d8272d",
+    "frequency": ["sunday"],
+    "startTime": "20:30",
+    "endTime": "21:00",
+    "enabled": true
+  },
+  {
+    "name": "目標設定",
+    "templateId": "2dad94010e588043b58fe9b0326b071e",
+    "frequency": ["sunday"],
+    "startTime": "20:30",
+    "endTime": "21:00",
+    "enabled": true
+  },
+  {
+    "name": "風呂/夜ケア",
+    "templateId": "2d1d94010e58801981fedbf888f73a88",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "21:15",
+    "endTime": "22:45",
+    "enabled": true
+  },
+  {
+    "name": "睡眠",
+    "templateId": "2c9d94010e58809b905dcbd84076d34d",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "23:00",
+    "endTime": "06:00",
+    "enabled": true
+  }
+]

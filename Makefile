@@ -1,4 +1,4 @@
-.PHONY: help init setup up down restart shell logs health test lint format type-check build clean reset
+.PHONY: help init setup up down restart shell logs logs-app health test lint lint-fix format format-check type-check build clean clean-images clean-all reset
 
 # =============================================================================
 # ヘルプ・初期化
@@ -20,15 +20,15 @@ help:
 	@echo ""
 	@echo "📊 Monitoring:"
 	@echo "  logs          - Show all logs"
-	@echo "  logs:app      - Show application logs only"
+	@echo "  logs-app      - Show application logs only"
 	@echo "  health        - Check service health"
 	@echo ""
 	@echo "🧪 Testing & Quality:"
 	@echo "  test          - Run tests"
 	@echo "  lint          - Run linting"
-	@echo "  lint:fix      - Fix linting issues"
+	@echo "  lint-fix      - Fix linting issues"
 	@echo "  format        - Format code"
-	@echo "  format:check  - Check code formatting"
+	@echo "  format-check  - Check code formatting"
 	@echo "  type-check    - Run TypeScript type checking"
 	@echo ""
 	@echo "🔨 Build & Deploy:"
@@ -36,8 +36,8 @@ help:
 	@echo ""
 	@echo "🧹 Cleanup:"
 	@echo "  clean         - Clean Docker system"
-	@echo "  clean:images  - Clean Docker images"
-	@echo "  clean:all     - Clean everything"
+	@echo "  clean-images  - Clean Docker images"
+	@echo "  clean-all     - Clean everything"
 	@echo "  reset         - Reset development environment"
 	@echo ""
 	@echo "  help          - Show this help"
@@ -82,7 +82,7 @@ logs:
 	@cd app && docker compose logs -f
 
 # アプリケーションのログのみ表示
-logs:app:
+logs-app:
 	@cd app && docker compose logs -f app
 
 # ヘルスチェック
@@ -102,7 +102,7 @@ lint:
 	@cd app && docker compose exec app npm run lint:check
 
 # リント修正
-lint:fix:
+lint-fix:
 	@cd app && docker compose exec app npm run lint
 
 # フォーマット実行
@@ -110,7 +110,7 @@ format:
 	@cd app && docker compose exec app npm run format
 
 # フォーマットチェック
-format:check:
+format-check:
 	@cd app && docker compose exec app npm run format:check
 
 # 型チェック
@@ -135,11 +135,11 @@ clean:
 	@docker volume prune -f
 
 # イメージのクリーンアップ
-clean:images:
+clean-images:
 	@docker image prune -f
 
 # 全体的なクリーンアップ
-clean:all: down clean clean:images
+clean-all: down clean clean-images
 
 # 開発環境の完全リセット
 reset: down clean up
