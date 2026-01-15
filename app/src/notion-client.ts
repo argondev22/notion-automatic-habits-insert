@@ -45,6 +45,12 @@ export class NotionClientWrapper {
         process.env.TIMEZONE || 'UTC'
       );
 
+      console.log(`Creating habit "${habit.name}" with time range:`, {
+        start: timeRange.start,
+        end: timeRange.end,
+        timezone: process.env.TIMEZONE || 'UTC',
+      });
+
       // Create the page using Notion template
       const response = await this.client.pages.create({
         parent: {

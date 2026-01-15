@@ -111,9 +111,12 @@ function parseTimeString(timeString: string): {
 /**
  * Create a Date object for a specific date and time in a given timezone
  *
- * @param date - Base date
+ * This function creates a UTC Date object that represents the specified local time
+ * in the given timezone.
+ *
+ * @param date - Base date (used to determine the day in the target timezone)
  * @param time - Time object with hours and minutes
- * @param timezone - Timezone string
+ * @param timezone - Timezone string (e.g., "Asia/Tokyo", "America/New_York")
  * @returns Date object representing the datetime in UTC
  */
 function createDateTimeInTimezone(
@@ -121,44 +124,59 @@ function createDateTimeInTimezone(
   time: { hours: number; minutes: number },
   timezone: string
 ): Date {
-  if (timezone === 'UTC') {
-    // For UTC, create the date directly
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth();
-    const day = date.getUTCDate();
-    return new Date(Date.UTC(year, month, day, time.hours, time.minutes, 0, 0));
-  }
-
-  // For other timezones, we need to create a date that when interpreted in that timezone
-  // gives us the desired local time, but returns a UTC timestamp
-
-  // Get the date in the target timezone
+  // Get the date components in the target timezone
   const year = parseInt(
     date.toLocaleDateString('en-CA', { timeZone: timezone, year: 'numeric' })
   );
-  const month =
-    parseInt(
-      date.toLocaleDateString('en-CA', { timeZone: timezone, month: '2-digit' })
-    ) - 1; // Month is 0-indexed
+  const month = parseInt(
+    date.toLocaleDateString('en-CA', { timeZone: timezone, month: '2-digit' })
+  );
   const day = parseInt(
     date.toLocaleDateString('en-CA', { timeZone: timezone, day: '2-digit' })
   );
 
-  // Create a date object that represents the desired time in the target timezone
-  // We'll use a trick: create the date as if it were local time, then adjust for timezone offset
-  const localDate = new Date(year, month, day, time.hours, time.minutes, 0, 0);
+  // Create a UTC date for the target date at midnight
+  const midnightUTC = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
 
-  // Get the timezone offset for this specific date/time
-  const utcTime = new Date(
-    localDate.toLocaleString('sv-SE', { timeZone: 'UTC' })
-  );
-  const tzTime = new Date(
-    localDate.toLocaleString('sv-SE', { timeZone: timezone })
-  );
-  const offset = utcTime.getTime() - tzTime.getTime();
+  // Create a Date object from this UTC timestamp
+  const midnightDate = new Date(midnightUTC);
 
-  // Apply the offset to get the correct UTC time
-  return new Date(localDate.getTime() + offset);
+  // Get what time midnight UTC appears as in the target timezone
+  const midnightInTz = midnightDate.toLocaleString('sv-SE', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  const [midnightTzDate, midnightTzTime] = midnightInTz.split(' ');
+  const [tzHour, tzMin] = midnightTzTime.split(':').map(Number);
+
+  // Calculate the offset in milliseconds
+  // If midnight UTC shows as 09:00 in Tokyo, the offset is +9 hours
+  const offsetHours = tzHour;
+  const offsetMinutes = tzMin;
+  const offsetMs = (offsetHours * 60 + offsetMinutes) * 60 * 1000;
+
+  // Now create the target time in UTC
+  // We want the time to be time.hours:time.minutes in the target timezone
+  // So we need to subtract the offset
+  const targetTimeMs = Date.UTC(
+    year,
+    month - 1,
+    day,
+    time.hours,
+    time.minutes,
+    0,
+    0
+  );
+  const resultMs = targetTimeMs - offsetMs;
+
+  return new Date(resultMs);
 }
 
 /**
