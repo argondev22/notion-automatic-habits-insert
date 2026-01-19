@@ -77,11 +77,11 @@ export class WebhookServer {
    * Requirements: 8.1, 8.2
    */
   private validateSecret(request: Request): boolean {
-    // Check for secret in request body first, then query parameters
-    const providedSecret = request.body?.secret || request.query?.secret;
+    // Check for secret in X-Webhook-Secret header
+    const providedSecret = request.headers['x-webhook-secret'];
 
     if (!providedSecret) {
-      console.warn('Webhook request missing secret parameter');
+      console.warn('Webhook request missing X-Webhook-Secret header');
       return false;
     }
 
