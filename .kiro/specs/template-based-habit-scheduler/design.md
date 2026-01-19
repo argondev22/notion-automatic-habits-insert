@@ -217,7 +217,7 @@ interface SystemConfig {
 ```typescript
 class WebhookServer {
   private validateSecret(request: Request): boolean {
-    const providedSecret = request.body?.secret || request.query?.secret;
+    const providedSecret = request.headers["x-webhook-secret"];
     const expectedSecret = process.env.WEBHOOK_SECRET;
 
     if (!expectedSecret) {
@@ -225,11 +225,17 @@ class WebhookServer {
     }
 
     if (!providedSecret) {
-      console.warn("Webhook request missing secret parameter");
+      console.warn("Webhook request missing X-Webhook-Secret header");
       return false;
     }
 
-    return providedSecret === expectedSecret;
+    if (typeof providedSecret !== "string") {
+      console.warn("Webhook secret must be a string");
+      return false;
+    }
+
+    // Constant-time comparison to prevent timing attacks
+    return this.constantTimeCompare(providedSecret, expectedSecret);
   }
 
   async handleWebhook(request: Request): Promise<Response> {
@@ -250,7 +256,7 @@ class WebhookServer {
 
 ### Security Requirements
 
-1. **Secret Validation**: All webhook requests must include valid secret parameter
+1. **Secret Validation**: All webhook requests must include valid X-Webhook-Secret header
 2. **Environment Protection**: WEBHOOK_SECRET must be set in environment variables
 3. **Request Rejection**: Invalid requests return 401 Unauthorized immediately
 4. **No Secret Logging**: Secret values must never appear in logs or error messages
@@ -578,7 +584,8 @@ TIMEZONE=Asia/Tokyo
 ### Security Considerations
 
 - **WEBHOOK_SECRET**: Must be a strong, randomly generated secret shared between the webhook caller and this application
-- **Request Validation**: All incoming webhook requests must include the secret parameter (in body or query string)
+- **Request Validation**: All incoming webhook requests must include the X-Webhook-Secret header
+- **Timing Attack Prevention**: Uses constant-time comparison for secret validation
 - **Error Handling**: Security failures return 401 status without revealing system details
 - **Environment Security**: All secrets must be stored in environment variables, never in code
 

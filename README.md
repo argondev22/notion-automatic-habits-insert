@@ -155,13 +155,10 @@ POST /webhook
 **認証方法:**
 
 ```bash
-# リクエストボディまたはクエリパラメータでsecretを送信
+# X-Webhook-Secretヘッダーでsecretを送信
 curl -X POST http://localhost:8080/webhook \
   -H "Content-Type: application/json" \
-  -d '{"secret": "your_webhook_secret"}'
-
-# または
-curl -X POST "http://localhost:8080/webhook?secret=your_webhook_secret"
+  -H "X-Webhook-Secret: your_webhook_secret"
 ```
 
 **レスポンス（成功時）:**
@@ -271,7 +268,7 @@ curl -X POST "http://localhost:8080/webhook?secret=your_webhook_secret"
 # 習慣作成を実行
 curl -X POST http://localhost:8080/webhook \
   -H "Content-Type: application/json" \
-  -d '{"secret": "your_webhook_secret"}'
+  -H "X-Webhook-Secret: your_webhook_secret"
 
 # ヘルスチェック
 curl http://localhost:8080/health
@@ -284,7 +281,7 @@ curl http://localhost:8080/health
   run: |
     curl -X POST ${{ secrets.WEBHOOK_URL }}/webhook \
       -H "Content-Type: application/json" \
-      -d '{"secret": "${{ secrets.WEBHOOK_SECRET }}"}'
+      -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}"
 ```
 
 ### 自動化ツール
@@ -297,11 +294,11 @@ curl http://localhost:8080/health
 ```bash
 # 毎朝7時に実行（crontab例）
 # 注意: 7時に実行すると、その日（今日）の習慣が作成されます
-0 7 * * * curl -X POST http://localhost:8080/webhook -d '{"secret":"your_secret"}'
+0 7 * * * curl -X POST http://localhost:8080/webhook -H "X-Webhook-Secret: your_secret"
 
 # 前日の夜に実行する場合（推奨）
 # 23時に実行すると、翌日の習慣が作成されます
-0 23 * * * curl -X POST http://localhost:8080/webhook -d '{"secret":"your_secret"}'
+0 23 * * * curl -X POST http://localhost:8080/webhook -H "X-Webhook-Secret: your_secret"
 ```
 
 ## 🛠️ 開発
@@ -440,8 +437,8 @@ echo $NOTION_API_KEY
 
 ```bash
 # エラー: Unauthorized webhook request
-# 解決: リクエストにsecretパラメータが含まれているか確認
-curl -X POST http://localhost:8080/webhook -d '{"secret": "your_secret"}'
+# 解決: リクエストにX-Webhook-Secretヘッダーが含まれているか確認
+curl -X POST http://localhost:8080/webhook -H "X-Webhook-Secret: your_secret"
 ```
 
 #### 4. ポートが使用中
