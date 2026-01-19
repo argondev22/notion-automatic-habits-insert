@@ -87,7 +87,8 @@ echo ""
 WEBHOOK_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
     -X POST \
     -H "Content-Type: application/json" \
-    -d "{\"secret\": \"${WEBHOOK_SECRET}\"}" \
+    -H "X-Webhook-Secret: ${WEBHOOK_SECRET}" \
+    -d '{}' \
     "${BASE_URL}/webhook")
 
 HTTP_STATUS=$(echo "$WEBHOOK_RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)

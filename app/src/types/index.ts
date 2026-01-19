@@ -39,10 +39,11 @@ export interface SystemConfig {
 
 /**
  * Incoming webhook request structure
+ * Note: Authentication is handled via X-Webhook-Secret header
  */
 export interface WebhookRequest {
-  secret: string; // Required security parameter
   timestamp?: number;
+  action?: string; // Optional action parameter for future extensibility
 }
 
 /**
@@ -246,13 +247,14 @@ export function isHabitConfig(obj: any): obj is HabitConfig {
 
 /**
  * Type guard for checking if an object is a valid WebhookRequest
+ * Note: Authentication is validated separately via X-Webhook-Secret header
  */
 export function isWebhookRequest(obj: any): obj is WebhookRequest {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    typeof obj.secret === 'string' &&
-    (obj.timestamp === undefined || typeof obj.timestamp === 'number')
+    (obj.timestamp === undefined || typeof obj.timestamp === 'number') &&
+    (obj.action === undefined || typeof obj.action === 'string')
   );
 }
 

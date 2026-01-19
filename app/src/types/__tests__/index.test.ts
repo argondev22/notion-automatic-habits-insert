@@ -93,29 +93,33 @@ describe('Core Data Model Interfaces', () => {
   });
 
   describe('WebhookRequest interface', () => {
-    it('should accept valid webhook request', () => {
+    it('should accept valid webhook request with timestamp', () => {
       const validRequest: WebhookRequest = {
-        secret: 'test-secret-123',
         timestamp: Date.now(),
       };
 
       expect(isWebhookRequest(validRequest)).toBe(true);
     });
 
-    it('should accept webhook request without timestamp', () => {
+    it('should accept webhook request with action', () => {
       const validRequest: WebhookRequest = {
-        secret: 'test-secret-123',
+        action: 'schedule_habits',
+        timestamp: Date.now(),
       };
 
       expect(isWebhookRequest(validRequest)).toBe(true);
     });
 
-    it('should reject webhook request without secret', () => {
-      const invalidRequest = {
-        timestamp: Date.now(),
-      };
+    it('should accept empty webhook request', () => {
+      const validRequest: WebhookRequest = {};
 
-      expect(isWebhookRequest(invalidRequest)).toBe(false);
+      expect(isWebhookRequest(validRequest)).toBe(true);
+    });
+
+    it('should reject non-object webhook request', () => {
+      expect(isWebhookRequest(null)).toBe(false);
+      expect(isWebhookRequest('string')).toBe(false);
+      expect(isWebhookRequest(123)).toBe(false);
     });
   });
 
