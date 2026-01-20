@@ -1,6 +1,6 @@
 services:
   app:
-    image: notion-automatic-habits-insert
+    image: argondev22/notion-automatic-habits-insert:latest
     build:
       context: .
       target: development
