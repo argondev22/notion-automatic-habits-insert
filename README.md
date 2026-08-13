@@ -1,6 +1,6 @@
 # Notion Automatic Habit Insert
 
-NotionのTemplateを活用した習慣管理システム。Webhookトリガーで自動的にTimebox（旧Todos）データベースに習慣エントリを作成します。
+NotionのTemplateを活用した習慣管理システム。GitHub Actionsの毎日のcronジョブから直接ワンショットCLIとして実行し、Timebox（旧Todos）データベースに習慣エントリを作成します。
 
 ## 📋 概要
 
@@ -11,28 +11,30 @@ NotionのTemplateを活用した習慣管理システム。Webhookトリガー�
 - **テンプレートベース**: Notionの標準テンプレート機能を活用
 - **統一データベース**: TimboxデータベースでタスクとHABITを一元管理
 - **設定ファイル駆動**: `habits.json`で習慣スケジュールを管理
-- **Webhook対応**: 外部システムからの自動実行をサポート
-- **セキュア**: Webhook認証による安全な実行
+- **サーバーレス**: HTTPサーバーやWebhookを持たず、GitHub Actionsのcronから直接実行されるワンショットCLI
 
 ### 処理フロー
 
-1. **Webhookリクエスト受信** → セキュリティ検証
+1. **GitHub Actionsのcronがジョブを起動** → ワンショットスクリプトを実行
 2. **習慣設定読み込み** → `config/habits.json`から設定取得
 3. **スケジュール判定** → 明日実行すべき習慣を特定
 4. **テンプレート適用** → Notionテンプレートを使用してエントリ作成
 5. **プロパティ設定** → TAG="HABIT"、EXPECTED時間を自動設定（明日の日付で）
+6. **終了コードで結果を報告** → 成功時は`0`、エラーがあれば`1`で終了しGitHub Actionsに実行結果を伝える
 
-**重要**: このシステムは、Webhookが発火した時点で**明日の日付**で習慣を作成します。例えば、月曜日にWebhookが実行されると、火曜日の習慣が作成されます。これにより、前日に翌日の習慣を準備することができます。
+**重要**: このシステムは、ジョブが実行された時点で**明日の日付**で習慣を作成します。例えば、月曜日にジョブが実行されると、火曜日の習慣が作成されます。これにより、前日に翌日の習慣を準備することができます。
 
 ## 🏗️ アーキテクチャ
 
 シンプルで保守しやすい設計を採用：
 
-- **WebhookServer**: HTTPリクエスト処理とセキュリティ検証
+- **GitHub Actions (cron)**: 毎日決まった時刻にワンショットスクリプトを起動するトリガー
 - **HabitManager**: 習慣作成のコアロジック
 - **NotionClientWrapper**: Notion API統合
 - **Configuration Management**: 設定ファイル管理
 - **Time Utilities**: 時間計算とタイムゾーン処理
+
+サーバープロセスは存在せず、ジョブは1回実行されて終了します（常駐プロセスもポート待受もありません）。実行のたびにDockerコンテナやNode.jsプロセスを起動し、処理が終わったら終了します。二重実行を防ぐ重複排除ロジックは意図的に持たないため、`workflow_dispatch`で手動実行した場合、同日中に複数回実行するとNotion側に重複したページが作成される点に注意してください。
 
 ## 🚀 クイックスタート
 
@@ -65,11 +67,7 @@ cp .env.example .env
 NOTION_API_KEY=secret_xxx
 TIMEBOX_DATABASE_ID=database_id_xxx
 
-# Webhook セキュリティ
-WEBHOOK_SECRET=your_secure_secret_here
-
-# サーバー設定
-PORT=8080
+# タイムゾーン設定
 TIMEZONE=Asia/Tokyo
 ```
 
@@ -90,24 +88,28 @@ TIMEZONE=Asia/Tokyo
 ]
 ```
 
-### 4. サーバーを起動
+### 4. 本番運用: GitHub Actionsのcron
 
-#### Node.js で直接実行
+本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日21:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_API_KEY`・`TIMEBOX_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
+
+### 5. ローカルでの動作確認
+
+#### Node.js で直接実行（1回だけ実行して終了）
 
 ```bash
 cd app
 npm install
-npm run dev
+npm start
 ```
 
-#### Docker で実行
+#### Docker で実行（1回だけ実行して終了）
 
 ```bash
 cd app
 docker compose up --build
 ```
 
-サーバーは `http://localhost:8080` で起動します。
+いずれも常駐サーバーではなく、1回habit作成処理を実行したらプロセスが終了します。
 
 ## 🔐 環境変数
 
@@ -115,11 +117,9 @@ docker compose up --build
 | --------------------- | ----------------------------------- | ---- | -------------------- |
 | `NOTION_API_KEY`      | Notion APIの統合トークン            | ✓    | -                    |
 | `TIMEBOX_DATABASE_ID` | TimeboxデータベースのID             | ✓    | -                    |
-| `WEBHOOK_SECRET`      | Webhook認証用のシークレット         | ✓    | -                    |
-| `PORT`                | サーバーのポート番号                | -    | `8080`               |
 | `TIMEZONE`            | タイムゾーン（IANA形式）            | -    | `UTC`                |
 | `LOG_LEVEL`           | ログレベル（debug/info/warn/error） | -    | `info`               |
-| `HABITS_CONFIG_PATH`  | 習慣設定ファイルのパス              | -    | `config/habits.json` |
+| `HABIT_CONFIG_PATH`   | 習慣設定ファイルのパス              | -    | `config/habits.json` |
 
 ### Notion設定
 
@@ -128,69 +128,21 @@ docker compose up --build
 3. **テンプレート作成**: Timeboxデータベース内で習慣用テンプレートを作成
 4. **テンプレートID取得**: 各テンプレートのIDを`habits.json`に設定
 
-## 📡 API エンドポイント
+## ⏰ 実行トリガー（GitHub Actions cron）
 
-### ヘルスチェック
+このアプリケーションはHTTPサーバーを持たず、外部から呼び出すエンドポイントもありません。実行は`.github/workflows/run-habits.yml`で定義されたGitHub Actionsのスケジュール実行のみが担います。
 
-```bash
-GET /health
+```yaml
+on:
+  schedule:
+    - cron: "0 12 * * *" # 12:00 UTC = 21:00 JST
+  workflow_dispatch: {}
 ```
 
-**レスポンス:**
+- **毎日21:00 JST**に自動実行されます（GitHub Actionsのスケジュール実行には数分程度の遅延が発生し得るため、意図的に21:00 JSTを狙ってcronを設定しています）。
+- **`workflow_dispatch`**により、GitHub Actionsの画面から手動再実行も可能です。ただし本アプリには重複実行を防ぐ仕組みがないため、同日中に手動で複数回実行するとNotionに重複したページが作成されます。
 
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-01-12T12:00:00.000Z",
-  "uptime": 3600
-}
-```
-
-### Webhook（習慣作成）
-
-```bash
-POST /webhook
-```
-
-**認証方法:**
-
-```bash
-# X-Webhook-Secretヘッダーでsecretを送信
-curl -X POST http://localhost:8080/webhook \
-  -H "Content-Type: application/json" \
-  -H "X-Webhook-Secret: your_webhook_secret"
-```
-
-**レスポンス（成功時）:**
-
-```json
-{
-  "success": true,
-  "created": [
-    {
-      "id": "page-id-123",
-      "title": "Morning Exercise",
-      "templateUsed": "template-123",
-      "timeRange": "07:00-08:00"
-    }
-  ],
-  "skipped": ["Evening Meditation"],
-  "errors": [],
-  "executionTime": 1250
-}
-```
-
-**レスポンス（エラー時）:**
-
-```json
-{
-  "success": false,
-  "created": [],
-  "skipped": [],
-  "errors": ["Failed to create habit: Morning Exercise"],
-  "executionTime": 800
-}
-```
+実行結果（作成件数・スキップ件数・エラー内容）はジョブの標準出力ログと終了コードで確認できます。エラーが発生した場合はプロセスが終了コード`1`で終了し、GitHub Actions上でジョブが失敗として記録されます。
 
 ## ⚙️ 習慣設定（habits.json）
 
@@ -241,7 +193,7 @@ curl -X POST http://localhost:8080/webhook \
 - 週末のみ: `["saturday", "sunday"]`
 - 特定の曜日: `["monday", "wednesday", "friday"]`
 
-**注意**: `frequency`で指定した曜日は、習慣が作成される**翌日**の曜日です。例えば、`["monday"]`と指定した場合、日曜日にWebhookを実行すると月曜日の習慣が作成されます。
+**注意**: `frequency`で指定した曜日は、習慣が作成される**翌日**の曜日です。例えば、`["monday"]`と指定した場合、日曜日にジョブが実行されると月曜日の習慣が作成されます。
 
 ### 日付を跨ぐ時間帯
 
@@ -262,43 +214,20 @@ curl -X POST http://localhost:8080/webhook \
 
 ## 🔧 使用例
 
-### cURL
+### GitHub Actions（本番運用）
+
+本番運用は`.github/workflows/run-habits.yml`のスケジュール実行のみです。追加の設定なしに、毎日21:00 JSTにワンショットスクリプトが実行されます。GitHub Actionsの画面から「Run workflow」を選択すれば`workflow_dispatch`により手動実行も可能です（重複実行防止はないため、同日中の複数回実行には注意してください）。
+
+### ローカルでの手動実行
 
 ```bash
-# 習慣作成を実行
-curl -X POST http://localhost:8080/webhook \
-  -H "Content-Type: application/json" \
-  -H "X-Webhook-Secret: your_webhook_secret"
+# Node.jsで直接実行（1回実行して終了）
+cd app
+npm start
 
-# ヘルスチェック
-curl http://localhost:8080/health
-```
-
-### GitHub Actions / 外部CI
-
-```yaml
-- name: Create Daily Habits
-  run: |
-    curl -X POST ${{ secrets.WEBHOOK_URL }}/webhook \
-      -H "Content-Type: application/json" \
-      -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}"
-```
-
-### 自動化ツール
-
-- **Zapier**: スケジュールトリガーでWebhookを実行
-- **Make.com**: 時間ベースのシナリオでAPI呼び出し
-- **GitHub Actions**: Cronジョブで定期実行
-- **cron**: サーバーのcrontabで定期実行
-
-```bash
-# 毎朝7時に実行（crontab例）
-# 注意: 7時に実行すると、その日（今日）の習慣が作成されます
-0 7 * * * curl -X POST http://localhost:8080/webhook -H "X-Webhook-Secret: your_secret"
-
-# 前日の夜に実行する場合（推奨）
-# 23時に実行すると、翌日の習慣が作成されます
-0 23 * * * curl -X POST http://localhost:8080/webhook -H "X-Webhook-Secret: your_secret"
+# Dockerで実行（1回実行して終了）
+cd app
+docker compose up --build
 ```
 
 ## 🛠️ 開発
@@ -308,7 +237,7 @@ curl http://localhost:8080/health
 ```bash
 cd app
 npm install
-npm run dev
+npm start
 ```
 
 ### テスト実行
@@ -370,9 +299,8 @@ app/
 │   │   ├── scheduling.ts    # スケジューリングロジック
 │   │   └── time.ts          # 時間計算
 │   ├── habit-manager.ts     # 習慣管理コアロジック
-│   ├── main.ts              # アプリケーションエントリーポイント
-│   ├── notion-client.ts     # Notion APIクライアント
-│   └── webhook-server.ts    # Webhookサーバー
+│   ├── main.ts              # ワンショットCLIエントリーポイント
+│   └── notion-client.ts     # Notion APIクライアント
 ├── config/
 │   └── habits.json          # 習慣設定ファイル
 ├── Dockerfile
@@ -433,31 +361,21 @@ echo $NOTION_API_KEY
 # Notionでテンプレートを作成し、IDを取得
 ```
 
-#### 3. Webhook認証エラー
+#### 3. GitHub Actionsでジョブが実行されない/失敗する
 
 ```bash
-# エラー: Unauthorized webhook request
-# 解決: リクエストにX-Webhook-Secretヘッダーが含まれているか確認
-curl -X POST http://localhost:8080/webhook -H "X-Webhook-Secret: your_secret"
-```
-
-#### 4. ポートが使用中
-
-```bash
-# ポート8080を使用しているプロセスを確認
-lsof -i :8080
-
-# または別のポートを使用
-PORT=3001 npm run dev
+# 解決: リポジトリのSettings > Secrets and variablesに
+# NOTION_API_KEY と TIMEBOX_DATABASE_ID が登録されているか確認
+# Actionsタブから該当のワークフロー実行のログを確認し、エラー内容を特定する
 ```
 
 ### ログの確認
 
 ```bash
-# 開発環境でデバッグログを有効化
-LOG_LEVEL=debug npm run dev
+# ローカルでデバッグログを有効化
+LOG_LEVEL=debug npm start
 
-# 本番環境でエラーログのみ
+# エラーログのみ
 LOG_LEVEL=error npm start
 ```
 
@@ -468,7 +386,7 @@ LOG_LEVEL=error npm start
 cat config/habits.json | jq .
 
 # 環境変数の確認
-env | grep -E "(NOTION|WEBHOOK|TIMEBOX)"
+env | grep -E "(NOTION|TIMEBOX|TIMEZONE)"
 ```
 
 ## 📚 関連ドキュメント
@@ -481,37 +399,25 @@ env | grep -E "(NOTION|WEBHOOK|TIMEBOX)"
 
 ## 🚀 デプロイ
 
-### Docker での本番デプロイ
+本番運用にサーバーのデプロイは不要です。「デプロイ」は次の2点を設定するだけで完了します：
+
+1. リポジトリの **Settings > Secrets and variables > Actions** に `NOTION_API_KEY` と `TIMEBOX_DATABASE_ID` を登録する
+2. `.github/workflows/run-habits.yml` がリポジトリに存在していれば、毎日21:00 JSTに自動でジョブが実行される
+
+常駐サーバーを起動し続ける必要はなく、PM2やDockerでの永続稼働も不要です。Dockerは前述の「ローカルでの動作確認」用途にのみ使用します。
+
+### 動作確認用イメージのビルド（ローカル検証のみ）
 
 ```bash
-# 本番用イメージをビルド
+# ローカル検証用イメージをビルド
 docker build -t notion-habit-insert:latest app/
 
-# 本番環境で実行
-docker run -d \
-  --name notion-habit-insert \
-  -p 8080:8080 \
+# 1回実行して終了
+docker run --rm \
   -e NOTION_API_KEY=your_api_key \
   -e TIMEBOX_DATABASE_ID=your_db_id \
-  -e WEBHOOK_SECRET=your_secret \
   -e TIMEZONE=Asia/Tokyo \
   notion-habit-insert:latest
-```
-
-### PM2 での Node.js デプロイ
-
-```bash
-# PM2をインストール
-npm install -g pm2
-
-# アプリケーションを起動
-cd app
-npm run build
-pm2 start dist/main.js --name notion-habit-insert
-
-# 自動起動設定
-pm2 startup
-pm2 save
 ```
 
 ## 📝 ライセンス

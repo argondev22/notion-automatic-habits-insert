@@ -10,7 +10,7 @@ A habit management system leveraging Notion template functionality. This system 
 - **Timebox_Database**: Notion database that manages both habits and tasks in a unified manner (formerly Todos database)
 - **Template**: Notion database template functionality
 - **Habit_Template**: Notion template created specifically for habits
-- **Webhook_Server**: Server that receives HTTP requests and executes processing
+- **Scheduled_Job**: The GitHub Actions cron workflow that invokes the System's one-shot CLI entry point once per scheduled run (also triggerable manually via `workflow_dispatch`)
 - **Habit_Scheduler**: Component that manages habit execution frequency and scheduling
 - **Template_Service**: Service that creates entries using Notion templates
 - **Time_Calculator**: Component that calculates time periods for habit entries
@@ -64,19 +64,19 @@ A habit management system leveraging Notion template functionality. This system 
 4. WHEN the end time is earlier than the start time, THE Time_Calculator SHALL interpret this as crossing midnight and add one day to the end time
 5. WHEN time calculation fails, THE Time_Calculator SHALL use default time periods
 
-### Requirement 5: Webhook Processing
+### Requirement 5: Scheduled One-Shot Execution
 
-**User Story:** As an external system, I want to trigger habit creation via webhook, so that habits can be scheduled automatically from external automation tools.
+**User Story:** As a system administrator, I want habit creation to run automatically once per day via a scheduled job, so that habits can be scheduled without any server running or external trigger.
 
 #### Acceptance Criteria
 
-1. WHEN a webhook request is received, THE Webhook_Server SHALL authenticate the request using the webhook secret
-2. WHEN authentication succeeds, THE Webhook_Server SHALL trigger the habit creation process for the next day
-3. WHEN the habit creation process executes, THE System SHALL filter habits to include only those scheduled for the next day's weekday
-4. WHEN the process completes successfully, THE Webhook_Server SHALL return success status with creation metrics
-5. WHEN the process fails, THE Webhook_Server SHALL return error status with failure details
-6. THE Webhook_Server SHALL log all webhook requests and their outcomes
-7. THE System SHALL be designed to receive webhook requests daily, with each invocation creating only the habits scheduled for the next day
+1. WHEN the Scheduled_Job fires (daily cron, or a manual `workflow_dispatch` run), THE System SHALL run the habit creation process for the next day as a single one-shot process that exits when finished
+2. WHEN the habit creation process executes, THE System SHALL filter habits to include only those scheduled for the next day's weekday
+3. WHEN the process completes successfully, THE System SHALL exit with status code 0 and log creation metrics
+4. WHEN the process fails or completes with errors, THE System SHALL exit with a non-zero status code so the Scheduled_Job is reported as failed
+5. THE System SHALL log the outcome of every run, including counts of created, skipped, and failed habits
+6. THE System SHALL be designed to run daily, with each invocation creating only the habits scheduled for the next day
+7. THE System SHALL NOT implement any deduplication or idempotency protection against duplicate runs on the same day; running the Scheduled_Job manually more than once in a day may create duplicate Notion pages, and this is an accepted risk rather than a defect
 
 ### Requirement 6: Error Handling and Logging
 
@@ -87,7 +87,7 @@ A habit management system leveraging Notion template functionality. This system 
 1. WHEN Notion API calls fail, THE System SHALL implement retry logic with exponential backoff up to 3 attempts
 2. WHEN critical errors occur, THE System SHALL continue operating with degraded functionality where possible
 3. THE System SHALL provide structured logging with appropriate log levels (ERROR, WARN, INFO, DEBUG)
-4. WHEN webhook processing completes, THE System SHALL log execution metrics and timing
+4. WHEN a scheduled run completes, THE System SHALL log execution metrics and timing
 5. WHEN any error occurs, THE System SHALL log detailed error information including context
 
 ### Requirement 7: Configuration Management
@@ -111,4 +111,4 @@ A habit management system leveraging Notion template functionality. This system 
 1. THE System SHALL measure and log execution time for each major operation
 2. THE System SHALL track the number of templates processed and entries created
 3. WHEN operations exceed 30 seconds execution time, THE System SHALL log performance warnings
-4. THE System SHALL provide metrics in webhook responses for monitoring integration
+4. THE System SHALL provide creation/skip/error metrics in its run summary log output for monitoring integration

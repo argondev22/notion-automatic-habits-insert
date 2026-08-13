@@ -4,6 +4,8 @@
 
 The Template-Based Habit Scheduler is a streamlined system that leverages Notion's native template functionality to create habit entries directly in the Timebox database. This design eliminates unnecessary complexity by using a single-component architecture focused on simplicity and reliability.
 
+The System is a **one-shot CLI script**, not a server. It is invoked directly by a GitHub Actions scheduled workflow (cron, plus manual `workflow_dispatch` re-runs); there is no HTTP listener, no webhook, and no port to expose. Each invocation runs the habit-creation job to completion and exits with a status code that reflects the outcome, so GitHub Actions can report success/failure directly.
+
 ### Key Design Principles
 
 1. **Simplicity First**: Minimal components, maximum functionality
@@ -11,17 +13,19 @@ The Template-Based Habit Scheduler is a streamlined system that leverages Notion
 3. **Configuration-Driven**: All habit scheduling controlled by simple configuration
 4. **Stateless Operation**: No complex state management or caching
 5. **Direct API Usage**: Minimal abstraction over Notion API
+6. **Serverless / Run-to-Completion**: No long-running process; GitHub Actions' scheduler is the only trigger, and the process exits when the job is done
 
 ## Architecture
 
 ```mermaid
 graph TB
-    subgraph "External"
-        WH[Webhook Request]
+    subgraph "GitHub Actions"
+        CRON[Scheduled cron trigger]
+        MANUAL[Manual workflow_dispatch]
     end
 
-    subgraph "Application"
-        WS[Webhook Server]
+    subgraph "Application (one-shot process)"
+        MAIN[main.ts entry point]
         HM[Habit Manager]
     end
 
@@ -34,8 +38,9 @@ graph TB
         TEMPLATES[Templates]
     end
 
-    WH --> WS
-    WS --> HM
+    CRON --> MAIN
+    MANUAL --> MAIN
+    MAIN --> HM
     HM --> CONFIG
     HM --> TD
     HM --> TEMPLATES
@@ -46,36 +51,23 @@ graph TB
 
 ### Simplified Flow
 
-1. **Webhook receives request** → Triggers habit creation
+1. **GitHub Actions cron (or manual `workflow_dispatch`) invokes the one-shot script** → Triggers habit creation
 2. **Habit Manager reads configuration** → Determines which habits to create today
 3. **For each scheduled habit** → Uses Notion template to create entry
-4. **Sets TAG="HABIT" and EXPECTED time** → Returns success metrics
+4. **Sets TAG="HABIT" and EXPECTED time** → Logs a run summary and exits (0 on success, 1 if errors occurred)
 
 ## Components and Interfaces
 
-### 1. Webhook Server
+### 1. One-Shot Entry Point (`main.ts`)
 
-**Responsibility**: HTTP endpoint handling with security validation
+**Responsibility**: Load configuration, run the habit-creation job once, and translate the result into a process exit code — no HTTP surface, no security validation of inbound requests (there are none)
 
 ```typescript
-interface WebhookServer {
-  start(): void;
-  handleWebhook(request: Request): Promise<Response>;
-  validateSecret(request: Request): boolean;
-}
-
-interface WebhookResponse {
-  success: boolean;
-  created: number;
-  skipped: number;
-  errors: string[];
-  executionTime: number;
-}
-
-interface WebhookRequest {
-  secret: string; // Required security parameter
-  timestamp?: number;
-}
+async function main(): Promise<void>;
+// - Loads and validates NOTION_API_KEY, TIMEBOX_DATABASE_ID, TIMEZONE (optional)
+// - Runs habitManager.validateSystem() and fails fast (exit 1) if invalid
+// - Runs habitManager.createScheduledHabits()
+// - Logs a run summary and exits 0 on success, 1 if the result contains errors
 ```
 
 ### 2. Habit Manager (Core Component)
@@ -204,62 +196,18 @@ const habitsConfig: HabitConfig[] = [
 interface SystemConfig {
   NOTION_API_KEY: string;
   TIMEBOX_DATABASE_ID: string;
-  WEBHOOK_SECRET: string; // Required for security validation
-  PORT: number;
   TIMEZONE: string;
 }
 ```
 
 ## Security
 
-### Webhook Authentication
+There is no HTTP surface to authenticate: the System has no webhook, no listening port, and no inbound request path. Access control is delegated entirely to the trigger layer:
 
-```typescript
-class WebhookServer {
-  private validateSecret(request: Request): boolean {
-    const providedSecret = request.headers["x-webhook-secret"];
-    const expectedSecret = process.env.WEBHOOK_SECRET;
-
-    if (!expectedSecret) {
-      throw new Error("WEBHOOK_SECRET not configured");
-    }
-
-    if (!providedSecret) {
-      console.warn("Webhook request missing X-Webhook-Secret header");
-      return false;
-    }
-
-    if (typeof providedSecret !== "string") {
-      console.warn("Webhook secret must be a string");
-      return false;
-    }
-
-    // Constant-time comparison to prevent timing attacks
-    return this.constantTimeCompare(providedSecret, expectedSecret);
-  }
-
-  async handleWebhook(request: Request): Promise<Response> {
-    // Security validation first
-    if (!this.validateSecret(request)) {
-      return {
-        status: 401,
-        body: { error: "Unauthorized: Invalid or missing secret" },
-      };
-    }
-
-    // Process habit creation
-    const result = await this.habitManager.createScheduledHabits();
-    return { status: 200, body: result };
-  }
-}
-```
-
-### Security Requirements
-
-1. **Secret Validation**: All webhook requests must include valid X-Webhook-Secret header
-2. **Environment Protection**: WEBHOOK_SECRET must be set in environment variables
-3. **Request Rejection**: Invalid requests return 401 Unauthorized immediately
-4. **No Secret Logging**: Secret values must never appear in logs or error messages
+1. **GitHub Actions Secrets**: `NOTION_API_KEY` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the scheduled run
+2. **Trigger Restriction**: Only the repository's own `schedule` cron and `workflow_dispatch` (which requires repository write access to invoke) can start a run — there is no externally reachable endpoint to secure
+3. **No Secret Logging**: Secret values must never appear in logs or error messages
+4. **Accepted Duplicate-Run Risk**: The System intentionally has no deduplication/idempotency logic; manually re-running the workflow more than once on the same day can create duplicate Notion pages. This is an accepted trade-off, not a defect to fix.
 
 ## Time Calculation Logic
 
@@ -317,36 +265,45 @@ function calculateTimeRange(habit: HabitConfig): { start: string; end: string } 
 
 ### Daily Execution Model
 
-The system is designed to be invoked daily via webhook. Each invocation processes only the habits scheduled for the next day.
+The system is designed to be invoked once per day by a GitHub Actions scheduled (`cron`) workflow, which runs the one-shot CLI directly (no HTTP request, no server involved). The same workflow also accepts `workflow_dispatch` for manual re-runs. Each invocation processes only the habits scheduled for the next day.
 
 **Execution Flow:**
 
-1. External automation tool (e.g., cron, GitHub Actions) triggers webhook daily
-2. System receives webhook request and calculates the next day's date
-3. System filters habits based on the next day's weekday
+1. GitHub Actions' scheduler (or an operator via `workflow_dispatch`) starts a workflow run daily
+2. The workflow runs the one-shot script, which calculates the next day's date in the configured `TIMEZONE`
+3. System filters habits based on the next day's weekday (resolved in `TIMEZONE`, not the CI runner's local timezone — see the Time Calculation Logic note on the `isDueToday`/`getDayName` timezone parameter)
 4. System creates only the habits scheduled for the next day
-5. System returns metrics for the execution
+5. System logs metrics for the run and exits with a status code reflecting success/failure
 
 **Example:**
 
-- Monday webhook → Creates habits with `frequency: ["tuesday"]` (for Tuesday)
-- Tuesday webhook → Creates habits with `frequency: ["wednesday"]` (for Wednesday)
+- Monday run → Creates habits with `frequency: ["tuesday"]` (for Tuesday)
+- Tuesday run → Creates habits with `frequency: ["wednesday"]` (for Wednesday)
 - A habit with `frequency: ["monday", "wednesday", "friday"]` will be created on Sunday, Tuesday, and Thursday (one day before each scheduled day)
 
 ### Frequency Patterns
 
 ```typescript
-function isDueToday(habit: HabitConfig, today: Date): boolean {
+function isDueToday(
+  habit: HabitConfig,
+  timezone: string = "UTC",
+  today?: Date
+): boolean {
   if (!habit.enabled) return false;
 
-  const tomorrow = new Date(today);
+  const targetDate = today || new Date();
+  const tomorrow = new Date(targetDate);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const dayName = tomorrow.toLocaleDateString("en", { weekday: "lowercase" });
+  const dayName = tomorrow
+    .toLocaleDateString("en-US", { timeZone: timezone, weekday: "long" })
+    .toLowerCase();
 
-  // Check if tomorrow is in the frequency array
+  // Check if tomorrow (in `timezone`) is in the frequency array
   return habit.frequency.includes(dayName);
 }
 ```
+
+Resolving the weekday via `{ timeZone: timezone }` (rather than the runtime's local timezone) matters because the GitHub Actions runner always executes in UTC: without an explicit timezone, "tomorrow" could be judged against the wrong day near the UTC/JST boundary, causing the wrong habits to be created (or skipped) for a run that was intended to reflect `Asia/Tokyo` scheduling.
 
 **Supported Patterns:**
 
@@ -355,7 +312,7 @@ function isDueToday(habit: HabitConfig, today: Date): boolean {
 - Weekends: `["saturday", "sunday"]`
 - Custom: Any combination of weekdays (e.g., `["monday", "wednesday", "friday"]`)
 
-Note: The system creates habits for the next day, so a webhook triggered on Sunday will create habits scheduled for Monday.
+Note: The system creates habits for the next day, so a run triggered on Sunday will create habits scheduled for Monday.
 
 ## Correctness Properties
 
@@ -384,8 +341,8 @@ _For any_ valid habit configuration file, the system should correctly parse and 
 _For any_ error condition (API failure, invalid config, etc.), the system should log the error and continue processing other habits without complete failure
 **Validates: Requirements 6.1, 6.3**
 
-**Property 6: Webhook Response Consistency**
-_For any_ webhook request, the system should return a properly formatted response with accurate metrics about created, skipped, and failed habits
+**Property 6: Run Outcome Consistency**
+_For any_ scheduled run, the system should log a properly formatted summary with accurate metrics about created, skipped, and failed habits, and exit with a status code that reflects whether errors occurred
 **Validates: Requirements 5.3, 5.4, 8.4**
 
 ## Error Handling
@@ -527,13 +484,13 @@ describe("Habit Scheduling Properties", () => {
 
 - **Configuration Loading**: Test various config file formats
 - **Time Calculations**: Test all time slot combinations
-- **Frequency Logic**: Test all frequency patterns with edge cases
+- **Frequency Logic**: Test all frequency patterns with edge cases, including timezone boundary cases (e.g. an instant that is a different weekday in UTC vs. `Asia/Tokyo`)
 - **Error Scenarios**: Test API failures, invalid configs, network issues
-- **Webhook Integration**: Test request/response handling
+- **CLI Entry Point**: Test configuration loading/validation and exit-code behavior of `main.ts`
 
 ### Integration Testing
 
-- **End-to-End Flow**: Webhook → Habit Creation → Notion API
+- **End-to-End Flow**: Scheduled run (GitHub Actions cron / manual `workflow_dispatch`) → Habit Creation → Notion API
 - **Real Notion API**: Test with actual Notion database and templates
 - **Configuration Scenarios**: Test with various habit configurations
 - **Error Recovery**: Test system behavior during failures
@@ -544,8 +501,7 @@ describe("Habit Scheduling Properties", () => {
 
 ```text
 src/
-├── main.ts                 # Application entry point
-├── webhook-server.ts       # HTTP server
+├── main.ts                 # One-shot CLI entry point
 ├── habit-manager.ts        # Core logic
 ├── notion-client.ts        # Notion API wrapper
 ├── config/
@@ -553,6 +509,7 @@ src/
 │   └── system.ts          # Environment config
 └── utils/
     ├── time.ts            # Time calculation utilities
+    ├── scheduling.ts      # Frequency/weekday scheduling logic (timezone-aware)
     └── logger.ts          # Simple logging
 ```
 
@@ -561,12 +518,11 @@ src/
 ```json
 {
   "dependencies": {
-    "@notionhq/client": "^4.0.2",
-    "express": "^4.18.2"
+    "@notionhq/client": "^5.6.0"
   },
   "devDependencies": {
-    "fast-check": "^3.15.0",
-    "jest": "^29.7.0"
+    "fast-check": "^4.5.2",
+    "jest": "^30.2.0"
   }
 }
 ```
@@ -576,17 +532,14 @@ src/
 ```bash
 NOTION_API_KEY=secret_xxx
 TIMEBOX_DATABASE_ID=database_id_xxx
-WEBHOOK_SECRET=your_secure_secret_here  # Required for webhook authentication
-PORT=8080
 TIMEZONE=Asia/Tokyo
 ```
 
 ### Security Considerations
 
-- **WEBHOOK_SECRET**: Must be a strong, randomly generated secret shared between the webhook caller and this application
-- **Request Validation**: All incoming webhook requests must include the X-Webhook-Secret header
-- **Timing Attack Prevention**: Uses constant-time comparison for secret validation
-- **Error Handling**: Security failures return 401 status without revealing system details
+- **No Inbound Surface**: There is no server, no port, and no webhook to secure — the trigger is exclusively GitHub Actions' own `schedule`/`workflow_dispatch` mechanisms
+- **Secrets via GitHub Actions**: `NOTION_API_KEY` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the run
 - **Environment Security**: All secrets must be stored in environment variables, never in code
+- **Accepted Duplicate-Run Risk**: No deduplication/idempotency logic exists by design; manual re-runs on the same day can create duplicate Notion pages
 
 This simplified design eliminates unnecessary complexity while maintaining all required functionality. The system is easier to understand, test, and maintain.

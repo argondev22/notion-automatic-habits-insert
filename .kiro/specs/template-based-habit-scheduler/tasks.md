@@ -2,7 +2,9 @@
 
 ## Overview
 
-This implementation plan breaks down the Template-Based Habit Scheduler into discrete coding tasks. The system will be built as a simple Node.js application with TypeScript, focusing on webhook handling, habit configuration management, and Notion API integration.
+This implementation plan breaks down the Template-Based Habit Scheduler into discrete coding tasks. The system is built as a simple Node.js application with TypeScript, focusing on a one-shot CLI entry point (invoked by a GitHub Actions scheduled workflow — no server, no webhook), habit configuration management, and Notion API integration.
+
+> **Note (architecture change):** The system originally shipped with an always-on Express webhook server (tasks 8/8.1 below, historically). It has since been overhauled into a cron-only, one-shot CLI with no HTTP surface at all, invoked directly by a GitHub Actions scheduled workflow (see `.github/workflows/run-habits.yml`). Task descriptions below have been updated to describe the current architecture; numbering is preserved for traceability rather than renumbered.
 
 ## Tasks
 
@@ -15,9 +17,10 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
 
 - [x] 2. Implement core data models and interfaces
   - [x] 2.1 Create TypeScript interfaces for all data models
-    - Define HabitConfig, WebhookRequest, WebhookResponse interfaces
+    - Define HabitConfig interface
     - Define HabitCreationResult, HabitEntry, SystemConfig interfaces
     - Create type definitions for Notion API responses
+    - (Historical note: this originally also defined WebhookRequest/WebhookResponse interfaces; those were removed when the webhook server was replaced by the one-shot CLI)
     - _Requirements: 7.1, 7.3_
 
   - [x] 2.2 Write unit tests for data model validation
@@ -78,18 +81,18 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Add comprehensive error handling and logging
     - _Requirements: 2.1, 2.2, 6.1, 6.3_
 
-- [x] 8. Implement webhook server with security
-  - [x] 8.1 Create WebhookServer class
-    - Set up Express.js server with security validation
-    - Implement validateSecret() function for authentication
-    - Add proper HTTP status codes and error responses
+- [x] 8. ~~Implement webhook server with security~~ Superseded: remove the webhook server entirely
+  - [x] 8.1 ~~Create WebhookServer class~~ Delete `webhook-server.ts` and its Express/body-parser dependencies
+    - (Historical: this task originally set up an Express.js server with `X-Webhook-Secret` validation, a `POST /webhook` endpoint, and a `GET /health` endpoint)
+    - The webhook server, its auth logic, and the `/health` endpoint have been removed entirely — no replacement HTTP surface exists
+    - Add a GitHub Actions scheduled workflow (`.github/workflows/run-habits.yml`) as the sole trigger instead
     - _Requirements: 5.1, 5.2, 5.3, 8.1, 8.2_
 
 - [x] 9. Create application entry point
-  - [x] 9.1 Implement main.ts application startup
-    - Load environment variables and validate configuration
-    - Initialize HabitManager and WebhookServer
-    - Add graceful shutdown handling
+  - [x] 9.1 Implement main.ts as a one-shot CLI entry point
+    - Load environment variables (`NOTION_API_KEY`, `TIMEBOX_DATABASE_ID`, optional `TIMEZONE`/`HABIT_CONFIG_PATH`) and validate configuration
+    - Initialize HabitManager, run `validateSystem()` and `createScheduledHabits()`, then log a run summary
+    - Exit with status code 0 on success or 1 on failure/errors (no signal handling or graceful shutdown — the process runs to completion and exits)
     - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ]\* 10. Write property-based tests for correctness properties
@@ -113,8 +116,8 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - **Property 5: Error Handling Robustness**
     - **Validates: Requirements 6.1, 6.3**
 
-  - [ ]\* 10.6 Write property test for webhook response consistency
-    - **Property 6: Webhook Response Consistency**
+  - [ ]\* 10.6 Write property test for run outcome consistency
+    - **Property 6: Run Outcome Consistency**
     - **Validates: Requirements 5.3, 5.4, 8.4**
 
 - [ ]\* 11. Write integration tests
@@ -124,15 +127,13 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
     - Test multiple habit processing
     - _Requirements: 2.1, 2.2, 6.1, 6.3_
 
-  - [ ]\* 11.2 Write integration tests for WebhookServer
-    - Test webhook security validation
-    - Test complete webhook-to-notion flow
-    - Test error handling in webhook processing
+  - [ ]\* 11.2 ~~Write integration tests for WebhookServer~~ Superseded: no webhook server exists to test
+    - (Historical: this task originally covered webhook security validation and webhook-to-Notion flow tests; there is no webhook server anymore)
     - _Requirements: 5.1, 5.2, 5.3, 8.1, 8.2_
 
   - [ ]\* 11.3 Write full application integration tests
-    - Test complete webhook-to-notion flow
-    - Test application startup and shutdown
+    - Test complete scheduled-run-to-Notion flow (one-shot CLI invocation → habit creation → Notion API)
+    - Test CLI startup, exit-code behavior, and process completion (no shutdown handling to test — the process simply exits)
     - Test environment variable validation
     - _Requirements: 1.1, 1.2, 1.3_
 
@@ -157,7 +158,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
 - Property tests validate universal correctness properties using fast-check
 - Unit tests validate specific examples and edge cases
 - Integration tests verify end-to-end functionality
-- Security validation is implemented throughout the webhook handling
+- There is no webhook/HTTP surface to secure; the trigger boundary is GitHub Actions' own `schedule`/`workflow_dispatch` mechanisms (see task 8 above)
 - Error handling ensures partial failures don't break the entire system
 - Most core functionality is already implemented and tested
-- Main remaining work is the application entry point and optional comprehensive testing
+- Main remaining work is optional comprehensive testing (property-based and integration tests marked with `*`)
