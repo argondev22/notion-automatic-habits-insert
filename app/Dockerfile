@@ -23,12 +23,7 @@ COPY ./config ./config
 RUN chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
 
 
 FROM node:25-bullseye AS builder
@@ -54,8 +49,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 COPY ./package*.json ./
@@ -67,10 +60,5 @@ COPY ./config ./config
 
 RUN chown -R appuser:appuser /app
 USER appuser
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-EXPOSE 8080
 
 CMD ["node", "./dist/main.js"]

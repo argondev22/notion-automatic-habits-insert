@@ -1,19 +1,15 @@
 services:
+  # Local one-shot verification: `docker compose run --rm app` (or `up`) runs
+  # the habit-creation job once and exits — there is no long-lived service.
   app:
     image: argondev22/notion-automatic-habits-insert:latest
     build:
       context: .
       target: development
-    ports:
-      - '${PORT:-8080}:8080'
     environment:
       # Notion API設定
       - NOTION_API_KEY=${NOTION_API_KEY}
       - TIMEBOX_DATABASE_ID=${TIMEBOX_DATABASE_ID}
-      # Webhook設定
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      # サーバー設定
-      - PORT=8080
       - TIMEZONE=${TIMEZONE:-Asia/Tokyo}
       # ログレベル（オプション）
       - LOG_LEVEL=${LOG_LEVEL:-info}
