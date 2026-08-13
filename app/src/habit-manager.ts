@@ -301,7 +301,7 @@ export class HabitManager {
     const warnings: string[] = [];
 
     // Required environment variables
-    const requiredVars = ['NOTION_API_KEY', 'TIMEBOX_DATABASE_ID'];
+    const requiredVars = ['NOTION_TOKEN', 'TIMEBOX_DATABASE_ID'];
 
     for (const varName of requiredVars) {
       const value = process.env[varName];

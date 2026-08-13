@@ -64,7 +64,7 @@ graph TB
 
 ```typescript
 async function main(): Promise<void>;
-// - Loads and validates NOTION_API_KEY, TIMEBOX_DATABASE_ID, TIMEZONE (optional)
+// - Loads and validates NOTION_TOKEN, TIMEBOX_DATABASE_ID, TIMEZONE (optional)
 // - Runs habitManager.validateSystem() and fails fast (exit 1) if invalid
 // - Runs habitManager.createScheduledHabits()
 // - Logs a run summary and exits 0 on success, 1 if the result contains errors
@@ -194,7 +194,7 @@ const habitsConfig: HabitConfig[] = [
 
 ```typescript
 interface SystemConfig {
-  NOTION_API_KEY: string;
+  NOTION_TOKEN: string;
   TIMEBOX_DATABASE_ID: string;
   TIMEZONE: string;
 }
@@ -204,7 +204,7 @@ interface SystemConfig {
 
 There is no HTTP surface to authenticate: the System has no webhook, no listening port, and no inbound request path. Access control is delegated entirely to the trigger layer:
 
-1. **GitHub Actions Secrets**: `NOTION_API_KEY` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the scheduled run
+1. **GitHub Actions Secrets**: `NOTION_TOKEN` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the scheduled run
 2. **Trigger Restriction**: Only the repository's own `schedule` cron and `workflow_dispatch` (which requires repository write access to invoke) can start a run — there is no externally reachable endpoint to secure
 3. **No Secret Logging**: Secret values must never appear in logs or error messages
 4. **Accepted Duplicate-Run Risk**: The System intentionally has no deduplication/idempotency logic; manually re-running the workflow more than once on the same day can create duplicate Notion pages. This is an accepted trade-off, not a defect to fix.
@@ -530,7 +530,7 @@ src/
 ### Environment Variables
 
 ```bash
-NOTION_API_KEY=secret_xxx
+NOTION_TOKEN=secret_xxx
 TIMEBOX_DATABASE_ID=database_id_xxx
 TIMEZONE=Asia/Tokyo
 ```
@@ -538,7 +538,7 @@ TIMEZONE=Asia/Tokyo
 ### Security Considerations
 
 - **No Inbound Surface**: There is no server, no port, and no webhook to secure — the trigger is exclusively GitHub Actions' own `schedule`/`workflow_dispatch` mechanisms
-- **Secrets via GitHub Actions**: `NOTION_API_KEY` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the run
+- **Secrets via GitHub Actions**: `NOTION_TOKEN` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the run
 - **Environment Security**: All secrets must be stored in environment variables, never in code
 - **Accepted Duplicate-Run Risk**: No deduplication/idempotency logic exists by design; manual re-runs on the same day can create duplicate Notion pages
 

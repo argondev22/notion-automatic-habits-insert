@@ -90,7 +90,7 @@ This implementation plan breaks down the Template-Based Habit Scheduler into dis
 
 - [x] 9. Create application entry point
   - [x] 9.1 Implement main.ts as a one-shot CLI entry point
-    - Load environment variables (`NOTION_API_KEY`, `TIMEBOX_DATABASE_ID`, optional `TIMEZONE`/`HABIT_CONFIG_PATH`) and validate configuration
+    - Load environment variables (`NOTION_TOKEN`, `TIMEBOX_DATABASE_ID`, optional `TIMEZONE`/`HABIT_CONFIG_PATH`) and validate configuration
     - Initialize HabitManager, run `validateSystem()` and `createScheduledHabits()`, then log a run summary
     - Exit with status code 0 on success or 1 on failure/errors (no signal handling or graceful shutdown — the process runs to completion and exits)
     - _Requirements: 1.1, 1.2, 1.3_

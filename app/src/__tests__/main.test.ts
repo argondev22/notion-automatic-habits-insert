@@ -22,7 +22,7 @@ describe('Main Application', () => {
   describe('loadConfiguration', () => {
     it('should load configuration with all required environment variables', () => {
       // Set required environment variables
-      process.env.NOTION_API_KEY = 'test-api-key';
+      process.env.NOTION_TOKEN = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
       process.env.TIMEZONE = 'America/New_York';
 
@@ -36,7 +36,7 @@ describe('Main Application', () => {
 
     it('should use default value for optional TIMEZONE environment variable', () => {
       // Set only required environment variables
-      process.env.NOTION_API_KEY = 'test-api-key';
+      process.env.NOTION_TOKEN = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
 
       const config = loadConfiguration();
@@ -46,7 +46,7 @@ describe('Main Application', () => {
 
     it('should include custom config path when provided', () => {
       // Set required environment variables
-      process.env.NOTION_API_KEY = 'test-api-key';
+      process.env.NOTION_TOKEN = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
       process.env.HABIT_CONFIG_PATH = '/custom/path/habits.json';
 
@@ -64,7 +64,7 @@ describe('Main Application', () => {
         .mockImplementation();
 
       // Don't set required environment variables
-      delete process.env.NOTION_API_KEY;
+      delete process.env.NOTION_TOKEN;
       delete process.env.TIMEBOX_DATABASE_ID;
 
       expect(() => loadConfiguration()).toThrow('process.exit called');
@@ -86,7 +86,7 @@ describe('Main Application', () => {
         .mockImplementation();
 
       // Set required environment variables but invalid timezone
-      process.env.NOTION_API_KEY = 'test-api-key';
+      process.env.NOTION_TOKEN = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
       process.env.TIMEZONE = 'Invalid/Timezone';
 

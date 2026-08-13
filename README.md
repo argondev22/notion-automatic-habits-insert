@@ -41,7 +41,7 @@ NotionのTemplateを活用した習慣管理システム。GitHub Actionsの毎�
 ### 前提条件
 
 - Node.js 18+ または Docker
-- Notion APIキー
+- Notion Internal connectionのInstallation access token
 - Timeboxデータベースとテンプレートの設定
 
 ### 1. リポジトリをクローン
@@ -64,7 +64,7 @@ cp .env.example .env
 
 ```bash
 # Notion API設定
-NOTION_API_KEY=secret_xxx
+NOTION_TOKEN=secret_xxx
 TIMEBOX_DATABASE_ID=database_id_xxx
 
 # タイムゾーン設定
@@ -90,7 +90,7 @@ TIMEZONE=Asia/Tokyo
 
 ### 4. 本番運用: GitHub Actionsのcron
 
-本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日21:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_API_KEY`・`TIMEBOX_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
+本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日21:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_TOKEN`・`TIMEBOX_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
 
 ### 5. ローカルでの動作確認
 
@@ -115,7 +115,7 @@ docker compose up --build
 
 | 名前                  | 説明                                | 必須 | デフォルト           |
 | --------------------- | ----------------------------------- | ---- | -------------------- |
-| `NOTION_API_KEY`      | Notion APIの統合トークン            | ✓    | -                    |
+| `NOTION_TOKEN`        | Notion Internal connectionのInstallation access token | ✓    | -                    |
 | `TIMEBOX_DATABASE_ID` | TimeboxデータベースのID             | ✓    | -                    |
 | `TIMEZONE`            | タイムゾーン（IANA形式）            | -    | `UTC`                |
 | `LOG_LEVEL`           | ログレベル（debug/info/warn/error） | -    | `info`               |
@@ -123,8 +123,8 @@ docker compose up --build
 
 ### Notion設定
 
-1. **Integration作成**: [Notion Integrations](https://www.notion.so/my-integrations)でIntegrationを作成
-2. **データベース共有**: TimeboxデータベースをIntegrationと共有
+1. **Internal connection作成**: [Notion Developer Portal](https://www.notion.so/my-integrations)（`https://www.notion.so/developers/connections`にリダイレクト）でInternal connectionを作成し、Configurationタブの「Installation access token」を控える
+2. **データベース共有**: TimeboxデータベースをそのInternal connectionと共有
 3. **テンプレート作成**: Timeboxデータベース内で習慣用テンプレートを作成
 4. **テンプレートID取得**: 各テンプレートのIDを`habits.json`に設定
 
@@ -346,11 +346,11 @@ npm run test:coverage
 
 ```bash
 # エラー: Unauthorized
-# 解決: NOTION_API_KEYが正しく設定されているか確認
-echo $NOTION_API_KEY
+# 解決: NOTION_TOKENが正しく設定されているか確認
+echo $NOTION_TOKEN
 
 # エラー: Database not found
-# 解決: TIMEBOX_DATABASE_IDが正しく、Integrationがアクセス権限を持っているか確認
+# 解決: TIMEBOX_DATABASE_IDが正しく、Internal connectionがアクセス権限を持っているか確認
 ```
 
 #### 2. テンプレートが見つからない
@@ -365,7 +365,7 @@ echo $NOTION_API_KEY
 
 ```bash
 # 解決: リポジトリのSettings > Secrets and variablesに
-# NOTION_API_KEY と TIMEBOX_DATABASE_ID が登録されているか確認
+# NOTION_TOKEN と TIMEBOX_DATABASE_ID が登録されているか確認
 # Actionsタブから該当のワークフロー実行のログを確認し、エラー内容を特定する
 ```
 
@@ -401,7 +401,7 @@ env | grep -E "(NOTION|TIMEBOX|TIMEZONE)"
 
 本番運用にサーバーのデプロイは不要です。「デプロイ」は次の2点を設定するだけで完了します：
 
-1. リポジトリの **Settings > Secrets and variables > Actions** に `NOTION_API_KEY` と `TIMEBOX_DATABASE_ID` を登録する
+1. リポジトリの **Settings > Secrets and variables > Actions** に `NOTION_TOKEN` と `TIMEBOX_DATABASE_ID` を登録する
 2. `.github/workflows/run-habits.yml` がリポジトリに存在していれば、毎日21:00 JSTに自動でジョブが実行される
 
 常駐サーバーを起動し続ける必要はなく、PM2やDockerでの永続稼働も不要です。Dockerは前述の「ローカルでの動作確認」用途にのみ使用します。
@@ -414,7 +414,7 @@ docker build -t notion-habit-insert:latest app/
 
 # 1回実行して終了
 docker run --rm \
-  -e NOTION_API_KEY=your_api_key \
+  -e NOTION_TOKEN=your_installation_access_token \
   -e TIMEBOX_DATABASE_ID=your_db_id \
   -e TIMEZONE=Asia/Tokyo \
   notion-habit-insert:latest

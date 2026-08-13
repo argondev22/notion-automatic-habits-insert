@@ -19,16 +19,16 @@ export class NotionClientWrapper {
   private client: Client;
   private timeboxDatabaseId: string;
 
-  constructor(apiKey: string, timeboxDatabaseId: string) {
-    if (!apiKey) {
-      throw new Error('Notion API key is required');
+  constructor(token: string, timeboxDatabaseId: string) {
+    if (!token) {
+      throw new Error('Notion token is required');
     }
     if (!timeboxDatabaseId) {
       throw new Error('Timebox database ID is required');
     }
 
     this.client = new Client({
-      auth: apiKey,
+      auth: token,
     });
     this.timeboxDatabaseId = timeboxDatabaseId;
   }
@@ -281,16 +281,16 @@ export class NotionClientWrapper {
  * Factory function to create NotionClientWrapper with environment configuration
  */
 export function createNotionClient(): NotionClientWrapper {
-  const apiKey = process.env.NOTION_API_KEY;
+  const token = process.env.NOTION_TOKEN;
   const databaseId = process.env.TIMEBOX_DATABASE_ID;
 
-  if (!apiKey) {
-    throw new Error('NOTION_API_KEY environment variable is required');
+  if (!token) {
+    throw new Error('NOTION_TOKEN environment variable is required');
   }
 
   if (!databaseId) {
     throw new Error('TIMEBOX_DATABASE_ID environment variable is required');
   }
 
-  return new NotionClientWrapper(apiKey, databaseId);
+  return new NotionClientWrapper(token, databaseId);
 }

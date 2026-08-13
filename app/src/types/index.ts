@@ -26,7 +26,7 @@ export interface HabitConfig {
  * System configuration from environment variables
  */
 export interface SystemConfig {
-  NOTION_API_KEY: string;
+  NOTION_TOKEN: string;
   TIMEBOX_DATABASE_ID: string;
   TIMEZONE: string;
 }

@@ -8,7 +8,7 @@ services:
       target: development
     environment:
       # Notion API設定
-      - NOTION_API_KEY=${NOTION_API_KEY}
+      - NOTION_TOKEN=${NOTION_TOKEN}
       - TIMEBOX_DATABASE_ID=${TIMEBOX_DATABASE_ID}
       - TIMEZONE=${TIMEZONE:-Asia/Tokyo}
       # ログレベル（オプション）
