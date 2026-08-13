@@ -20,10 +20,16 @@ import { NotionClientWrapper } from './notion-client';
 export class HabitManager {
   private notionClient: NotionClientWrapper;
   private configPath?: string;
+  private timezone: string;
 
-  constructor(notionClient: NotionClientWrapper, configPath?: string) {
+  constructor(
+    notionClient: NotionClientWrapper,
+    configPath?: string,
+    timezone: string = 'UTC'
+  ) {
     this.notionClient = notionClient;
     this.configPath = configPath;
+    this.timezone = timezone;
   }
 
   /**
@@ -43,7 +49,7 @@ export class HabitManager {
       console.log(`Loaded ${habits.length} habit configuration(s)`);
 
       // 2. Filter habits due today
-      const dueHabits = getHabitsDueToday(habits);
+      const dueHabits = getHabitsDueToday(habits, this.timezone);
       console.log(`Found ${dueHabits.length} habit(s) due today`);
 
       if (dueHabits.length === 0) {
@@ -384,7 +390,7 @@ export class HabitManager {
         const habits = await this.loadHabitConfiguration();
         configurationLoaded = true;
         habitsCount = habits.length;
-        dueTodayCount = getHabitsDueToday(habits).length;
+        dueTodayCount = getHabitsDueToday(habits, this.timezone).length;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Configuration error';
@@ -427,7 +433,8 @@ export class HabitManager {
  */
 export function createHabitManager(
   notionClient: NotionClientWrapper,
-  configPath?: string
+  configPath?: string,
+  timezone?: string
 ): HabitManager {
-  return new HabitManager(notionClient, configPath);
+  return new HabitManager(notionClient, configPath, timezone);
 }

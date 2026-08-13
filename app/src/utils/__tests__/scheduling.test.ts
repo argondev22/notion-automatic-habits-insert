@@ -67,29 +67,58 @@ describe('Scheduling Utilities', () => {
   describe('isDueToday', () => {
     it('should return false for disabled habits', () => {
       const sunday = new Date('2024-01-07'); // Sunday (tomorrow is Monday)
-      expect(isDueToday(disabledHabit, sunday)).toBe(false);
+      expect(isDueToday(disabledHabit, 'UTC', sunday)).toBe(false);
     });
 
     it('should return true for enabled habits on scheduled days (checking tomorrow)', () => {
       const sunday = new Date('2024-01-07'); // Sunday (tomorrow is Monday)
-      expect(isDueToday(weekdayHabit, sunday)).toBe(true); // Monday is a weekday
-      expect(isDueToday(dailyHabit, sunday)).toBe(true); // Monday is daily
+      expect(isDueToday(weekdayHabit, 'UTC', sunday)).toBe(true); // Monday is a weekday
+      expect(isDueToday(dailyHabit, 'UTC', sunday)).toBe(true); // Monday is daily
     });
 
     it('should return false for enabled habits on non-scheduled days (checking tomorrow)', () => {
       const friday = new Date('2024-01-05'); // Friday (tomorrow is Saturday)
-      expect(isDueToday(weekdayHabit, friday)).toBe(false); // Saturday is not a weekday
-      expect(isDueToday(weekendHabit, friday)).toBe(true); // Saturday is a weekend
+      expect(isDueToday(weekdayHabit, 'UTC', friday)).toBe(false); // Saturday is not a weekday
+      expect(isDueToday(weekendHabit, 'UTC', friday)).toBe(true); // Saturday is a weekend
     });
 
-    it('should use current date when no date provided', () => {
+    it('should use current date and default to UTC when no date/timezone provided', () => {
       // This test will depend on the current day, so we just verify it doesn't throw
       expect(() => isDueToday(dailyHabit)).not.toThrow();
+    });
+
+    it('should resolve "tomorrow" differently across a UTC/JST day boundary', () => {
+      // 2024-01-07T23:00:00Z is Sunday 23:00 in UTC, but already Monday 08:00 in Asia/Tokyo.
+      // Adding one day therefore lands on a different weekday depending on the timezone:
+      //   - UTC:         2024-01-08T23:00:00Z -> Monday
+      //   - Asia/Tokyo:  2024-01-09T08:00:00+09:00 -> Tuesday
+      // A habit scheduled via bare local-time logic (the pre-fix bug) would misjudge
+      // this on a UTC-only CI runner when the operator actually wants JST semantics.
+      const boundaryInstant = new Date('2024-01-07T23:00:00Z');
+
+      const mondayHabit: HabitConfig = {
+        ...weekdayHabit,
+        frequency: ['monday'],
+      };
+      const tuesdayHabit: HabitConfig = {
+        ...weekdayHabit,
+        frequency: ['tuesday'],
+      };
+
+      expect(isDueToday(mondayHabit, 'UTC', boundaryInstant)).toBe(true);
+      expect(isDueToday(mondayHabit, 'Asia/Tokyo', boundaryInstant)).toBe(
+        false
+      );
+
+      expect(isDueToday(tuesdayHabit, 'UTC', boundaryInstant)).toBe(false);
+      expect(isDueToday(tuesdayHabit, 'Asia/Tokyo', boundaryInstant)).toBe(
+        true
+      );
     });
   });
 
   describe('getDayName', () => {
-    it('should return correct lowercase weekday names', () => {
+    it('should return correct lowercase weekday names (defaulting to UTC)', () => {
       expect(getDayName(new Date('2024-01-01'))).toBe('monday');
       expect(getDayName(new Date('2024-01-02'))).toBe('tuesday');
       expect(getDayName(new Date('2024-01-03'))).toBe('wednesday');
@@ -97,6 +126,14 @@ describe('Scheduling Utilities', () => {
       expect(getDayName(new Date('2024-01-05'))).toBe('friday');
       expect(getDayName(new Date('2024-01-06'))).toBe('saturday');
       expect(getDayName(new Date('2024-01-07'))).toBe('sunday');
+    });
+
+    it('should resolve the weekday in the given timezone, not the runtime local timezone', () => {
+      // 2024-01-07T23:00:00Z is Sunday in UTC but already Monday in Asia/Tokyo (+9h)
+      const boundaryInstant = new Date('2024-01-07T23:00:00Z');
+
+      expect(getDayName(boundaryInstant, 'UTC')).toBe('sunday');
+      expect(getDayName(boundaryInstant, 'Asia/Tokyo')).toBe('monday');
     });
   });
 
@@ -125,7 +162,7 @@ describe('Scheduling Utilities', () => {
 
     it('should return habits due on Sunday (for Monday)', () => {
       const sunday = new Date('2024-01-07'); // Sunday (tomorrow is Monday)
-      const dueHabits = getHabitsDueToday(habits, sunday);
+      const dueHabits = getHabitsDueToday(habits, 'UTC', sunday);
 
       expect(dueHabits).toHaveLength(2);
       expect(dueHabits).toContain(dailyHabit);
@@ -136,7 +173,7 @@ describe('Scheduling Utilities', () => {
 
     it('should return habits due on Friday (for Saturday)', () => {
       const friday = new Date('2024-01-05'); // Friday (tomorrow is Saturday)
-      const dueHabits = getHabitsDueToday(habits, friday);
+      const dueHabits = getHabitsDueToday(habits, 'UTC', friday);
 
       expect(dueHabits).toHaveLength(2);
       expect(dueHabits).toContain(dailyHabit);
@@ -158,12 +195,12 @@ describe('Scheduling Utilities', () => {
   describe('getNextScheduledDate', () => {
     it('should return null for disabled habits', () => {
       const monday = new Date('2024-01-01');
-      expect(getNextScheduledDate(disabledHabit, monday)).toBeNull();
+      expect(getNextScheduledDate(disabledHabit, 'UTC', monday)).toBeNull();
     });
 
     it('should return next scheduled date for enabled habits', () => {
       const monday = new Date('2024-01-01'); // Monday
-      const nextDate = getNextScheduledDate(weekendHabit, monday);
+      const nextDate = getNextScheduledDate(weekendHabit, 'UTC', monday);
 
       expect(nextDate).not.toBeNull();
       if (nextDate) {
@@ -174,7 +211,7 @@ describe('Scheduling Utilities', () => {
 
     it('should return next day for daily habits', () => {
       const monday = new Date('2024-01-01'); // Monday
-      const nextDate = getNextScheduledDate(dailyHabit, monday);
+      const nextDate = getNextScheduledDate(dailyHabit, 'UTC', monday);
 
       expect(nextDate).not.toBeNull();
       if (nextDate) {

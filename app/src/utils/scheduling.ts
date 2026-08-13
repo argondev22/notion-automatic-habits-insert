@@ -26,11 +26,20 @@ export type ValidWeekday = (typeof VALID_WEEKDAYS)[number];
  * This function checks if a habit should be created today for tomorrow's schedule.
  * For example, if today is Monday, it checks if the habit is scheduled for Tuesday.
  *
+ * The weekday is resolved in `timezone` rather than the runtime's local timezone,
+ * since a CI runner (e.g. GitHub Actions, always UTC) would otherwise misjudge
+ * which weekday counts as "tomorrow" relative to the configured TIMEZONE.
+ *
  * @param habit - Habit configuration to check
+ * @param timezone - IANA timezone used to resolve "tomorrow"'s weekday (defaults to "UTC")
  * @param date - Date to check against (defaults to today)
  * @returns True if the habit should be created on the given date (for the next day)
  */
-export function isDueToday(habit: HabitConfig, date?: Date): boolean {
+export function isDueToday(
+  habit: HabitConfig,
+  timezone: string = 'UTC',
+  date?: Date
+): boolean {
   // If habit is disabled, it's never due
   if (!habit.enabled) {
     return false;
@@ -42,7 +51,7 @@ export function isDueToday(habit: HabitConfig, date?: Date): boolean {
   const tomorrow = new Date(targetDate);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const tomorrowDayName = getDayName(tomorrow);
+  const tomorrowDayName = getDayName(tomorrow, timezone);
 
   // Check if tomorrow is in the frequency array
   return habit.frequency.includes(tomorrowDayName);
@@ -52,10 +61,13 @@ export function isDueToday(habit: HabitConfig, date?: Date): boolean {
  * Get the lowercase weekday name for a given date
  *
  * @param date - Date to get weekday name for
+ * @param timezone - IANA timezone the weekday is resolved in (defaults to "UTC")
  * @returns Lowercase weekday name (e.g., "monday", "tuesday")
  */
-export function getDayName(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+export function getDayName(date: Date, timezone: string = 'UTC'): string {
+  return date
+    .toLocaleDateString('en-US', { timeZone: timezone, weekday: 'long' })
+    .toLowerCase();
 }
 
 /**
@@ -76,14 +88,16 @@ export function isValidFrequency(frequency: string[]): boolean {
  * Get all habits that are due today from a list of habit configurations
  *
  * @param habits - Array of habit configurations
+ * @param timezone - IANA timezone used to resolve "tomorrow"'s weekday (defaults to "UTC")
  * @param date - Date to check against (defaults to today)
  * @returns Array of habits that are due today
  */
 export function getHabitsDueToday(
   habits: HabitConfig[],
+  timezone: string = 'UTC',
   date?: Date
 ): HabitConfig[] {
-  return habits.filter(habit => isDueToday(habit, date));
+  return habits.filter(habit => isDueToday(habit, timezone, date));
 }
 
 /**
@@ -104,11 +118,13 @@ export function isScheduledForWeekday(
  * Get the next scheduled date for a habit after a given date
  *
  * @param habit - Habit configuration
+ * @param timezone - IANA timezone used to resolve weekdays (defaults to "UTC")
  * @param fromDate - Date to start searching from (defaults to today)
  * @returns Next date when the habit is scheduled, or null if habit is disabled
  */
 export function getNextScheduledDate(
   habit: HabitConfig,
+  timezone: string = 'UTC',
   fromDate?: Date
 ): Date | null {
   if (!habit.enabled) {
@@ -122,7 +138,7 @@ export function getNextScheduledDate(
     const checkDate = new Date(startDate);
     checkDate.setDate(startDate.getDate() + i);
 
-    if (isDueToday(habit, checkDate)) {
+    if (isDueToday(habit, timezone, checkDate)) {
       return checkDate;
     }
   }
