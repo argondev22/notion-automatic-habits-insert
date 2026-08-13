@@ -24,38 +24,30 @@ describe('Main Application', () => {
       // Set required environment variables
       process.env.NOTION_API_KEY = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
-      process.env.WEBHOOK_SECRET = 'test-webhook-secret';
-      process.env.PORT = '3000';
       process.env.TIMEZONE = 'America/New_York';
 
       const config = loadConfiguration();
 
       expect(config).toEqual({
-        port: 3000,
         timezone: 'America/New_York',
-        nodeEnv: 'test', // Jest sets NODE_ENV to 'test'
         configPath: undefined,
       });
     });
 
-    it('should use default values for optional environment variables', () => {
+    it('should use default value for optional TIMEZONE environment variable', () => {
       // Set only required environment variables
       process.env.NOTION_API_KEY = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
-      process.env.WEBHOOK_SECRET = 'test-webhook-secret';
 
       const config = loadConfiguration();
 
-      expect(config.port).toBe(8080); // default port
       expect(config.timezone).toBe('UTC'); // default timezone
-      expect(config.nodeEnv).toBe('test'); // Jest sets NODE_ENV to 'test'
     });
 
     it('should include custom config path when provided', () => {
       // Set required environment variables
       process.env.NOTION_API_KEY = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
-      process.env.WEBHOOK_SECRET = 'test-webhook-secret';
       process.env.HABIT_CONFIG_PATH = '/custom/path/habits.json';
 
       const config = loadConfiguration();
@@ -74,36 +66,11 @@ describe('Main Application', () => {
       // Don't set required environment variables
       delete process.env.NOTION_API_KEY;
       delete process.env.TIMEBOX_DATABASE_ID;
-      delete process.env.WEBHOOK_SECRET;
 
       expect(() => loadConfiguration()).toThrow('process.exit called');
       expect(mockExit).toHaveBeenCalledWith(1);
       expect(mockConsoleError).toHaveBeenCalledWith(
         '❌ Missing required environment variables:'
-      );
-
-      mockExit.mockRestore();
-      mockConsoleError.mockRestore();
-    });
-
-    it('should exit process when PORT is invalid', () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
-      const mockConsoleError = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
-
-      // Set required environment variables but invalid port
-      process.env.NOTION_API_KEY = 'test-api-key';
-      process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
-      process.env.WEBHOOK_SECRET = 'test-webhook-secret';
-      process.env.PORT = 'invalid-port';
-
-      expect(() => loadConfiguration()).toThrow('process.exit called');
-      expect(mockExit).toHaveBeenCalledWith(1);
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        '❌ Invalid PORT environment variable: invalid-port'
       );
 
       mockExit.mockRestore();
@@ -121,7 +88,6 @@ describe('Main Application', () => {
       // Set required environment variables but invalid timezone
       process.env.NOTION_API_KEY = 'test-api-key';
       process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
-      process.env.WEBHOOK_SECRET = 'test-webhook-secret';
       process.env.TIMEZONE = 'Invalid/Timezone';
 
       expect(() => loadConfiguration()).toThrow('process.exit called');

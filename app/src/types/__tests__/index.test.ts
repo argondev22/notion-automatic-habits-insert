@@ -5,14 +5,11 @@
 
 import {
   HabitConfig,
-  WebhookRequest,
-  WebhookResponse,
   HabitCreationResult,
   HabitEntry,
   SystemConfig,
   NotionTemplate,
   isHabitConfig,
-  isWebhookRequest,
   isNotionApiError,
 } from '../index';
 
@@ -92,68 +89,6 @@ describe('Core Data Model Interfaces', () => {
     });
   });
 
-  describe('WebhookRequest interface', () => {
-    it('should accept valid webhook request with timestamp', () => {
-      const validRequest: WebhookRequest = {
-        timestamp: Date.now(),
-      };
-
-      expect(isWebhookRequest(validRequest)).toBe(true);
-    });
-
-    it('should accept webhook request with action', () => {
-      const validRequest: WebhookRequest = {
-        action: 'schedule_habits',
-        timestamp: Date.now(),
-      };
-
-      expect(isWebhookRequest(validRequest)).toBe(true);
-    });
-
-    it('should accept empty webhook request', () => {
-      const validRequest: WebhookRequest = {};
-
-      expect(isWebhookRequest(validRequest)).toBe(true);
-    });
-
-    it('should reject non-object webhook request', () => {
-      expect(isWebhookRequest(null)).toBe(false);
-      expect(isWebhookRequest('string')).toBe(false);
-      expect(isWebhookRequest(123)).toBe(false);
-    });
-  });
-
-  describe('WebhookResponse interface', () => {
-    it('should structure response correctly', () => {
-      const response: WebhookResponse = {
-        success: true,
-        created: 3,
-        skipped: 1,
-        errors: [],
-        executionTime: 1500,
-      };
-
-      expect(response.success).toBe(true);
-      expect(typeof response.created).toBe('number');
-      expect(typeof response.skipped).toBe('number');
-      expect(Array.isArray(response.errors)).toBe(true);
-      expect(typeof response.executionTime).toBe('number');
-    });
-
-    it('should handle error responses', () => {
-      const errorResponse: WebhookResponse = {
-        success: false,
-        created: 0,
-        skipped: 0,
-        errors: ['Failed to connect to Notion API', 'Invalid template ID'],
-        executionTime: 500,
-      };
-
-      expect(errorResponse.success).toBe(false);
-      expect(errorResponse.errors.length).toBe(2);
-    });
-  });
-
   describe('HabitCreationResult interface', () => {
     it('should structure creation result correctly', () => {
       const habitEntry: HabitEntry = {
@@ -184,15 +119,11 @@ describe('Core Data Model Interfaces', () => {
       const config: SystemConfig = {
         NOTION_API_KEY: 'secret_test_key',
         TIMEBOX_DATABASE_ID: 'database_test_id',
-        WEBHOOK_SECRET: 'webhook_secret_123',
-        PORT: 8080,
         TIMEZONE: 'Asia/Tokyo',
       };
 
       expect(typeof config.NOTION_API_KEY).toBe('string');
       expect(typeof config.TIMEBOX_DATABASE_ID).toBe('string');
-      expect(typeof config.WEBHOOK_SECRET).toBe('string');
-      expect(typeof config.PORT).toBe('number');
       expect(typeof config.TIMEZONE).toBe('string');
     });
   });

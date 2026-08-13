@@ -28,33 +28,7 @@ export interface HabitConfig {
 export interface SystemConfig {
   NOTION_API_KEY: string;
   TIMEBOX_DATABASE_ID: string;
-  WEBHOOK_SECRET: string; // Required for security validation
-  PORT: number;
   TIMEZONE: string;
-}
-
-// ============================================================================
-// Webhook Interfaces
-// ============================================================================
-
-/**
- * Incoming webhook request structure
- * Note: Authentication is handled via X-Webhook-Secret header
- */
-export interface WebhookRequest {
-  timestamp?: number;
-  action?: string; // Optional action parameter for future extensibility
-}
-
-/**
- * Webhook response structure with execution metrics
- */
-export interface WebhookResponse {
-  success: boolean;
-  created: number;
-  skipped: number;
-  errors: string[];
-  executionTime: number;
 }
 
 // ============================================================================
@@ -242,19 +216,6 @@ export function isHabitConfig(obj: any): obj is HabitConfig {
     typeof obj.startTime === 'string' &&
     typeof obj.endTime === 'string' &&
     typeof obj.enabled === 'boolean'
-  );
-}
-
-/**
- * Type guard for checking if an object is a valid WebhookRequest
- * Note: Authentication is validated separately via X-Webhook-Secret header
- */
-export function isWebhookRequest(obj: any): obj is WebhookRequest {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    (obj.timestamp === undefined || typeof obj.timestamp === 'number') &&
-    (obj.action === undefined || typeof obj.action === 'string')
   );
 }
 

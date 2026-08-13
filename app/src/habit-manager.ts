@@ -301,11 +301,7 @@ export class HabitManager {
     const warnings: string[] = [];
 
     // Required environment variables
-    const requiredVars = [
-      'NOTION_API_KEY',
-      'TIMEBOX_DATABASE_ID',
-      'WEBHOOK_SECRET',
-    ];
+    const requiredVars = ['NOTION_API_KEY', 'TIMEBOX_DATABASE_ID'];
 
     for (const varName of requiredVars) {
       const value = process.env[varName];
@@ -318,7 +314,7 @@ export class HabitManager {
     }
 
     // Optional but recommended variables
-    const optionalVars = ['TIMEZONE', 'PORT'];
+    const optionalVars = ['TIMEZONE'];
 
     for (const varName of optionalVars) {
       const value = process.env[varName];
@@ -337,17 +333,6 @@ export class HabitManager {
         new Date().toLocaleString('en-US', { timeZone: timezone });
       } catch {
         errors.push(`Invalid TIMEZONE environment variable: ${timezone}`);
-      }
-    }
-
-    // Validate port if provided
-    const port = process.env.PORT;
-    if (port) {
-      const portNum = parseInt(port, 10);
-      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
-        errors.push(
-          `Invalid PORT environment variable: ${port} (must be 1-65535)`
-        );
       }
     }
 
