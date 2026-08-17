@@ -131,9 +131,9 @@
       "saturday",
       "sunday"
     ],
-    "startTime": "21:15",
+    "startTime": "21:45",
     "endTime": "22:45",
-    "enabled": false
+    "enabled": true
   },
   {
     "name": "睡眠",
