@@ -56,6 +56,22 @@
     "enabled": true
   },
   {
+    "name": "英会話",
+    "templateId": "392d94010e58805e8a1cc89387b24e17",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "9:00",
+    "endTime": "9:30",
+    "enabled": true
+  },
+  {
     "name": "昼食",
     "templateId": "2d2d94010e5880e88acdd374dd5f1ae6",
     "frequency": [
