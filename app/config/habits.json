@@ -52,7 +52,7 @@
     "templateId": "2d1d94010e5880e9afe9c28ed70ca836",
     "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
     "startTime": "8:00",
-    "endTime": "20:00",
+    "endTime": "17:00",
     "enabled": true
   },
   {
