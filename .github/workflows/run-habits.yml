@@ -2,9 +2,9 @@ name: Run Habit Scheduler
 
 on:
   schedule:
-    # 12:00 UTC = 21:00 JST. Deliberately later than the intended 21:00 JST
+    # 15:00 UTC = 00:00 JST. Deliberately later than the intended 00:00 JST
     # run time to leave margin for GitHub Actions' scheduling delay.
-    - cron: "0 12 * * *"
+    - cron: "0 15 * * *"
   workflow_dispatch: {}
 
 jobs:
