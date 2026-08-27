@@ -2,8 +2,10 @@ name: Run Habit Scheduler
 
 on:
   schedule:
-    # 15:00 UTC = 00:00 JST. Deliberately later than the intended 00:00 JST
-    # run time to leave margin for GitHub Actions' scheduling delay.
+    # 15:00 UTC = 00:00 JST. GitHub Actions may start the job some minutes
+    # late, which is fine here: the run only has to happen after 00:00 JST.
+    # A run at 00:00 JST on day D creates the habits for day D+1, so every
+    # day's entries land in Notion roughly 24 hours ahead.
     - cron: "0 15 * * *"
   workflow_dispatch: {}
 

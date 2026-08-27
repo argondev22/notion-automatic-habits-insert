@@ -90,7 +90,7 @@ TIMEZONE=Asia/Tokyo
 
 ### 4. 本番運用: GitHub Actionsのcron
 
-本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日21:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_TOKEN`・`TIMEBOX_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
+本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日0:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_TOKEN`・`TIMEBOX_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
 
 ### 5. ローカルでの動作確認
 
@@ -135,11 +135,12 @@ docker compose up --build
 ```yaml
 on:
   schedule:
-    - cron: "0 12 * * *" # 12:00 UTC = 21:00 JST
+    - cron: "0 15 * * *" # 15:00 UTC = 00:00 JST
   workflow_dispatch: {}
 ```
 
-- **毎日21:00 JST**に自動実行されます（GitHub Actionsのスケジュール実行には数分程度の遅延が発生し得るため、意図的に21:00 JSTを狙ってcronを設定しています）。
+- **毎日0:00 JST**に自動実行されます（GitHub Actionsのスケジュール実行には数分程度の遅延が発生し得ますが、0:00 JST以降に動けばよい設計のため問題ありません）。
+- 作成対象は**実行時点のJST日付の翌日**です。たとえば8/29の0:00に実行されたジョブは8/30の予定を作成します。結果として、ある日の習慣は前日の0:00（約24時間前）にNotionへ登録されます。
 - **`workflow_dispatch`**により、GitHub Actionsの画面から手動再実行も可能です。ただし本アプリには重複実行を防ぐ仕組みがないため、同日中に手動で複数回実行するとNotionに重複したページが作成されます。
 
 実行結果（作成件数・スキップ件数・エラー内容）はジョブの標準出力ログと終了コードで確認できます。エラーが発生した場合はプロセスが終了コード`1`で終了し、GitHub Actions上でジョブが失敗として記録されます。
@@ -216,7 +217,7 @@ on:
 
 ### GitHub Actions（本番運用）
 
-本番運用は`.github/workflows/run-habits.yml`のスケジュール実行のみです。追加の設定なしに、毎日21:00 JSTにワンショットスクリプトが実行されます。GitHub Actionsの画面から「Run workflow」を選択すれば`workflow_dispatch`により手動実行も可能です（重複実行防止はないため、同日中の複数回実行には注意してください）。
+本番運用は`.github/workflows/run-habits.yml`のスケジュール実行のみです。追加の設定なしに、毎日0:00 JSTにワンショットスクリプトが実行されます。GitHub Actionsの画面から「Run workflow」を選択すれば`workflow_dispatch`により手動実行も可能です（重複実行防止はないため、同日中の複数回実行には注意してください）。
 
 ### ローカルでの手動実行
 
@@ -402,7 +403,7 @@ env | grep -E "(NOTION|TIMEBOX|TIMEZONE)"
 本番運用にサーバーのデプロイは不要です。「デプロイ」は次の2点を設定するだけで完了します：
 
 1. リポジトリの **Settings > Secrets and variables > Actions** に `NOTION_TOKEN` と `TIMEBOX_DATABASE_ID` を登録する
-2. `.github/workflows/run-habits.yml` がリポジトリに存在していれば、毎日21:00 JSTに自動でジョブが実行される
+2. `.github/workflows/run-habits.yml` がリポジトリに存在していれば、毎日0:00 JSTに自動でジョブが実行される
 
 常駐サーバーを起動し続ける必要はなく、PM2やDockerでの永続稼働も不要です。Dockerは前述の「ローカルでの動作確認」用途にのみ使用します。
 
