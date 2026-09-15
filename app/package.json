@@ -1,6 +1,6 @@
 {
   "name": "notion-automatic-habits-insert",
-  "version": "1.0.0",
+  "version": "4.0.0",
   "main": "src/main.ts",
   "scripts": {
     "start": "tsx src/main.ts",
