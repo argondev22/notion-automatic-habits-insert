@@ -36,6 +36,7 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-inferrable-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
       'no-unused-vars': 'off', // TypeScript版を使用
       'no-undef': 'off', // TypeScriptが型チェックを行うため
       // ロギングシステムが実装されているため、console.logの使用を制限

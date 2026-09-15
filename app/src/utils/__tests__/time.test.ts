@@ -66,6 +66,95 @@ describe('Time Calculation Utilities', () => {
       expect(result.end).toBe('2024-01-17T01:00:00.000Z'); // Crosses to Wednesday
     });
 
+    it('should resolve "tomorrow" correctly for negative UTC offset timezones', () => {
+      // Regression test: the pre-fix offset calculation rendered UTC
+      // midnight in the target timezone and used the resulting time-of-day
+      // as the offset, ignoring that for negative offsets that render lands
+      // on the PREVIOUS calendar day. With base date 2026-09-16, that bug
+      // produced 2026-09-16 07:00 local in America/New_York instead of the
+      // correct 2026-09-17 07:00 local.
+      const testDate = new Date('2026-09-16T12:00:00Z');
+
+      const nyResult = calculateTimeRange(
+        mockHabit,
+        'America/New_York',
+        testDate
+      );
+      const nyStart = new Date(nyResult.start).toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      expect(nyStart).toBe('09/17/2026, 07:00');
+
+      const laResult = calculateTimeRange(
+        mockHabit,
+        'America/Los_Angeles',
+        testDate
+      );
+      const laStart = new Date(laResult.start).toLocaleString('en-US', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      expect(laStart).toBe('09/17/2026, 07:00');
+    });
+
+    it('should resolve correctly across a US DST spring-forward boundary', () => {
+      // 2026-03-07T12:00:00Z targets 2026-03-08 (the US spring-forward day).
+      const testDate = new Date('2026-03-07T12:00:00Z');
+      const result = calculateTimeRange(
+        mockHabit,
+        'America/New_York',
+        testDate
+      );
+
+      const start = new Date(result.start).toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      expect(start).toBe('03/08/2026, 07:00');
+    });
+
+    it('should produce a 7-hour cross-midnight range for a sleep-style habit', () => {
+      const sleepHabit: HabitConfig = {
+        ...mockHabit,
+        startTime: '23:00',
+        endTime: '06:00',
+      };
+      const testDate = new Date('2026-09-16T12:00:00Z');
+      const result = calculateTimeRange(sleepHabit, 'Asia/Tokyo', testDate);
+
+      const durationHours =
+        (new Date(result.end).getTime() - new Date(result.start).getTime()) /
+        (60 * 60 * 1000);
+      expect(durationHours).toBe(7);
+
+      const endLocal = new Date(result.end).toLocaleString('en-US', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      expect(endLocal).toBe('09/18/2026, 06:00');
+    });
+
     it('should use current date when no date provided', () => {
       const result = calculateTimeRange(mockHabit, 'UTC');
 

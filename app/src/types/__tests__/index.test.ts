@@ -102,6 +102,7 @@ describe('Core Data Model Interfaces', () => {
         success: true,
         created: [habitEntry],
         skipped: ['Disabled habit'],
+        failed: [],
         errors: [],
         executionTime: 2000,
       };
@@ -110,6 +111,7 @@ describe('Core Data Model Interfaces', () => {
       expect(result.created.length).toBe(1);
       expect(result.created[0].id).toBe('page-123');
       expect(Array.isArray(result.skipped)).toBe(true);
+      expect(Array.isArray(result.failed)).toBe(true);
       expect(Array.isArray(result.errors)).toBe(true);
     });
   });

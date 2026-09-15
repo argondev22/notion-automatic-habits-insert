@@ -4,6 +4,11 @@
  */
 
 import { HabitConfig } from '../types';
+import {
+  getSchedulingTargetDate,
+  getWeekdayNameForCalendarDate,
+  getCalendarDateInTimezone,
+} from './time';
 
 /**
  * Valid weekday names that can be used in frequency arrays
@@ -45,16 +50,11 @@ export function isDueToday(
     return false;
   }
 
-  const targetDate = date || new Date();
-
-  // Calculate tomorrow's date
-  const tomorrow = new Date(targetDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const tomorrowDayName = getDayName(tomorrow, timezone);
+  const targetDate = getSchedulingTargetDate(timezone, date);
+  const targetDayName = getWeekdayNameForCalendarDate(targetDate);
 
   // Check if tomorrow is in the frequency array
-  return habit.frequency.includes(tomorrowDayName);
+  return habit.frequency.includes(targetDayName);
 }
 
 /**
@@ -65,9 +65,9 @@ export function isDueToday(
  * @returns Lowercase weekday name (e.g., "monday", "tuesday")
  */
 export function getDayName(date: Date, timezone: string = 'UTC'): string {
-  return date
-    .toLocaleDateString('en-US', { timeZone: timezone, weekday: 'long' })
-    .toLowerCase();
+  return getWeekdayNameForCalendarDate(
+    getCalendarDateInTimezone(date, timezone)
+  );
 }
 
 /**

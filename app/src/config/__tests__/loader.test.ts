@@ -11,6 +11,7 @@ import {
   configFileExists,
 } from '../loader';
 import { HabitConfig } from '../../types';
+import { isDueToday } from '../../utils/scheduling';
 
 // Mock fs for testing
 jest.mock('fs/promises');
@@ -200,6 +201,37 @@ describe('Configuration Loader', () => {
       expect(result.validHabits).toHaveLength(1);
       expect(result.invalidHabits).toHaveLength(1);
       expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should normalize mixed-case/whitespace frequency, name, and templateId so runtime matching still fires', () => {
+      // Regression test: validateFrequency normalizes with toLowerCase().trim()
+      // only to validate, while validateHabitConfiguration used to push the
+      // RAW object into validHabits. isDueToday matches frequency values
+      // exact-lowercase, so a habit configured as "Monday" passed validation
+      // and then silently never triggered.
+      const habits = [
+        {
+          name: '  Mixed Case Habit  ',
+          templateId: '  template-mixed  ',
+          frequency: ['Monday', ' tuesday '],
+          startTime: '09:00',
+          endTime: '10:00',
+          enabled: true,
+        },
+      ];
+
+      const result = validateHabitConfiguration(habits);
+
+      expect(result.valid).toBe(true);
+      expect(result.validHabits).toHaveLength(1);
+      expect(result.validHabits[0].name).toBe('Mixed Case Habit');
+      expect(result.validHabits[0].templateId).toBe('template-mixed');
+      expect(result.validHabits[0].frequency).toEqual(['monday', 'tuesday']);
+
+      // A habit configured with "Monday" must actually fire when tomorrow is
+      // Monday.
+      const sunday = new Date('2024-01-07'); // Sunday (tomorrow is Monday)
+      expect(isDueToday(result.validHabits[0], 'UTC', sunday)).toBe(true);
     });
   });
 

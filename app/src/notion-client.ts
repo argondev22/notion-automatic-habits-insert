@@ -18,8 +18,13 @@ import { calculateTimeRange } from './utils/time';
 export class NotionClientWrapper {
   private client: Client;
   private timeboxDatabaseId: string;
+  private timezone: string;
 
-  constructor(token: string, timeboxDatabaseId: string) {
+  constructor(
+    token: string,
+    timeboxDatabaseId: string,
+    timezone: string = 'UTC'
+  ) {
     if (!token) {
       throw new Error('Notion token is required');
     }
@@ -31,6 +36,7 @@ export class NotionClientWrapper {
       auth: token,
     });
     this.timeboxDatabaseId = timeboxDatabaseId;
+    this.timezone = timezone;
   }
 
   /**
@@ -40,15 +46,12 @@ export class NotionClientWrapper {
   async createHabitFromTemplate(habit: HabitConfig): Promise<CreateResult> {
     try {
       // Calculate time range for the habit
-      const timeRange = calculateTimeRange(
-        habit,
-        process.env.TIMEZONE || 'UTC'
-      );
+      const timeRange = calculateTimeRange(habit, this.timezone);
 
       console.log(`Creating habit "${habit.name}" with time range:`, {
         start: timeRange.start,
         end: timeRange.end,
-        timezone: process.env.TIMEZONE || 'UTC',
+        timezone: this.timezone,
       });
 
       // Create the page using Notion template
@@ -101,11 +104,14 @@ export class NotionClientWrapper {
    */
   private handleNotionError(error: unknown, habitName: string): CreateResult {
     let errorMessage = 'Unknown error occurred';
+    let status: number | undefined;
+    let code: string | undefined;
 
     if (isNotionApiError(error)) {
-      errorMessage = `Notion API Error (${error.status}): ${error.message}`;
+      status = error.status;
 
-      // Determine if error is retryable
+      // Human-readable message per status (not used for retry decisions;
+      // see isRetryableError, which decides on `status`/`code` directly)
       switch (error.status) {
         case 429: // Rate limited
           errorMessage = `Rate limited by Notion API: ${error.message}`;
@@ -133,6 +139,12 @@ export class NotionClientWrapper {
       }
     } else if (error instanceof Error) {
       errorMessage = error.message;
+
+      // Node network errors carry a string `code` (e.g. ECONNRESET)
+      const maybeCode = (error as NodeJS.ErrnoException).code;
+      if (typeof maybeCode === 'string') {
+        code = maybeCode;
+      }
     }
 
     // Log the error with context
@@ -145,6 +157,8 @@ export class NotionClientWrapper {
       success: false,
       habitName,
       error: errorMessage,
+      status,
+      code,
     };
   }
 
@@ -174,7 +188,7 @@ export class NotionClientWrapper {
       lastError = result;
 
       // Don't retry on the last attempt or for non-retryable errors
-      if (attempt === maxRetries || !this.isRetryableError(result.error)) {
+      if (attempt === maxRetries || !this.isRetryableError(result)) {
         break;
       }
 
@@ -191,27 +205,44 @@ export class NotionClientWrapper {
   }
 
   /**
-   * Determines if an error is retryable based on the error message
+   * Notion API status codes worth retrying (rate limiting and transient
+   * server errors)
    */
-  private isRetryableError(errorMessage?: string): boolean {
-    if (!errorMessage) return false;
+  private static readonly RETRYABLE_STATUS_CODES = new Set([
+    429, 500, 502, 503, 504,
+  ]);
 
-    const retryablePatterns = [
-      'Rate limited',
-      'server error',
-      'ECONNRESET',
-      'ETIMEDOUT',
-      'ENOTFOUND',
-      '429',
-      '500',
-      '502',
-      '503',
-      '504',
-    ];
+  /**
+   * Node.js network error codes worth retrying
+   */
+  private static readonly RETRYABLE_ERROR_CODES = new Set([
+    'ECONNRESET',
+    'ETIMEDOUT',
+    'ENOTFOUND',
+    'EAI_AGAIN',
+  ]);
 
-    return retryablePatterns.some(pattern =>
-      errorMessage.toLowerCase().includes(pattern.toLowerCase())
-    );
+  /**
+   * Determines if an error is retryable based on the Notion API status code
+   * or the network error code, rather than substring-matching the message
+   * (which could false-positive on unrelated messages).
+   */
+  private isRetryableError(result: CreateResult): boolean {
+    if (
+      result.status !== undefined &&
+      NotionClientWrapper.RETRYABLE_STATUS_CODES.has(result.status)
+    ) {
+      return true;
+    }
+
+    if (
+      result.code !== undefined &&
+      NotionClientWrapper.RETRYABLE_ERROR_CODES.has(result.code)
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -279,8 +310,12 @@ export class NotionClientWrapper {
 
 /**
  * Factory function to create NotionClientWrapper with environment configuration
+ *
+ * @param timezone - IANA timezone used for time-range calculation (defaults to "UTC")
  */
-export function createNotionClient(): NotionClientWrapper {
+export function createNotionClient(
+  timezone: string = 'UTC'
+): NotionClientWrapper {
   const token = process.env.NOTION_TOKEN;
   const databaseId = process.env.TIMEBOX_DATABASE_ID;
 
@@ -292,5 +327,5 @@ export function createNotionClient(): NotionClientWrapper {
     throw new Error('TIMEBOX_DATABASE_ID environment variable is required');
   }
 
-  return new NotionClientWrapper(token, databaseId);
+  return new NotionClientWrapper(token, databaseId, timezone);
 }
