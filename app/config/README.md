@@ -58,7 +58,8 @@ Each habit in the array has the following properties:
 
 - The end time for the habit in 24-hour format (HH:MM)
 - Used to set the EXPECTED property end time in Notion
-- Must be after the startTime
+- Must simply differ from `startTime`
+- If `endTime` is earlier than or equal to `startTime`'s time-of-day, the range is treated as crossing midnight and rolls into the next day (e.g. `"23:00"`–`"06:00"` is a valid 7-hour range ending the following day — see the 睡眠 habit in `habits.json`)
 - Example: `"08:00"`, `"19:30"`
 
 #### `enabled` (boolean, required)
@@ -157,7 +158,7 @@ Each habit in the array has the following properties:
 - All fields are required
 - `templateId` must exist in your Notion database
 - `frequency` array must contain at least one valid day name
-- `startTime` must be before `endTime`
+- `startTime` and `endTime` must not be identical; cross-midnight ranges (e.g. `"23:00"`–`"06:00"`) are valid and roll into the next day
 - Times must be in HH:MM format (24-hour)
 - Day names must be lowercase and spelled correctly
 
