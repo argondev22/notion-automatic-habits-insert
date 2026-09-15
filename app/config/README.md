@@ -4,7 +4,7 @@ This directory contains the configuration files for the Template-Based Habit Sch
 
 ## habits.json
 
-The `habits.json` file defines all the habits that should be automatically created in your Notion Timebox database. Each habit configuration includes scheduling, timing, and template information.
+The `habits.json` file defines all the habits that should be automatically created in your target Notion database. Each habit configuration includes scheduling, timing, and template information.
 
 ### Configuration Structure
 
@@ -33,7 +33,7 @@ Each habit in the array has the following properties:
 
 - The Notion template ID to use when creating this habit
 - Get this from your Notion database templates
-- Each habit should have its own template in the Timebox database
+- Each habit should have its own template in the target Notion database
 - Example: `"template-123"`, `"template-abc"`
 
 #### `frequency` (array of strings, required)
@@ -50,14 +50,14 @@ Each habit in the array has the following properties:
 #### `startTime` (string, required)
 
 - The start time for the habit in 24-hour format (HH:MM)
-- Used to set the EXPECTED property start time in Notion
+- Used to set the DATE property start time in Notion
 - Times are interpreted in the timezone specified in your `.env` file
 - Example: `"07:00"`, `"18:30"`
 
 #### `endTime` (string, required)
 
 - The end time for the habit in 24-hour format (HH:MM)
-- Used to set the EXPECTED property end time in Notion
+- Used to set the DATE property end time in Notion
 - Must simply differ from `startTime`
 - If `endTime` is earlier than or equal to `startTime`'s time-of-day, the range is treated as crossing midnight and rolls into the next day (e.g. `"23:00"`–`"06:00"` is a valid 7-hour range ending the following day — see the 睡眠 habit in `habits.json`)
 - Example: `"08:00"`, `"19:30"`
@@ -146,11 +146,11 @@ Each habit in the array has the following properties:
 
 ### Template Requirements
 
-1. **Create Templates in Notion**: Each habit should have its own template in your Timebox database
+1. **Create Templates in Notion**: Each habit should have its own template in your target Notion database
 2. **Template Content**: Templates should be pre-configured with the content you want for each habit
 3. **Automatic Properties**: The system will automatically set:
-   - `TAG` property to `"HABIT"`
-   - `EXPECTED` property to the calculated time range
+   - `TYPE` property to `PROJECT` and `HABIT`
+   - `DATE` property to the calculated time range
 4. **Preserved Properties**: All other properties from the template will be preserved
 
 ### Validation Rules
@@ -166,7 +166,7 @@ Each habit in the array has the following properties:
 
 To find your Notion template IDs:
 
-1. Go to your Timebox database in Notion
+1. Go to your target Notion database
 2. Click on the "New" button dropdown
 3. Find your habit templates in the list
 4. The template ID can be found in the URL or through the Notion API

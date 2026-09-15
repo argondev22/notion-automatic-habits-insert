@@ -27,7 +27,7 @@ export interface HabitConfig {
  */
 export interface SystemConfig {
   NOTION_TOKEN: string;
-  TIMEBOX_DATABASE_ID: string;
+  NOTION_DATABASE_ID: string;
   TIMEZONE: string;
 }
 
@@ -129,12 +129,12 @@ export interface NotionTemplate {
  * Notion property types for habit entries
  */
 export interface NotionHabitProperties {
-  TAG: {
+  TYPE: {
     multi_select: Array<{
       name: string;
     }>;
   };
-  EXPECTED: {
+  DATE: {
     date: {
       start: string;
       end: string;

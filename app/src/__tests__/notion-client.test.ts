@@ -93,7 +93,7 @@ describe('NotionClientWrapper', () => {
       process.env = {
         ...originalEnv,
         NOTION_TOKEN: 'test-token',
-        TIMEBOX_DATABASE_ID: 'test-db-id',
+        NOTION_DATABASE_ID: 'test-db-id',
       };
     });
 

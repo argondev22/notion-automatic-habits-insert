@@ -32,7 +32,7 @@ function loadConfiguration(): AppConfig {
   console.log('Loading application configuration...');
 
   // Required environment variables
-  const requiredVars = ['NOTION_TOKEN', 'TIMEBOX_DATABASE_ID'];
+  const requiredVars = ['NOTION_TOKEN', 'NOTION_DATABASE_ID'];
 
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
 

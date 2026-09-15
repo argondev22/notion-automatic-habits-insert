@@ -2,12 +2,12 @@
 
 ## Introduction
 
-A habit management system leveraging Notion template functionality. This system eliminates the traditional Habits database and implements a simplified habit tracking system unified under the Timebox database.
+A habit management system leveraging Notion template functionality. This system eliminates the traditional Habits database and implements a simplified habit tracking system unified under a single Notion database.
 
 ## Glossary
 
 - **System**: The complete Template-Based Habit Scheduler application
-- **Timebox_Database**: Notion database that manages both habits and tasks in a unified manner (formerly Todos database)
+- **Target_Database**: The Notion database that manages both habits and tasks in a unified manner
 - **Template**: Notion database template functionality
 - **Habit_Template**: Notion template created specifically for habits
 - **Scheduled_Job**: The GitHub Actions cron workflow that invokes the System's one-shot CLI entry point once per scheduled run (also triggerable manually via `workflow_dispatch`)
@@ -23,7 +23,7 @@ A habit management system leveraging Notion template functionality. This system 
 
 #### Acceptance Criteria
 
-1. WHEN the System starts up, THE Template_Service SHALL retrieve all available templates from the Timebox_Database
+1. WHEN the System starts up, THE Template_Service SHALL retrieve all available templates from the Target_Database
 2. WHEN template retrieval fails, THE Template_Service SHALL log the error and continue with cached templates if available
 3. THE Template_Service SHALL filter templates to identify habit-related templates
 4. WHEN no habit templates are found, THE Template_Service SHALL log a warning message
@@ -47,14 +47,14 @@ A habit management system leveraging Notion template functionality. This system 
 #### Acceptance Criteria
 
 1. WHEN creating a habit entry, THE Template_Service SHALL use the appropriate Notion template
-2. WHEN a template is applied, THE Template_Service SHALL set the TAG property to "HABIT"
-3. WHEN a template is applied, THE Template_Service SHALL set the EXPECTED property to the calculated time period
+2. WHEN a template is applied, THE Template_Service SHALL set the TYPE property to "PROJECT" and "HABIT"
+3. WHEN a template is applied, THE Template_Service SHALL set the DATE property to the calculated time period
 4. THE Template_Service SHALL preserve all other template properties and content
 5. WHEN template creation fails, THE Template_Service SHALL log the error and return failure status
 
 ### Requirement 4: Time Period Calculation
 
-**User Story:** As a system, I want to calculate appropriate time periods for habits, so that the EXPECTED property is set with meaningful time ranges.
+**User Story:** As a system, I want to calculate appropriate time periods for habits, so that the DATE property is set with meaningful time ranges.
 
 #### Acceptance Criteria
 
@@ -97,7 +97,7 @@ A habit management system leveraging Notion template functionality. This system 
 #### Acceptance Criteria
 
 1. THE System SHALL read configuration from environment variables
-2. THE System SHALL support configuration of Timebox_Database ID
+2. THE System SHALL support configuration of Target_Database ID
 3. THE System SHALL support configuration of habit scheduling rules
 4. WHEN configuration is invalid, THE System SHALL log errors and use default values where available
 5. THE System SHALL validate all configuration values at startup

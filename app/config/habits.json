@@ -1,7 +1,7 @@
 [
   {
     "name": "運動",
-    "templateId": "2cdd94010e5880609df7def176a64940",
+    "templateId": "3dbd94010e58806c9541c07bde8f906e",
     "frequency": [
       "monday",
       "tuesday",
@@ -17,7 +17,7 @@
   },
   {
     "name": "朝ケア",
-    "templateId": "2c8d94010e5880b0a8e7d0c39cda31b4",
+    "templateId": "3dbd94010e5880798a0ccb7192fe9c11",
     "frequency": [
       "monday",
       "tuesday",
@@ -33,7 +33,7 @@
   },
   {
     "name": "朝食",
-    "templateId": "2c8d94010e588049a023de7339341067",
+    "templateId": "3dbd94010e5880adaa1cc877fce5071b",
     "frequency": [
       "monday",
       "tuesday",
@@ -49,7 +49,7 @@
   },
   {
     "name": "仕事",
-    "templateId": "2d1d94010e5880e9afe9c28ed70ca836",
+    "templateId": "3dbd94010e5880a08d67f0857be62624",
     "frequency": ["monday", "tuesday", "wednesday", "thursday", "friday"],
     "startTime": "09:00",
     "endTime": "18:00",
@@ -57,7 +57,7 @@
   },
   {
     "name": "英会話",
-    "templateId": "392d94010e58805e8a1cc89387b24e17",
+    "templateId": "3dbd94010e58809e9939d238104ba5ba",
     "frequency": [
       "monday",
       "tuesday",
@@ -73,7 +73,7 @@
   },
   {
     "name": "昼食",
-    "templateId": "2d2d94010e5880e88acdd374dd5f1ae6",
+    "templateId": "3dbd94010e5880769ee3fdf9982111de",
     "frequency": [
       "monday",
       "tuesday",
@@ -89,7 +89,7 @@
   },
   {
     "name": "夕食",
-    "templateId": "2d1d94010e58804e985dc3d0cf8875e8",
+    "templateId": "3dbd94010e5880498b28c140ad12bc09",
     "frequency": [
       "monday",
       "tuesday",
@@ -105,7 +105,7 @@
   },
   {
     "name": "振り返り",
-    "templateId": "2d1d94010e5880569e96f1d645d8272d",
+    "templateId": "3dbd94010e588026b752d35f230f9c2a",
     "frequency": ["sunday"],
     "startTime": "20:30",
     "endTime": "21:00",
@@ -113,7 +113,7 @@
   },
   {
     "name": "目標設定",
-    "templateId": "2dad94010e588043b58fe9b0326b071e",
+    "templateId": "3dbd94010e5880ca82d0c112114d0ebb",
     "frequency": ["sunday"],
     "startTime": "20:30",
     "endTime": "21:00",
@@ -121,7 +121,7 @@
   },
   {
     "name": "風呂/夜ケア",
-    "templateId": "2d1d94010e58801981fedbf888f73a88",
+    "templateId": "3dbd94010e5880aa9e39d916dd587d40",
     "frequency": [
       "monday",
       "tuesday",
@@ -137,7 +137,7 @@
   },
   {
     "name": "睡眠",
-    "templateId": "2c9d94010e58809b905dcbd84076d34d",
+    "templateId": "3dbd94010e58809b89c6ce1f6ff4b563",
     "frequency": [
       "monday",
       "tuesday",

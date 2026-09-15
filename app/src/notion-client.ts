@@ -17,25 +17,21 @@ import { calculateTimeRange } from './utils/time';
  */
 export class NotionClientWrapper {
   private client: Client;
-  private timeboxDatabaseId: string;
+  private databaseId: string;
   private timezone: string;
 
-  constructor(
-    token: string,
-    timeboxDatabaseId: string,
-    timezone: string = 'UTC'
-  ) {
+  constructor(token: string, databaseId: string, timezone: string = 'UTC') {
     if (!token) {
       throw new Error('Notion token is required');
     }
-    if (!timeboxDatabaseId) {
-      throw new Error('Timebox database ID is required');
+    if (!databaseId) {
+      throw new Error('Notion database ID is required');
     }
 
     this.client = new Client({
       auth: token,
     });
-    this.timeboxDatabaseId = timeboxDatabaseId;
+    this.databaseId = databaseId;
     this.timezone = timezone;
   }
 
@@ -57,21 +53,20 @@ export class NotionClientWrapper {
       // Create the page using Notion template
       const response = await this.client.pages.create({
         parent: {
-          database_id: this.timeboxDatabaseId,
+          database_id: this.databaseId,
         },
         template: {
           type: 'template_id',
           template_id: habit.templateId,
         },
+        // These property names and values are the single place this
+        // scheduler is coupled to the target database's schema -- update
+        // them here if the target database's properties change.
         properties: {
-          TAG: {
-            multi_select: [
-              {
-                name: 'HABIT',
-              },
-            ],
+          TYPE: {
+            multi_select: [{ name: 'PROJECT' }, { name: 'HABIT' }],
           },
-          EXPECTED: {
+          DATE: {
             date: {
               start: timeRange.start,
               end: timeRange.end,
@@ -260,7 +255,7 @@ export class NotionClientWrapper {
     try {
       // Try to retrieve the database to validate connection and permissions
       await this.client.databases.retrieve({
-        database_id: this.timeboxDatabaseId,
+        database_id: this.databaseId,
       });
 
       return { valid: true };
@@ -286,7 +281,7 @@ export class NotionClientWrapper {
   } | null> {
     try {
       const database = await this.client.databases.retrieve({
-        database_id: this.timeboxDatabaseId,
+        database_id: this.databaseId,
       });
 
       const title =
@@ -317,14 +312,14 @@ export function createNotionClient(
   timezone: string = 'UTC'
 ): NotionClientWrapper {
   const token = process.env.NOTION_TOKEN;
-  const databaseId = process.env.TIMEBOX_DATABASE_ID;
+  const databaseId = process.env.NOTION_DATABASE_ID;
 
   if (!token) {
     throw new Error('NOTION_TOKEN environment variable is required');
   }
 
   if (!databaseId) {
-    throw new Error('TIMEBOX_DATABASE_ID environment variable is required');
+    throw new Error('NOTION_DATABASE_ID environment variable is required');
   }
 
   return new NotionClientWrapper(token, databaseId, timezone);

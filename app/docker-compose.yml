@@ -9,7 +9,7 @@ services:
     environment:
       # Notion API設定
       - NOTION_TOKEN=${NOTION_TOKEN}
-      - TIMEBOX_DATABASE_ID=${TIMEBOX_DATABASE_ID}
+      - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
       - TIMEZONE=${TIMEZONE:-Asia/Tokyo}
       # ログレベル（オプション）
       - LOG_LEVEL=${LOG_LEVEL:-info}

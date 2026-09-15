@@ -23,7 +23,7 @@ describe('Main Application', () => {
     it('should load configuration with all required environment variables', () => {
       // Set required environment variables
       process.env.NOTION_TOKEN = 'test-api-key';
-      process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
+      process.env.NOTION_DATABASE_ID = 'test-database-id';
       process.env.TIMEZONE = 'America/New_York';
 
       const config = loadConfiguration();
@@ -37,7 +37,7 @@ describe('Main Application', () => {
     it('should use default value for optional TIMEZONE environment variable', () => {
       // Set only required environment variables
       process.env.NOTION_TOKEN = 'test-api-key';
-      process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
+      process.env.NOTION_DATABASE_ID = 'test-database-id';
 
       const config = loadConfiguration();
 
@@ -47,7 +47,7 @@ describe('Main Application', () => {
     it('should include custom config path when provided', () => {
       // Set required environment variables
       process.env.NOTION_TOKEN = 'test-api-key';
-      process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
+      process.env.NOTION_DATABASE_ID = 'test-database-id';
       process.env.HABIT_CONFIG_PATH = '/custom/path/habits.json';
 
       const config = loadConfiguration();
@@ -65,7 +65,7 @@ describe('Main Application', () => {
 
       // Don't set required environment variables
       delete process.env.NOTION_TOKEN;
-      delete process.env.TIMEBOX_DATABASE_ID;
+      delete process.env.NOTION_DATABASE_ID;
 
       expect(() => loadConfiguration()).toThrow('process.exit called');
       expect(mockExit).toHaveBeenCalledWith(1);
@@ -87,7 +87,7 @@ describe('Main Application', () => {
 
       // Set required environment variables but invalid timezone
       process.env.NOTION_TOKEN = 'test-api-key';
-      process.env.TIMEBOX_DATABASE_ID = 'test-database-id';
+      process.env.NOTION_DATABASE_ID = 'test-database-id';
       process.env.TIMEZONE = 'Invalid/Timezone';
 
       expect(() => loadConfiguration()).toThrow('process.exit called');

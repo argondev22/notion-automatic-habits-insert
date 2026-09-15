@@ -120,12 +120,12 @@ describe('Core Data Model Interfaces', () => {
     it('should define all required environment variables', () => {
       const config: SystemConfig = {
         NOTION_TOKEN: 'secret_test_key',
-        TIMEBOX_DATABASE_ID: 'database_test_id',
+        NOTION_DATABASE_ID: 'database_test_id',
         TIMEZONE: 'Asia/Tokyo',
       };
 
       expect(typeof config.NOTION_TOKEN).toBe('string');
-      expect(typeof config.TIMEBOX_DATABASE_ID).toBe('string');
+      expect(typeof config.NOTION_DATABASE_ID).toBe('string');
       expect(typeof config.TIMEZONE).toBe('string');
     });
   });
