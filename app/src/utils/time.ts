@@ -6,6 +6,21 @@
 import { TimeRange, TimeCalculationParams, HabitConfig } from '../types';
 
 /**
+ * A calendar date (no time, no timezone attached).
+ */
+export interface CalendarDate {
+  year: number;
+  month: number; // 1-12
+  day: number;
+}
+
+/**
+ * Canonical time-format regex (HH:MM). Permissive of single-digit hours
+ * (e.g. "9:00") since existing config data relies on that.
+ */
+export const TIME_FORMAT_REGEX = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+
+/**
  * Calculate time range for a habit based on its configuration
  *
  * This function calculates the time range for tomorrow's date.
@@ -21,30 +36,7 @@ export function calculateTimeRange(
   timezone: string = 'UTC',
   date?: Date
 ): TimeRange {
-  const targetDate = date || new Date();
-
-  // Calculate tomorrow's date
-  const tomorrow = new Date(targetDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  // Parse start and end times
-  const startTime = parseTimeString(habit.startTime);
-  const endTime = parseTimeString(habit.endTime);
-
-  // Create Date objects for start and end times (for tomorrow)
-  const startDateTime = createDateTimeInTimezone(tomorrow, startTime, timezone);
-  const endDateTime = createDateTimeInTimezone(tomorrow, endTime, timezone);
-
-  // Handle case where end time is before start time (crosses midnight)
-  if (endDateTime <= startDateTime) {
-    // Add one day to end time
-    endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-  }
-
-  return {
-    start: startDateTime.toISOString(),
-    end: endDateTime.toISOString(),
-  };
+  return buildTimeRange(habit.startTime, habit.endTime, timezone, date);
 }
 
 /**
@@ -58,38 +50,186 @@ export function calculateTimeRange(
 export function calculateTimeRangeFromParams(
   params: TimeCalculationParams
 ): TimeRange {
-  const targetDate = params.date || new Date();
-
-  // Calculate tomorrow's date
-  const tomorrow = new Date(targetDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  // Parse start and end times
-  const startTime = parseTimeString(params.startTime);
-  const endTime = parseTimeString(params.endTime);
-
-  // Create Date objects for start and end times (for tomorrow)
-  const startDateTime = createDateTimeInTimezone(
-    tomorrow,
-    startTime,
-    params.timezone
+  return buildTimeRange(
+    params.startTime,
+    params.endTime,
+    params.timezone,
+    params.date
   );
-  const endDateTime = createDateTimeInTimezone(
-    tomorrow,
-    endTime,
-    params.timezone
-  );
+}
 
-  // Handle case where end time is before start time (crosses midnight)
-  if (endDateTime <= startDateTime) {
-    // Add one day to end time
-    endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-  }
+/**
+ * Shared implementation behind `calculateTimeRange` and
+ * `calculateTimeRangeFromParams`: resolves the scheduling target date in
+ * `timezone`, then builds the start/end instants, rolling the end time into
+ * the following calendar day when it crosses midnight.
+ */
+function buildTimeRange(
+  startTimeString: string,
+  endTimeString: string,
+  timezone: string,
+  date?: Date
+): TimeRange {
+  const targetDate = getSchedulingTargetDate(timezone, date);
+
+  const startTime = parseTimeString(startTimeString);
+  const endTime = parseTimeString(endTimeString);
+
+  const startDateTime = zonedTimeToUtc(targetDate, startTime, timezone);
+
+  // Handle case where end time is before (or equal to) start time (crosses midnight)
+  const startMinutes = startTime.hours * 60 + startTime.minutes;
+  const endMinutes = endTime.hours * 60 + endTime.minutes;
+  const endCalendarDate =
+    endMinutes <= startMinutes ? addCalendarDays(targetDate, 1) : targetDate;
+
+  const endDateTime = zonedTimeToUtc(endCalendarDate, endTime, timezone);
 
   return {
     start: startDateTime.toISOString(),
     end: endDateTime.toISOString(),
   };
+}
+
+/**
+ * The calendar date that `instant` falls on in `timezone`.
+ *
+ * @param instant - The instant to resolve
+ * @param timezone - IANA timezone to resolve the date in
+ * @returns The year/month/day that `instant` falls on in `timezone`
+ */
+export function getCalendarDateInTimezone(
+  instant: Date,
+  timezone: string
+): CalendarDate {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(instant);
+
+  const read = (type: string): number =>
+    Number(parts.find(p => p.type === type)!.value);
+
+  return {
+    year: read('year'),
+    month: read('month'),
+    day: read('day'),
+  };
+}
+
+/**
+ * Calendar-arithmetic day addition (DST-safe; no instant involved).
+ *
+ * @param date - Starting calendar date
+ * @param days - Number of days to add (may be negative)
+ * @returns The resulting calendar date
+ */
+export function addCalendarDays(
+  date: CalendarDate,
+  days: number
+): CalendarDate {
+  const base = new Date(Date.UTC(date.year, date.month - 1, date.day));
+  base.setUTCDate(base.getUTCDate() + days);
+
+  return {
+    year: base.getUTCFullYear(),
+    month: base.getUTCMonth() + 1,
+    day: base.getUTCDate(),
+  };
+}
+
+/**
+ * The date this run schedules habits for: tomorrow, as seen in `timezone`.
+ * Single source of truth for both weekday matching and time-range building.
+ *
+ * @param timezone - IANA timezone used to resolve "today"/"tomorrow"
+ * @param now - Optional instant to treat as "now" (defaults to the current time)
+ * @returns Tomorrow's calendar date in `timezone`
+ */
+export function getSchedulingTargetDate(
+  timezone: string,
+  now?: Date
+): CalendarDate {
+  const currentInstant = now || new Date();
+  const todayInTimezone = getCalendarDateInTimezone(currentInstant, timezone);
+  return addCalendarDays(todayInTimezone, 1);
+}
+
+/**
+ * Lowercase English weekday name for a calendar date (e.g. "tuesday").
+ *
+ * @param date - Calendar date to resolve the weekday for
+ * @returns Lowercase weekday name
+ */
+export function getWeekdayNameForCalendarDate(date: CalendarDate): string {
+  return new Date(Date.UTC(date.year, date.month - 1, date.day))
+    .toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long' })
+    .toLowerCase();
+}
+
+/**
+ * Get the UTC offset (in milliseconds) that `timezone` is at a given instant.
+ * Renders the instant in the target timezone, re-reads those wall-clock
+ * components as if they were UTC, and diffs against the real instant.
+ */
+function getTimezoneOffsetMs(utcMs: number, timezone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(new Date(utcMs));
+
+  const read = (type: string): number =>
+    Number(parts.find(p => p.type === type)!.value);
+
+  // en-US with hour12:false can render midnight as hour 24
+  const hour = read('hour') % 24;
+
+  const asIfUtc = Date.UTC(
+    read('year'),
+    read('month') - 1,
+    read('day'),
+    hour,
+    read('minute'),
+    read('second')
+  );
+
+  return asIfUtc - utcMs;
+}
+
+/**
+ * Build the UTC instant corresponding to a wall-clock date/time in `timezone`.
+ * Guesses the instant assuming today's offset, then corrects once against
+ * the offset at the guessed instant (this second pass handles DST boundaries).
+ */
+function zonedTimeToUtc(
+  date: CalendarDate,
+  time: { hours: number; minutes: number },
+  timezone: string
+): Date {
+  const guess = Date.UTC(
+    date.year,
+    date.month - 1,
+    date.day,
+    time.hours,
+    time.minutes,
+    0,
+    0
+  );
+  const firstOffset = getTimezoneOffsetMs(guess, timezone);
+  let resultMs = guess - firstOffset;
+  const secondOffset = getTimezoneOffsetMs(resultMs, timezone);
+  if (secondOffset !== firstOffset) {
+    resultMs = guess - secondOffset;
+  }
+  return new Date(resultMs);
 }
 
 /**
@@ -102,8 +242,7 @@ function parseTimeString(timeString: string): {
   hours: number;
   minutes: number;
 } {
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
-  const match = timeString.match(timeRegex);
+  const match = timeString.match(TIME_FORMAT_REGEX);
 
   if (!match) {
     throw new Error(
@@ -118,85 +257,13 @@ function parseTimeString(timeString: string): {
 }
 
 /**
- * Create a Date object for a specific date and time in a given timezone
- *
- * This function creates a UTC Date object that represents the specified local time
- * in the given timezone.
- *
- * @param date - Base date (used to determine the day in the target timezone)
- * @param time - Time object with hours and minutes
- * @param timezone - Timezone string (e.g., "Asia/Tokyo", "America/New_York")
- * @returns Date object representing the datetime in UTC
- */
-function createDateTimeInTimezone(
-  date: Date,
-  time: { hours: number; minutes: number },
-  timezone: string
-): Date {
-  // Get the date components in the target timezone
-  const year = parseInt(
-    date.toLocaleDateString('en-CA', { timeZone: timezone, year: 'numeric' })
-  );
-  const month = parseInt(
-    date.toLocaleDateString('en-CA', { timeZone: timezone, month: '2-digit' })
-  );
-  const day = parseInt(
-    date.toLocaleDateString('en-CA', { timeZone: timezone, day: '2-digit' })
-  );
-
-  // Create a UTC date for the target date at midnight
-  const midnightUTC = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
-
-  // Create a Date object from this UTC timestamp
-  const midnightDate = new Date(midnightUTC);
-
-  // Get what time midnight UTC appears as in the target timezone
-  const midnightInTz = midnightDate.toLocaleString('sv-SE', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-
-  const [, midnightTzTime] = midnightInTz.split(' ');
-  const [tzHour, tzMin] = midnightTzTime.split(':').map(Number);
-
-  // Calculate the offset in milliseconds
-  // If midnight UTC shows as 09:00 in Tokyo, the offset is +9 hours
-  const offsetHours = tzHour;
-  const offsetMinutes = tzMin;
-  const offsetMs = (offsetHours * 60 + offsetMinutes) * 60 * 1000;
-
-  // Now create the target time in UTC
-  // We want the time to be time.hours:time.minutes in the target timezone
-  // So we need to subtract the offset
-  const targetTimeMs = Date.UTC(
-    year,
-    month - 1,
-    day,
-    time.hours,
-    time.minutes,
-    0,
-    0
-  );
-  const resultMs = targetTimeMs - offsetMs;
-
-  return new Date(resultMs);
-}
-
-/**
  * Validate time string format
  *
  * @param timeString - Time string to validate
  * @returns True if valid HH:MM format
  */
 export function isValidTimeFormat(timeString: string): boolean {
-  const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
-  return timeRegex.test(timeString);
+  return TIME_FORMAT_REGEX.test(timeString);
 }
 
 /**

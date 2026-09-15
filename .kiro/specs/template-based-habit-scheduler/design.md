@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Template-Based Habit Scheduler is a streamlined system that leverages Notion's native template functionality to create habit entries directly in the Timebox database. This design eliminates unnecessary complexity by using a single-component architecture focused on simplicity and reliability.
+The Template-Based Habit Scheduler is a streamlined system that leverages Notion's native template functionality to create habit entries directly in the target Notion database. This design eliminates unnecessary complexity by using a single-component architecture focused on simplicity and reliability.
 
 The System is a **one-shot CLI script**, not a server. It is invoked directly by a GitHub Actions scheduled workflow (cron, plus manual `workflow_dispatch` re-runs); there is no HTTP listener, no webhook, and no port to expose. Each invocation runs the habit-creation job to completion and exits with a status code that reflects the outcome, so GitHub Actions can report success/failure directly.
 
@@ -34,7 +34,7 @@ graph TB
     end
 
     subgraph "Notion"
-        TD[Timebox Database]
+        TD[Target Notion Database]
         TEMPLATES[Templates]
     end
 
@@ -54,7 +54,7 @@ graph TB
 1. **GitHub Actions cron (or manual `workflow_dispatch`) invokes the one-shot script** → Triggers habit creation
 2. **Habit Manager reads configuration** → Determines which habits to create today
 3. **For each scheduled habit** → Uses Notion template to create entry
-4. **Sets TAG="HABIT" and EXPECTED time** → Logs a run summary and exits (0 on success, 1 if errors occurred)
+4. **Sets TYPE="PROJECT"/"HABIT" and DATE time** → Logs a run summary and exits (0 on success, 1 if errors occurred)
 
 ## Components and Interfaces
 
@@ -64,7 +64,7 @@ graph TB
 
 ```typescript
 async function main(): Promise<void>;
-// - Loads and validates NOTION_TOKEN, TIMEBOX_DATABASE_ID, TIMEZONE (optional)
+// - Loads and validates NOTION_TOKEN, NOTION_DATABASE_ID, TIMEZONE (optional)
 // - Runs habitManager.validateSystem() and fails fast (exit 1) if invalid
 // - Runs habitManager.createScheduledHabits()
 // - Logs a run summary and exits 0 on success, 1 if the result contains errors
@@ -117,16 +117,16 @@ class HabitManager {
   private async createHabitFromTemplate(habit: HabitConfig): Promise<CreateResult> {
     // Creates a Notion page using the specified template
     // The page title will be inherited from the template itself
-    // Only TAG and EXPECTED properties are set by the system
+    // Only TYPE and DATE properties are set by the system
     return await this.notionClient.pages.create({
-      parent: { database_id: this.timeboxDatabaseId },
+      parent: { database_id: this.databaseId },
       template: {
         type: "template_id",
         template_id: habit.templateId,
       },
       properties: {
-        TAG: { select: { name: "HABIT" } },
-        EXPECTED: {
+        TYPE: { select: { name: "HABIT" } },
+        DATE: {
           date: {
             start: this.calculateStartTime(habit),
             end: this.calculateEndTime(habit),
@@ -195,7 +195,7 @@ const habitsConfig: HabitConfig[] = [
 ```typescript
 interface SystemConfig {
   NOTION_TOKEN: string;
-  TIMEBOX_DATABASE_ID: string;
+  NOTION_DATABASE_ID: string;
   TIMEZONE: string;
 }
 ```
@@ -204,7 +204,7 @@ interface SystemConfig {
 
 There is no HTTP surface to authenticate: the System has no webhook, no listening port, and no inbound request path. Access control is delegated entirely to the trigger layer:
 
-1. **GitHub Actions Secrets**: `NOTION_TOKEN` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the scheduled run
+1. **GitHub Actions Secrets**: `NOTION_TOKEN` and `NOTION_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the scheduled run
 2. **Trigger Restriction**: Only the repository's own `schedule` cron and `workflow_dispatch` (which requires repository write access to invoke) can start a run — there is no externally reachable endpoint to secure
 3. **No Secret Logging**: Secret values must never appear in logs or error messages
 4. **Accepted Duplicate-Run Risk**: The System intentionally has no deduplication/idempotency logic; manually re-running the workflow more than once on the same day can create duplicate Notion pages. This is an accepted trade-off, not a defect to fix.
@@ -284,11 +284,7 @@ The system is designed to be invoked once per day by a GitHub Actions scheduled 
 ### Frequency Patterns
 
 ```typescript
-function isDueToday(
-  habit: HabitConfig,
-  timezone: string = "UTC",
-  today?: Date
-): boolean {
+function isDueToday(habit: HabitConfig, timezone: string = "UTC", today?: Date): boolean {
   if (!habit.enabled) return false;
 
   const targetDate = today || new Date();
@@ -326,7 +322,7 @@ _For any_ habit configuration and date combination, the system should create a h
 **Validates: Requirements 2.2, 2.4**
 
 **Property 2: Template Application Consistency**
-_For any_ habit creation, the system should use the specified template and correctly set both TAG="HABIT" and EXPECTED properties with calculated time ranges
+_For any_ habit creation, the system should use the specified template and correctly set both TYPE="PROJECT"/"HABIT" and DATE properties with calculated time ranges
 **Validates: Requirements 3.1, 3.2, 3.3**
 
 **Property 3: Time Calculation Reliability**
@@ -468,9 +464,9 @@ describe("Habit Scheduling Properties", () => {
         async (habitConfig) => {
           const result = await habitManager.createHabitFromTemplate(habitConfig);
 
-          expect(result.properties.TAG.select.name).toBe("HABIT");
-          expect(result.properties.EXPECTED.date.start).toBeDefined();
-          expect(result.properties.EXPECTED.date.end).toBeDefined();
+          expect(result.properties.TYPE.select.name).toBe("HABIT");
+          expect(result.properties.DATE.date.start).toBeDefined();
+          expect(result.properties.DATE.date.end).toBeDefined();
           expect(result.templateUsed).toBe(habitConfig.templateId);
         }
       ),
@@ -531,14 +527,14 @@ src/
 
 ```bash
 NOTION_TOKEN=secret_xxx
-TIMEBOX_DATABASE_ID=database_id_xxx
+NOTION_DATABASE_ID=database_id_xxx
 TIMEZONE=Asia/Tokyo
 ```
 
 ### Security Considerations
 
 - **No Inbound Surface**: There is no server, no port, and no webhook to secure — the trigger is exclusively GitHub Actions' own `schedule`/`workflow_dispatch` mechanisms
-- **Secrets via GitHub Actions**: `NOTION_TOKEN` and `TIMEBOX_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the run
+- **Secrets via GitHub Actions**: `NOTION_TOKEN` and `NOTION_DATABASE_ID` are stored as encrypted repository Secrets and injected as environment variables only for the duration of the run
 - **Environment Security**: All secrets must be stored in environment variables, never in code
 - **Accepted Duplicate-Run Risk**: No deduplication/idempotency logic exists by design; manual re-runs on the same day can create duplicate Notion pages
 

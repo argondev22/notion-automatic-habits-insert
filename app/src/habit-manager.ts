@@ -21,6 +21,7 @@ export class HabitManager {
   private notionClient: NotionClientWrapper;
   private configPath?: string;
   private timezone: string;
+  private cachedHabits: HabitConfig[] | null = null;
 
   constructor(
     notionClient: NotionClientWrapper,
@@ -52,12 +53,24 @@ export class HabitManager {
       const dueHabits = getHabitsDueToday(habits, this.timezone);
       console.log(`Found ${dueHabits.length} habit(s) due today`);
 
+      // Habits that were loaded but are not due today (disabled, or
+      // frequency doesn't match) are "skipped" -- distinct from habits that
+      // were attempted but "failed" during creation.
+      // Compared by object identity, not by name: `dueHabits` is a filtered
+      // view of `habits`, so identity is exact and two habits sharing a name
+      // are still classified independently.
+      const dueHabitSet = new Set(dueHabits);
+      const skippedHabitNames = habits
+        .filter(habit => !dueHabitSet.has(habit))
+        .map(habit => habit.name);
+
       if (dueHabits.length === 0) {
         console.log('No habits scheduled for today');
         return {
           success: true,
           created: [],
-          skipped: [],
+          skipped: habits.map(habit => habit.name),
+          failed: [],
           errors: [],
           executionTime: Date.now() - startTime,
         };
@@ -97,7 +110,11 @@ export class HabitManager {
       }
 
       // 4. Aggregate results
-      const aggregatedResult = this.aggregateResults(results, startTime);
+      const aggregatedResult = this.aggregateResults(
+        results,
+        skippedHabitNames,
+        startTime
+      );
 
       // 5. Log summary
       this.logExecutionSummary(aggregatedResult);
@@ -115,6 +132,7 @@ export class HabitManager {
         success: false,
         created: [],
         skipped: [],
+        failed: [],
         errors,
         executionTime: Date.now() - startTime,
       };
@@ -123,9 +141,18 @@ export class HabitManager {
 
   /**
    * Load habit configuration with comprehensive error handling
+   *
+   * Memoized: the config file is read at most once per HabitManager
+   * instance, since `createScheduledHabits` and `validateSystem` both need
+   * it and would otherwise duplicate the file read and its log output. A
+   * failed load is never cached -- it must throw again on every call.
    * Requirements: 7.1, 7.2, 6.1
    */
   private async loadHabitConfiguration(): Promise<HabitConfig[]> {
+    if (this.cachedHabits) {
+      return this.cachedHabits;
+    }
+
     try {
       const habits = await loadHabitConfig(this.configPath);
 
@@ -133,6 +160,7 @@ export class HabitManager {
         console.warn('No habits found in configuration file');
       }
 
+      this.cachedHabits = habits;
       return habits;
     } catch (error) {
       const errorMessage =
@@ -150,17 +178,18 @@ export class HabitManager {
    */
   private aggregateResults(
     results: CreateResult[],
+    skipped: string[],
     startTime: number
   ): HabitCreationResult {
     const created: HabitEntry[] = [];
-    const skipped: string[] = [];
+    const failed: string[] = [];
     const errors: string[] = [];
 
     for (const result of results) {
       if (result.success && result.entry) {
         created.push(result.entry);
       } else {
-        skipped.push(result.habitName);
+        failed.push(result.habitName);
         if (result.error) {
           errors.push(`${result.habitName}: ${result.error}`);
         }
@@ -174,6 +203,7 @@ export class HabitManager {
       success,
       created,
       skipped,
+      failed,
       errors,
       executionTime,
     };
@@ -184,13 +214,14 @@ export class HabitManager {
    * Requirements: 6.1, 8.1, 8.2
    */
   private logExecutionSummary(result: HabitCreationResult): void {
-    const { success, created, skipped, errors, executionTime } = result;
+    const { success, created, skipped, failed, errors, executionTime } = result;
 
     console.log('\n=== Habit Creation Summary ===');
     console.log(`Status: ${success ? 'SUCCESS' : 'PARTIAL_FAILURE'}`);
     console.log(`Execution time: ${executionTime}ms`);
     console.log(`Created: ${created.length} habit(s)`);
     console.log(`Skipped: ${skipped.length} habit(s)`);
+    console.log(`Failed: ${failed.length} habit(s)`);
     console.log(`Errors: ${errors.length}`);
 
     if (created.length > 0) {
@@ -203,6 +234,13 @@ export class HabitManager {
     if (skipped.length > 0) {
       console.log('\nSkipped habits:');
       skipped.forEach(habitName => {
+        console.log(`  - ${habitName}`);
+      });
+    }
+
+    if (failed.length > 0) {
+      console.log('\nFailed habits:');
+      failed.forEach(habitName => {
         console.log(`  - ${habitName}`);
       });
     }
@@ -301,7 +339,7 @@ export class HabitManager {
     const warnings: string[] = [];
 
     // Required environment variables
-    const requiredVars = ['NOTION_TOKEN', 'TIMEBOX_DATABASE_ID'];
+    const requiredVars = ['NOTION_TOKEN', 'NOTION_DATABASE_ID'];
 
     for (const varName of requiredVars) {
       const value = process.env[varName];

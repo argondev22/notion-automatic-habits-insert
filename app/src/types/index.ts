@@ -27,7 +27,7 @@ export interface HabitConfig {
  */
 export interface SystemConfig {
   NOTION_TOKEN: string;
-  TIMEBOX_DATABASE_ID: string;
+  NOTION_DATABASE_ID: string;
   TIMEZONE: string;
 }
 
@@ -41,7 +41,8 @@ export interface SystemConfig {
 export interface HabitCreationResult {
   success: boolean;
   created: HabitEntry[];
-  skipped: string[];
+  skipped: string[]; // Loaded but not due today (disabled, or frequency doesn't match)
+  failed: string[]; // Attempted but the creation call failed
   errors: string[];
   executionTime: number;
 }
@@ -64,6 +65,8 @@ export interface CreateResult {
   habitName: string;
   entry?: HabitEntry;
   error?: string;
+  status?: number; // Notion API HTTP status code, when applicable
+  code?: string; // Node network error code (e.g. ECONNRESET), when applicable
 }
 
 // ============================================================================
@@ -126,12 +129,12 @@ export interface NotionTemplate {
  * Notion property types for habit entries
  */
 export interface NotionHabitProperties {
-  TAG: {
+  TYPE: {
     multi_select: Array<{
       name: string;
     }>;
   };
-  EXPECTED: {
+  DATE: {
     date: {
       start: string;
       end: string;

@@ -38,5 +38,5 @@ jobs:
         run: node dist/main.js
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          TIMEBOX_DATABASE_ID: ${{ secrets.TIMEBOX_DATABASE_ID }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           TIMEZONE: Asia/Tokyo

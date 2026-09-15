@@ -6,6 +6,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { HabitConfig, HabitConfigValidation, ValidationResult } from '../types';
+import { isValidTimeFormat } from '../utils/time';
 
 /**
  * Default configuration file path
@@ -24,11 +25,6 @@ const VALID_WEEKDAYS = [
   'saturday',
   'sunday',
 ];
-
-/**
- * Time format regex (HH:MM)
- */
-const TIME_FORMAT_REGEX = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
 /**
  * Loads and validates habit configuration from JSON file
@@ -130,7 +126,7 @@ export function validateHabitConfiguration(
     const habitValidation = validateSingleHabit(habitConfig);
 
     if (habitValidation.valid) {
-      result.validHabits.push(habitConfig as HabitConfig);
+      result.validHabits.push(normalizeHabitConfig(habitConfig as HabitConfig));
     } else {
       result.invalidHabits.push({
         config: habitConfig,
@@ -219,6 +215,28 @@ export function validateSingleHabit(habit: unknown): ValidationResult {
 }
 
 /**
+ * Builds a normalized copy of a validated habit configuration.
+ *
+ * `validateSingleHabit` accepts frequency entries in any case/whitespace
+ * (e.g. "Monday", " tuesday ") since it normalizes only for the purpose of
+ * validation. Runtime matching (`isDueToday`) compares against exact
+ * lowercase weekday names, so without this step a habit that passed
+ * validation could still silently never fire. This never mutates the
+ * caller's parsed object.
+ *
+ * @param habit Validated habit configuration (raw casing/whitespace)
+ * @returns A new HabitConfig with frequency/name/templateId normalized
+ */
+function normalizeHabitConfig(habit: HabitConfig): HabitConfig {
+  return {
+    ...habit,
+    name: habit.name.trim(),
+    templateId: habit.templateId.trim(),
+    frequency: habit.frequency.map(day => day.toLowerCase().trim()),
+  };
+}
+
+/**
  * Validates frequency array contains valid weekdays
  * @param frequency Frequency array to validate
  * @param result ValidationResult to add errors/warnings to
@@ -278,7 +296,7 @@ function validateTimeFormat(
   fieldName: string,
   result: ValidationResult
 ): void {
-  if (!TIME_FORMAT_REGEX.test(time)) {
+  if (!isValidTimeFormat(time)) {
     result.errors.push(
       `${fieldName} must be in HH:MM format (e.g., "07:30", "14:00")`
     );
@@ -298,7 +316,7 @@ function validateTimeRange(
   result: ValidationResult
 ): void {
   // Only validate if both times are in correct format
-  if (!TIME_FORMAT_REGEX.test(startTime) || !TIME_FORMAT_REGEX.test(endTime)) {
+  if (!isValidTimeFormat(startTime) || !isValidTimeFormat(endTime)) {
     return; // Format errors will be caught by validateTimeFormat
   }
 

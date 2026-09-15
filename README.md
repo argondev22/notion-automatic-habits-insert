@@ -1,15 +1,15 @@
 # Notion Automatic Habit Insert
 
-NotionのTemplateを活用した習慣管理システム。GitHub Actionsの毎日のcronジョブから直接ワンショットCLIとして実行し、Timebox（旧Todos）データベースに習慣エントリを作成します。
+NotionのTemplateを活用した習慣管理システム。GitHub Actionsの毎日のcronジョブから直接ワンショットCLIとして実行し、習慣を作成する対象のNotionデータベースに習慣エントリを作成します。
 
 ## 📋 概要
 
-このアプリケーションは、Notionのテンプレート機能を活用した習慣追跡システムです。従来のHabitsデータベースを廃止し、Timeboxデータベース内でタスクと習慣を統一管理します。
+このアプリケーションは、Notionのテンプレート機能を活用した習慣追跡システムです。従来のHabitsデータベースを廃止し、対象のNotionデータベース内でタスクと習慣を統一管理します。
 
 ### 主な特徴
 
 - **テンプレートベース**: Notionの標準テンプレート機能を活用
-- **統一データベース**: TimboxデータベースでタスクとHABITを一元管理
+- **統一データベース**: 対象のNotionデータベースでタスクとHABITを一元管理
 - **設定ファイル駆動**: `habits.json`で習慣スケジュールを管理
 - **サーバーレス**: HTTPサーバーやWebhookを持たず、GitHub Actionsのcronから直接実行されるワンショットCLI
 
@@ -19,7 +19,7 @@ NotionのTemplateを活用した習慣管理システム。GitHub Actionsの毎�
 2. **習慣設定読み込み** → `config/habits.json`から設定取得
 3. **スケジュール判定** → 明日実行すべき習慣を特定
 4. **テンプレート適用** → Notionテンプレートを使用してエントリ作成
-5. **プロパティ設定** → TAG="HABIT"、EXPECTED時間を自動設定（明日の日付で）
+5. **プロパティ設定** → TYPEに`PROJECT`・`HABIT`を設定、DATEに時間を自動設定（明日の日付で）
 6. **終了コードで結果を報告** → 成功時は`0`、エラーがあれば`1`で終了しGitHub Actionsに実行結果を伝える
 
 **重要**: このシステムは、ジョブが実行された時点で**明日の日付**で習慣を作成します。例えば、月曜日にジョブが実行されると、火曜日の習慣が作成されます。これにより、前日に翌日の習慣を準備することができます。
@@ -42,7 +42,7 @@ NotionのTemplateを活用した習慣管理システム。GitHub Actionsの毎�
 
 - Node.js 18+ または Docker
 - Notion Internal connectionのInstallation access token
-- Timeboxデータベースとテンプレートの設定
+- 習慣を作成する対象のNotionデータベースとテンプレートの設定
 
 ### 1. リポジトリをクローン
 
@@ -65,7 +65,7 @@ cp .env.example .env
 ```bash
 # Notion API設定
 NOTION_TOKEN=secret_xxx
-TIMEBOX_DATABASE_ID=database_id_xxx
+NOTION_DATABASE_ID=database_id_xxx
 
 # タイムゾーン設定
 TIMEZONE=Asia/Tokyo
@@ -90,7 +90,7 @@ TIMEZONE=Asia/Tokyo
 
 ### 4. 本番運用: GitHub Actionsのcron
 
-本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日0:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_TOKEN`・`TIMEBOX_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
+本番運用はGitHub Actionsのスケジュール実行（`.github/workflows/run-habits.yml`、毎日0:00 JST）が直接ワンショットスクリプトを実行する方式です。サーバーを起動し続ける必要はありません。リポジトリのSecretsに`NOTION_TOKEN`・`NOTION_DATABASE_ID`を登録しておけば、手動実行（`workflow_dispatch`）も含めて自動的に動作します。
 
 ### 5. ローカルでの動作確認
 
@@ -113,19 +113,19 @@ docker compose up --build
 
 ## 🔐 環境変数
 
-| 名前                  | 説明                                | 必須 | デフォルト           |
-| --------------------- | ----------------------------------- | ---- | -------------------- |
-| `NOTION_TOKEN`        | Notion Internal connectionのInstallation access token | ✓    | -                    |
-| `TIMEBOX_DATABASE_ID` | TimeboxデータベースのID             | ✓    | -                    |
-| `TIMEZONE`            | タイムゾーン（IANA形式）            | -    | `UTC`                |
-| `LOG_LEVEL`           | ログレベル（debug/info/warn/error） | -    | `info`               |
-| `HABIT_CONFIG_PATH`   | 習慣設定ファイルのパス              | -    | `config/habits.json` |
+| 名前                 | 説明                                                  | 必須 | デフォルト           |
+| -------------------- | ----------------------------------------------------- | ---- | -------------------- |
+| `NOTION_TOKEN`       | Notion Internal connectionのInstallation access token | ✓    | -                    |
+| `NOTION_DATABASE_ID` | 習慣を作成する対象のNotionデータベースのID            | ✓    | -                    |
+| `TIMEZONE`           | タイムゾーン（IANA形式）                              | -    | `UTC`                |
+| `LOG_LEVEL`          | ログレベル（debug/info/warn/error）                   | -    | `info`               |
+| `HABIT_CONFIG_PATH`  | 習慣設定ファイルのパス                                | -    | `config/habits.json` |
 
 ### Notion設定
 
 1. **Internal connection作成**: [Notion Developer Portal](https://www.notion.so/my-integrations)（`https://www.notion.so/developers/connections`にリダイレクト）でInternal connectionを作成し、Configurationタブの「Installation access token」を控える
-2. **データベース共有**: TimeboxデータベースをそのInternal connectionと共有
-3. **テンプレート作成**: Timeboxデータベース内で習慣用テンプレートを作成
+2. **データベース共有**: 対象のNotionデータベースをそのInternal connectionと共有
+3. **テンプレート作成**: 対象のNotionデータベース内で習慣用テンプレートを作成
 4. **テンプレートID取得**: 各テンプレートのIDを`habits.json`に設定
 
 ## ⏰ 実行トリガー（GitHub Actions cron）
@@ -351,7 +351,7 @@ npm run test:coverage
 echo $NOTION_TOKEN
 
 # エラー: Database not found
-# 解決: TIMEBOX_DATABASE_IDが正しく、Internal connectionがアクセス権限を持っているか確認
+# 解決: NOTION_DATABASE_IDが正しく、Internal connectionがアクセス権限を持っているか確認
 ```
 
 #### 2. テンプレートが見つからない
@@ -366,7 +366,7 @@ echo $NOTION_TOKEN
 
 ```bash
 # 解決: リポジトリのSettings > Secrets and variablesに
-# NOTION_TOKEN と TIMEBOX_DATABASE_ID が登録されているか確認
+# NOTION_TOKEN と NOTION_DATABASE_ID が登録されているか確認
 # Actionsタブから該当のワークフロー実行のログを確認し、エラー内容を特定する
 ```
 
@@ -387,7 +387,7 @@ LOG_LEVEL=error npm start
 cat config/habits.json | jq .
 
 # 環境変数の確認
-env | grep -E "(NOTION|TIMEBOX|TIMEZONE)"
+env | grep -E "(NOTION|TIMEZONE)"
 ```
 
 ## 📚 関連ドキュメント
@@ -402,7 +402,7 @@ env | grep -E "(NOTION|TIMEBOX|TIMEZONE)"
 
 本番運用にサーバーのデプロイは不要です。「デプロイ」は次の2点を設定するだけで完了します：
 
-1. リポジトリの **Settings > Secrets and variables > Actions** に `NOTION_TOKEN` と `TIMEBOX_DATABASE_ID` を登録する
+1. リポジトリの **Settings > Secrets and variables > Actions** に `NOTION_TOKEN` と `NOTION_DATABASE_ID` を登録する
 2. `.github/workflows/run-habits.yml` がリポジトリに存在していれば、毎日0:00 JSTに自動でジョブが実行される
 
 常駐サーバーを起動し続ける必要はなく、PM2やDockerでの永続稼働も不要です。Dockerは前述の「ローカルでの動作確認」用途にのみ使用します。
@@ -416,7 +416,7 @@ docker build -t notion-habit-insert:latest app/
 # 1回実行して終了
 docker run --rm \
   -e NOTION_TOKEN=your_installation_access_token \
-  -e TIMEBOX_DATABASE_ID=your_db_id \
+  -e NOTION_DATABASE_ID=your_db_id \
   -e TIMEZONE=Asia/Tokyo \
   notion-habit-insert:latest
 ```

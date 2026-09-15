@@ -71,14 +71,15 @@ export interface NotionPropertyValues {
 }
 
 // ============================================================================
-// Timebox Database Specific Types (Minimal)
+// Target Database Property Types (Minimal)
 // ============================================================================
 
 /**
- * Properties specific to the Timebox database (minimal for habit scheduler)
+ * Properties this scheduler writes on a habit page in the target Notion
+ * database (minimal for habit scheduler)
  */
-export interface TimeboxProperties {
-  Name: NotionPropertyValues['title'];
-  TAG: NotionPropertyValues['multi_select'];
-  EXPECTED: NotionPropertyValues['date'];
+export interface HabitPageProperties {
+  NAME: NotionPropertyValues['title'];
+  DATE: NotionPropertyValues['date'];
+  TYPE: NotionPropertyValues['multi_select'];
 }

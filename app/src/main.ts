@@ -21,13 +21,18 @@ interface AppConfig {
 
 /**
  * Load and validate environment configuration
+ *
+ * Note: this still calls `process.exit(1)` directly (rather than setting
+ * `process.exitCode`) on fatal validation failures. That's intentional here:
+ * it runs before any of the async work below has produced output worth
+ * losing to a buffered-stdout race, unlike the exits at the end of `main`.
  * Requirements: 1.1, 7.1, 7.3
  */
 function loadConfiguration(): AppConfig {
   console.log('Loading application configuration...');
 
   // Required environment variables
-  const requiredVars = ['NOTION_TOKEN', 'TIMEBOX_DATABASE_ID'];
+  const requiredVars = ['NOTION_TOKEN', 'NOTION_DATABASE_ID'];
 
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
 
@@ -88,7 +93,7 @@ async function main(): Promise<void> {
 
   // 2. Create Notion client and Habit Manager
   console.log('Creating Notion API client...');
-  const notionClient = createNotionClient();
+  const notionClient = createNotionClient(config.timezone);
 
   console.log('Creating Habit Manager...');
   const habitManager = createHabitManager(
@@ -107,7 +112,8 @@ async function main(): Promise<void> {
       console.error(`  - ${error}`);
     });
     console.error('\nPlease fix the configuration issues and try again.');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (validation.warnings.length > 0) {
@@ -122,10 +128,11 @@ async function main(): Promise<void> {
   // 4. Run the habit creation job
   const result = await habitManager.createScheduledHabits();
 
-  // 5. Log a concise summary and exit with a code GitHub Actions can key off
+  // 5. Log a concise summary and set the exit code GitHub Actions can key off
   console.log('\n📊 Run Summary');
   console.log(`  - Created: ${result.created.length}`);
   console.log(`  - Skipped: ${result.skipped.length}`);
+  console.log(`  - Failed: ${result.failed.length}`);
   console.log(`  - Errors: ${result.errors.length}`);
 
   if (result.errors.length > 0) {
@@ -133,18 +140,21 @@ async function main(): Promise<void> {
     result.errors.forEach(error => {
       console.error(`  - ${error}`);
     });
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   console.log('✓ Habit creation completed successfully');
-  process.exit(0);
+  process.exitCode = 0;
 }
 
 // Start the application
 if (require.main === module) {
+  // Using process.exitCode rather than process.exit() lets buffered
+  // stdout/stderr flush before the process exits naturally.
   main().catch(error => {
     console.error('❌ Fatal error during application run:', error);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }
 

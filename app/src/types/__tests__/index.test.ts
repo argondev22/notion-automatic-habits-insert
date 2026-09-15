@@ -102,6 +102,7 @@ describe('Core Data Model Interfaces', () => {
         success: true,
         created: [habitEntry],
         skipped: ['Disabled habit'],
+        failed: [],
         errors: [],
         executionTime: 2000,
       };
@@ -110,6 +111,7 @@ describe('Core Data Model Interfaces', () => {
       expect(result.created.length).toBe(1);
       expect(result.created[0].id).toBe('page-123');
       expect(Array.isArray(result.skipped)).toBe(true);
+      expect(Array.isArray(result.failed)).toBe(true);
       expect(Array.isArray(result.errors)).toBe(true);
     });
   });
@@ -118,12 +120,12 @@ describe('Core Data Model Interfaces', () => {
     it('should define all required environment variables', () => {
       const config: SystemConfig = {
         NOTION_TOKEN: 'secret_test_key',
-        TIMEBOX_DATABASE_ID: 'database_test_id',
+        NOTION_DATABASE_ID: 'database_test_id',
         TIMEZONE: 'Asia/Tokyo',
       };
 
       expect(typeof config.NOTION_TOKEN).toBe('string');
-      expect(typeof config.TIMEBOX_DATABASE_ID).toBe('string');
+      expect(typeof config.NOTION_DATABASE_ID).toBe('string');
       expect(typeof config.TIMEZONE).toBe('string');
     });
   });
