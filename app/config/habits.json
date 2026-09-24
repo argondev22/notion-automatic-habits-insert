@@ -16,22 +16,6 @@
     "enabled": true
   },
   {
-    "name": "朝ケア",
-    "templateId": "3dbd94010e5880798a0ccb7192fe9c11",
-    "frequency": [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday"
-    ],
-    "startTime": "06:45",
-    "endTime": "07:00",
-    "enabled": true
-  },
-  {
     "name": "朝食",
     "templateId": "3dbd94010e5880adaa1cc877fce5071b",
     "frequency": [
@@ -43,7 +27,23 @@
       "saturday",
       "sunday"
     ],
-    "startTime": "07:15",
+    "startTime": "06:45",
+    "endTime": "07:30",
+    "enabled": true
+  },
+  {
+    "name": "朝ケア",
+    "templateId": "3dbd94010e5880798a0ccb7192fe9c11",
+    "frequency": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "startTime": "07:45",
     "endTime": "08:00",
     "enabled": true
   },
