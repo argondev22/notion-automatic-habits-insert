@@ -29,7 +29,7 @@
     ],
     "startTime": "06:45",
     "endTime": "07:00",
-    "enabled": false
+    "enabled": true
   },
   {
     "name": "朝食",
@@ -45,7 +45,7 @@
     ],
     "startTime": "07:15",
     "endTime": "08:00",
-    "enabled": false
+    "enabled": true
   },
   {
     "name": "仕事",
@@ -104,16 +104,8 @@
     "enabled": false
   },
   {
-    "name": "振り返り",
+    "name": "振り返り/目標設定",
     "templateId": "3dbd94010e588026b752d35f230f9c2a",
-    "frequency": ["sunday"],
-    "startTime": "20:30",
-    "endTime": "21:00",
-    "enabled": false
-  },
-  {
-    "name": "目標設定",
-    "templateId": "3dbd94010e5880ca82d0c112114d0ebb",
     "frequency": ["sunday"],
     "startTime": "20:30",
     "endTime": "21:00",
